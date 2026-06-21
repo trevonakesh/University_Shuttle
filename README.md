@@ -1,4 +1,4 @@
-# LankaTrip 🚍
+# UniShuttle 🚍
 
 A smart transportation platform designed specifically for university students and private bus operators in Sri Lanka.
 
