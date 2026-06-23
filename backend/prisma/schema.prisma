@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  DRIVER
+  ADMIN
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  phone        String?  @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student      Student?
+  driver       Driver?
+}
+
+model Student {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  fullName       String
+  nic            String?  @unique
+  universityName String
+  studentId      String?
+  pickupPoint    String?
+  destination    String?
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Driver {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  fullName       String
+  nic            String   @unique
+  licenseNumber  String?  @unique
+  bankName       String?
+  accNumber      String?
+  accHolder      String?
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -19,9 +19,14 @@ const io = new Server(httpServer, {
   }
 });
 
+import authRoutes from './routes/authRoutes';
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
 
 // PostgreSQL database configuration (to be updated with real credentials)
 const pool = new Pool({
