@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class DriverRegisterScreen extends StatefulWidget {
@@ -10,94 +11,441 @@ class DriverRegisterScreen extends StatefulWidget {
 class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Form fields
-  String _fullName = '';
-  String _email = '';
-  String _phone = '';
-  String _password = '';
-  String _nic = '';
-  String _licenseNumber = '';
-  String _bankName = '';
-  String _accNumber = '';
-
   void _register() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      // TODO: Connect to backend API
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Driver Registration logic to be integrated')),
+        const SnackBar(content: Text('Registration Submitted! (Logic to be integrated)')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width > 800;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Driver Registration')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Personal Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Full Name'),
-                onSaved: (val) => _fullName = val ?? '',
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Email Address'),
-                keyboardType: TextInputType.emailAddress,
-                onSaved: (val) => _email = val ?? '',
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                keyboardType: TextInputType.phone,
-                onSaved: (val) => _phone = val ?? '',
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                onSaved: (val) => _password = val ?? '',
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'NIC Number'),
-                onSaved: (val) => _nic = val ?? '',
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Driving License Number'),
-                onSaved: (val) => _licenseNumber = val ?? '',
-              ),
-              const SizedBox(height: 32),
-              const Text('Banking Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Bank Name'),
-                onSaved: (val) => _bankName = val ?? '',
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Account Number'),
-                keyboardType: TextInputType.number,
-                onSaved: (val) => _accNumber = val ?? '',
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _register,
-                child: const Text('Register as Driver'),
-              ),
-            ],
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Background Image with dark overlay
+          Image.network(
+            'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=3538&auto=format&fit=crop',
+            fit: BoxFit.cover,
+          ),
+          Container(
+            color: Colors.black.withOpacity(0.75),
+          ),
+          
+          // Main Content
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 60.0 : 20.0,
+                      vertical: 40.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'DRIVER REGISTRATION',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'PLEASE FILL IN YOUR DETAILS TO REGISTER AS A DRIVER',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white70,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                        
+                        // Form Card
+                        _buildFormCard(context, isDesktop),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormCard(BuildContext context, bool isDesktop) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(30),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Personal Information
+                _buildSectionTitle('PERSONAL INFORMATION'),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
+                  _buildInputCol('FULL NAME', 'ENTER FULL NAME'),
+                  _buildInputCol('NIC NUMBER', 'ENTER NIC NUMBER'),
+                  _buildInputCol('PHONE NUMBER', 'ENTER PHONE NUMBER'),
+                ]),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
+                  _buildInputCol('EMAIL ADDRESS', 'ENTER EMAIL ADDRESS'),
+                  _buildInputCol('DRIVING LICENSE NUMBER', 'ENTER DRIVING LICENSE NUMBER'),
+                  _buildUploadCol('PROFILE PHOTO', 'UPLOAD PHOTO'),
+                ]),
+                
+                const SizedBox(height: 30),
+                const Divider(color: Colors.white24, thickness: 1),
+                const SizedBox(height: 30),
+                
+                // 2. Bank Details
+                _buildSectionTitle('BANK DETAILS'),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
+                  _buildDropdownCol('BANK NAME', 'SELECT BANK'),
+                  _buildInputCol('ACCOUNT NUMBER', 'ENTER ACCOUNT NUMBER'),
+                  _buildInputCol('ACCOUNT HOLDER NAME', 'ENTER ACCOUNT HOLDER NAME'),
+                ]),
+                
+                const SizedBox(height: 30),
+                const Divider(color: Colors.white24, thickness: 1),
+                const SizedBox(height: 30),
+                
+                // 3. Bus Information
+                _buildSectionTitle('BUS INFORMATION'),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
+                  _buildInputCol('BUS REGISTRATION NUMBER', 'ENTER BUS REGISTRATION NUMBER'),
+                  _buildInputCol('BUS CAPACITY (SEATS)', 'ENTER CAPACITY'),
+                  _buildInputCol('ROUTE NAME', 'ENTER ROUTE NAME'),
+                ]),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
+                  _buildInputCol('STARTING POINT', 'ENTER STARTING POINT'),
+                  _buildDropdownCol('DESTINATION (UNIVERSITY)', 'SELECT UNIVERSITY'),
+                  _buildInputCol('MONTHLY FEE (LKR)', 'ENTER MONTHLY FEE'),
+                ]),
+                
+                const SizedBox(height: 30),
+                const Divider(color: Colors.white24, thickness: 1),
+                const SizedBox(height: 30),
+                
+                // 4. Schedule
+                _buildSectionTitle('SCHEDULE'),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
+                  _buildDropdownCol('SCHEDULE TYPE', 'WEEKLY (MON - FRI)'),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'WEEKDAY (MON - FRI)',
+                            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(child: _buildTimePickerCol('PICKUP TIME', '06:45 AM')),
+                              const SizedBox(width: 20),
+                              Expanded(child: _buildTimePickerCol('DROP TIME', '04:30 PM')),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ]),
+
+                const SizedBox(height: 30),
+                const Divider(color: Colors.white24, thickness: 1),
+                const SizedBox(height: 30),
+
+                // 5. Documents Upload
+                _buildSectionTitle('DOCUMENTS UPLOAD'),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
+                  _buildUploadCol('NIC COPY', 'UPLOAD'),
+                  _buildUploadCol('DRIVING LICENSE COPY', 'UPLOAD'),
+                  _buildUploadCol('VEHICLE REGISTRATION COPY', 'UPLOAD'),
+                  _buildUploadCol('BUS PHOTO', 'UPLOAD'),
+                ]),
+
+                const SizedBox(height: 50),
+                
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 50,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white54, width: 1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            'CANCEL',
+                            style: TextStyle(
+                              color: Colors.white,
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              side: const BorderSide(color: Colors.white30),
+                            ),
+                          ),
+                          onPressed: _register,
+                          child: const Text(
+                            'SUBMIT REGISTRATION',
+                            style: TextStyle(
+                              color: Colors.white,
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _buildResponsiveRow(bool isDesktop, List<Widget> children) {
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children.map((child) {
+          if (child is Expanded) return child;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: child,
+            ),
+          );
+        }).toList(),
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children.map((child) {
+          if (child is Expanded) {
+            // For mobile, we extract the child of Expanded to prevent layout issues
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
+              child: child.child,
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: child,
+          );
+        }).toList(),
+      );
+    }
+  }
+
+  Widget _buildInputCol(String label, String hint) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: TextFormField(
+            style: const TextStyle(color: Colors.white, fontSize: 12),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: Colors.white54, fontSize: 10),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownCol(String label, String hint) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              hint: Text(hint, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+              dropdownColor: Colors.grey.shade900,
+              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 16),
+              items: const [],
+              onChanged: (val) {},
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimePickerCol(String label, String hint) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.access_time, color: Colors.white54, size: 16),
+              const SizedBox(width: 10),
+              Text(hint, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUploadCol(String label, String subtext) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 100,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.white.withOpacity(0.3), style: BorderStyle.solid),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 24),
+                const SizedBox(height: 4),
+                Text(subtext, style: const TextStyle(color: Colors.white, fontSize: 10)),
+                const SizedBox(height: 2),
+                const Text('JPG, PNG (MAX 2MB)', style: TextStyle(color: Colors.white54, fontSize: 8)),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
