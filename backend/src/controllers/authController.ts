@@ -78,7 +78,12 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
 
 export const registerDriver = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, phone, fullName, nic, licenseNumber, bankName, accNumber, accHolder } = req.body;
+    const { 
+      email, password, phone, fullName, nic, licenseNumber, bankName, accNumber, accHolder,
+      busRegNumber, busCapacity, routeName, startingPoint, destination, monthlyFee,
+      scheduleType, pickupTime, dropTime, profilePhotoUrl, nicCopyUrl, licenseCopyUrl,
+      vehicleRegUrl, busPhotoUrl
+    } = req.body;
 
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone }] }
@@ -105,7 +110,21 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
             licenseNumber,
             bankName,
             accNumber,
-            accHolder
+            accHolder,
+            busRegNumber,
+            busCapacity,
+            routeName,
+            startingPoint,
+            destination,
+            monthlyFee,
+            scheduleType,
+            pickupTime,
+            dropTime,
+            profilePhotoUrl,
+            nicCopyUrl,
+            licenseCopyUrl,
+            vehicleRegUrl,
+            busPhotoUrl
           }
         }
       },

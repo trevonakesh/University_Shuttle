@@ -56,14 +56,36 @@ model Student {
 }
 
 model Driver {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @unique
-  fullName       String
-  nic            String   @unique
-  licenseNumber  String?  @unique
-  bankName       String?
-  accNumber      String?
-  accHolder      String?
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  fullName         String
+  nic              String   @unique
+  licenseNumber    String?  @unique
+  
+  // Bank Details
+  bankName         String?
+  accNumber        String?
+  accHolder        String?
 
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Bus Information
+  busRegNumber     String?  @unique
+  busCapacity      String?
+  routeName        String?
+  startingPoint    String?
+  destination      String?
+  monthlyFee       String?
+
+  // Schedule
+  scheduleType     String?
+  pickupTime       String?
+  dropTime         String?
+
+  // Documents (URLs)
+  profilePhotoUrl  String?
+  nicCopyUrl       String?
+  licenseCopyUrl   String?
+  vehicleRegUrl    String?
+  busPhotoUrl      String?
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
