@@ -11,7 +11,12 @@ const generateToken = (userId: number, role: Role) => {
 
 export const registerStudent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, phone, fullName, nic, universityName, studentId, pickupPoint, destination } = req.body;
+    const { 
+      email, password, phone, fullName, nic, universityName, studentId, 
+      pickupPoint, destination, faculty, degreeProgram, academicYear, 
+      registrationNo, homeLocation, emerContactName, emerContactPhone, 
+      emerRelationship, profilePhotoUrl
+    } = req.body;
 
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone }] }
@@ -38,7 +43,16 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
             universityName,
             studentId,
             pickupPoint,
-            destination
+            destination,
+            faculty,
+            degreeProgram,
+            academicYear,
+            registrationNo,
+            homeLocation,
+            emerContactName,
+            emerContactPhone,
+            emerRelationship,
+            profilePhotoUrl
           }
         }
       },

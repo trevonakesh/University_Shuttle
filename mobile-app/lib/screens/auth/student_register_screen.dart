@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class StudentRegisterScreen extends StatefulWidget {
   const StudentRegisterScreen({Key? key}) : super(key: key);
@@ -10,14 +12,98 @@ class StudentRegisterScreen extends StatefulWidget {
 
 class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
-  void _register() {
+  // Text Controllers
+  final _fullNameCtrl = TextEditingController();
+  final _nicCtrl = TextEditingController();
+  final _studentIdCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController(); // Needed for account creation
+  final _regNoCtrl = TextEditingController();
+  final _homeLocCtrl = TextEditingController();
+  final _pickupCtrl = TextEditingController();
+  final _emerNameCtrl = TextEditingController();
+  final _emerPhoneCtrl = TextEditingController();
+
+  // Dropdown States
+  String? _university;
+  String? _faculty;
+  String? _program;
+  String? _academicYear;
+  String? _destination;
+  String? _relationship;
+
+  Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account Created! (Logic to be integrated)')),
-      );
+      setState(() => _isLoading = true);
+      
+      final payload = {
+        'fullName': _fullNameCtrl.text,
+        'nic': _nicCtrl.text,
+        'studentId': _studentIdCtrl.text,
+        'phone': _phoneCtrl.text,
+        'email': _emailCtrl.text,
+        'password': _passwordCtrl.text,
+        'universityName': _university ?? 'Unknown',
+        'faculty': _faculty,
+        'degreeProgram': _program,
+        'academicYear': _academicYear,
+        'registrationNo': _regNoCtrl.text,
+        'homeLocation': _homeLocCtrl.text,
+        'pickupPoint': _pickupCtrl.text,
+        'destination': _destination,
+        'emerContactName': _emerNameCtrl.text,
+        'emerContactPhone': _emerPhoneCtrl.text,
+        'emerRelationship': _relationship,
+        'profilePhotoUrl': null, // Upload logic not yet implemented
+      };
+
+      try {
+        // Replace localhost with your machine's IP (e.g., 192.168.1.x) if testing on a real device
+        final url = Uri.parse('http://localhost:3000/api/auth/register-student');
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(payload),
+        );
+
+        if (response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account Created Successfully!')),
+          );
+          Navigator.pop(context); // Go back to login
+        } else {
+          final resBody = json.decode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(resBody['error'] ?? 'Registration failed')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Network error: $e')),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _fullNameCtrl.dispose();
+    _nicCtrl.dispose();
+    _studentIdCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _regNoCtrl.dispose();
+    _homeLocCtrl.dispose();
+    _pickupCtrl.dispose();
+    _emerNameCtrl.dispose();
+    _emerPhoneCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -29,16 +115,12 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background Image with dark overlay
           Image.network(
             'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=3538&auto=format&fit=crop',
             fit: BoxFit.cover,
           ),
-          Container(
-            color: Colors.black.withOpacity(0.75), // Darker overlay for form readability
-          ),
+          Container(color: Colors.black.withOpacity(0.75)),
           
-          // Main Content
           SafeArea(
             child: CustomScrollView(
               slivers: [
@@ -51,7 +133,6 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header
                         Row(
                           children: [
                             IconButton(
@@ -62,31 +143,14 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: const [
-                                Text(
-                                  'STUDENT REGISTRATION',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
+                                Text('STUDENT REGISTRATION', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
                                 SizedBox(height: 4),
-                                Text(
-                                  'PLEASE FILL IN YOUR DETAILS TO CREATE YOUR STUDENT ACCOUNT',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white70,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
+                                Text('PLEASE FILL IN YOUR DETAILS TO CREATE YOUR STUDENT ACCOUNT', style: TextStyle(fontSize: 10, color: Colors.white70, letterSpacing: 1)),
                               ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 30),
-                        
-                        // Form Card
                         _buildFormCard(context, isDesktop),
                       ],
                     ),
@@ -110,65 +174,65 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
           ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. Personal Information
                 _buildSectionTitle('PERSONAL INFORMATION'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildInputCol('FULL NAME', 'ENTER FULL NAME'),
-                  _buildInputCol('NIC NUMBER', 'ENTER NIC NUMBER'),
-                  _buildInputCol('STUDENT ID', 'ENTER STUDENT ID'),
+                  _buildInputCol('FULL NAME', 'ENTER FULL NAME', _fullNameCtrl),
+                  _buildInputCol('NIC NUMBER', 'ENTER NIC NUMBER', _nicCtrl),
+                  _buildInputCol('STUDENT ID', 'ENTER STUDENT ID', _studentIdCtrl),
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildInputCol('PHONE NUMBER', 'ENTER PHONE NUMBER'),
-                  _buildInputCol('EMAIL ADDRESS', 'ENTER EMAIL ADDRESS'),
+                  _buildInputCol('PHONE NUMBER', 'ENTER PHONE NUMBER', _phoneCtrl),
+                  _buildInputCol('EMAIL ADDRESS', 'ENTER EMAIL ADDRESS', _emailCtrl),
+                  _buildInputCol('PASSWORD', 'ENTER PASSWORD', _passwordCtrl, obscureText: true),
+                ]),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
                   _buildPhotoUploadCol(),
+                  if (isDesktop) Expanded(child: const SizedBox()),
+                  if (isDesktop) Expanded(child: const SizedBox()),
                 ]),
                 
                 const SizedBox(height: 30),
                 const Divider(color: Colors.white24, thickness: 1),
                 const SizedBox(height: 30),
                 
-                // 2. University Information
                 _buildSectionTitle('UNIVERSITY INFORMATION'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('UNIVERSITY NAME', 'SELECT UNIVERSITY'),
-                  _buildDropdownCol('FACULTY', 'SELECT FACULTY'),
-                  _buildDropdownCol('DEGREE / PROGRAM', 'SELECT PROGRAM'),
+                  _buildDropdownCol('UNIVERSITY NAME', 'SELECT UNIVERSITY', ['Colombo', 'Peradeniya', 'Moratuwa'], _university, (val) => setState(() => _university = val)),
+                  _buildDropdownCol('FACULTY', 'SELECT FACULTY', ['Science', 'Engineering', 'Arts'], _faculty, (val) => setState(() => _faculty = val)),
+                  _buildDropdownCol('DEGREE / PROGRAM', 'SELECT PROGRAM', ['BSc', 'BEng', 'BA'], _program, (val) => setState(() => _program = val)),
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('ACADEMIC YEAR', 'SELECT ACADEMIC YEAR'),
-                  _buildInputCol('REGISTRATION NUMBER', 'ENTER REGISTRATION NUMBER'),
-                  if (isDesktop) Expanded(child: const SizedBox()), // Empty space for alignment
+                  _buildDropdownCol('ACADEMIC YEAR', 'SELECT ACADEMIC YEAR', ['Year 1', 'Year 2', 'Year 3', 'Year 4'], _academicYear, (val) => setState(() => _academicYear = val)),
+                  _buildInputCol('REGISTRATION NUMBER', 'ENTER REGISTRATION NUMBER', _regNoCtrl),
+                  if (isDesktop) Expanded(child: const SizedBox()),
                 ]),
                 
                 const SizedBox(height: 30),
                 const Divider(color: Colors.white24, thickness: 1),
                 const SizedBox(height: 30),
                 
-                // 3. Travel Information
                 _buildSectionTitle('TRAVEL INFORMATION'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildInputCol('HOME LOCATION', 'ENTER HOME LOCATION'),
-                  _buildInputCol('MAIN ROAD / PICKUP POINT', 'ENTER PICKUP POINT'),
+                  _buildInputCol('HOME LOCATION', 'ENTER HOME LOCATION', _homeLocCtrl),
+                  _buildInputCol('MAIN ROAD / PICKUP POINT', 'ENTER PICKUP POINT', _pickupCtrl),
                   if (isDesktop) Expanded(child: const SizedBox()),
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('DESTINATION UNIVERSITY', 'SELECT DESTINATION UNIVERSITY'),
+                  _buildDropdownCol('DESTINATION UNIVERSITY', 'SELECT DESTINATION UNIVERSITY', ['Colombo', 'Peradeniya', 'Moratuwa'], _destination, (val) => setState(() => _destination = val)),
                   if (isDesktop) Expanded(child: const SizedBox()),
                   if (isDesktop) Expanded(child: const SizedBox()),
                 ]),
@@ -177,37 +241,27 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 const Divider(color: Colors.white24, thickness: 1),
                 const SizedBox(height: 30),
                 
-                // 4. Emergency Contact
                 _buildSectionTitle('EMERGENCY CONTACT'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildInputCol('CONTACT PERSON NAME', 'ENTER CONTACT PERSON NAME'),
-                  _buildInputCol('PHONE NUMBER', 'ENTER CONTACT PHONE NUMBER'),
-                  _buildDropdownCol('RELATIONSHIP', 'SELECT RELATIONSHIP'),
+                  _buildInputCol('CONTACT PERSON NAME', 'ENTER CONTACT PERSON NAME', _emerNameCtrl),
+                  _buildInputCol('PHONE NUMBER', 'ENTER CONTACT PHONE NUMBER', _emerPhoneCtrl),
+                  _buildDropdownCol('RELATIONSHIP', 'SELECT RELATIONSHIP', ['Parent', 'Sibling', 'Guardian'], _relationship, (val) => setState(() => _relationship = val)),
                 ]),
                 
                 const SizedBox(height: 50),
                 
-                // Create Account Button
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        side: const BorderSide(color: Colors.white30),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25), side: const BorderSide(color: Colors.white30)),
                     ),
-                    onPressed: _register,
-                    child: const Text(
-                      'CREATE ACCOUNT',
-                      style: TextStyle(
-                        color: Colors.white,
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: _isLoading ? null : _register,
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('CREATE ACCOUNT', style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -219,15 +273,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-        letterSpacing: 1.2,
-      ),
-    );
+    return Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.2));
   }
 
   Widget _buildResponsiveRow(bool isDesktop, List<Widget> children) {
@@ -236,12 +282,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children.map((child) {
           if (child is Expanded) return child;
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 20.0),
-              child: child,
-            ),
-          );
+          return Expanded(child: Padding(padding: const EdgeInsets.only(right: 20.0), child: child));
         }).toList(),
       );
     } else {
@@ -249,68 +290,50 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children.map((child) {
           if (child is Expanded) return const SizedBox.shrink();
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
-            child: child,
-          );
+          return Padding(padding: const EdgeInsets.only(bottom: 20.0), child: child);
         }).toList(),
       );
     }
   }
 
-  Widget _buildInputCol(String label, String hint) {
+  Widget _buildInputCol(String label, String hint, TextEditingController controller, {bool obscureText = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
-        ),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
           child: TextFormField(
+            controller: controller,
+            obscureText: obscureText,
             style: const TextStyle(color: Colors.white, fontSize: 12),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(color: Colors.white54, fontSize: 10),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            ),
+            decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.white54, fontSize: 10), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
+            validator: (value) => value == null || value.isEmpty ? 'Required' : null,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDropdownCol(String label, String hint) {
+  Widget _buildDropdownCol(String label, String hint, List<String> items, String? currentValue, void Function(String?) onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
-        ),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
+              value: currentValue,
               hint: Text(hint, style: const TextStyle(color: Colors.white54, fontSize: 10)),
               dropdownColor: Colors.grey.shade900,
               icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 16),
-              items: const [],
-              onChanged: (val) {},
+              items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
+              onChanged: onChanged,
             ),
           ),
         ),
@@ -322,18 +345,11 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'PROFILE PHOTO',
-          style: TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
-        ),
+        const Text('PROFILE PHOTO', style: TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
-          height: 100, // Matching the approximate height of standard inputs + some padding
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Colors.white.withOpacity(0.3), style: BorderStyle.solid),
-          ),
+          height: 100,
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white.withOpacity(0.3), style: BorderStyle.solid)),
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

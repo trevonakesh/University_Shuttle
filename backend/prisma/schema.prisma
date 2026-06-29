@@ -26,16 +26,33 @@ model User {
 }
 
 model Student {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @unique
-  fullName       String
-  nic            String?  @unique
-  universityName String
-  studentId      String?
-  pickupPoint    String?
-  destination    String?
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  fullName         String
+  nic              String?  @unique
+  studentId        String?  @unique
+  
+  // University Info
+  universityName   String
+  faculty          String?
+  degreeProgram    String?
+  academicYear     String?
+  registrationNo   String?
 
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Travel Info
+  homeLocation     String?
+  pickupPoint      String?
+  destination      String?
+
+  // Emergency Contact
+  emerContactName  String?
+  emerContactPhone String?
+  emerRelationship String?
+
+  // Profile Photo URL
+  profilePhotoUrl  String?
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Driver {
