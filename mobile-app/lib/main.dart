@@ -5,6 +5,9 @@ import 'screens/student/student_dashboard.dart';
 import 'screens/driver/driver_dashboard.dart';
 import 'screens/auth/student_register_screen.dart';
 import 'screens/auth/driver_register_screen.dart';
+import 'screens/student/student_payments.dart';
+import 'screens/driver/driver_payments.dart';
+import 'screens/shared/notice_board.dart';
 
 void main() {
   runApp(const LankaTripApp());
@@ -53,6 +56,26 @@ class TestNavScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverRegisterScreen())),
               child: const Text('View Driver Registration'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentPaymentsScreen())),
+              child: const Text('View Student Payments'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverPaymentsScreen())),
+              child: const Text('View Driver Payments'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NoticeBoardScreen(isDriver: false, userName: 'Supun Perera'))),
+              child: const Text('View Notice Board (Student)'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NoticeBoardScreen(isDriver: true, userName: 'Chaminda Dias'))),
+              child: const Text('View Notice Board (Driver)'),
             ),
           ],
         ),
