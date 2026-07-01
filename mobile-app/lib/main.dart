@@ -10,6 +10,8 @@ import 'screens/driver/driver_payments.dart';
 import 'screens/shared/notice_board.dart';
 import 'screens/student/student_polls.dart';
 import 'screens/driver/driver_polls.dart';
+import 'screens/student/student_tracking.dart';
+import 'screens/driver/driver_tracking.dart';
 
 void main() {
   runApp(const LankaTripApp());
@@ -88,6 +90,16 @@ class TestNavScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverPollsScreen())),
               child: const Text('View Driver Polls'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentTrackingScreen())),
+              child: const Text('View Student GPS Tracking'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverTrackingScreen())),
+              child: const Text('View Driver GPS Tracking'),
             ),
           ],
         ),
