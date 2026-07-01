@@ -20,6 +20,8 @@ const io = new Server(httpServer, {
 });
 
 import authRoutes from './routes/authRoutes';
+import busRoutes from './routes/busRoutes';
+import requestRoutes from './routes/requestRoutes';
 
 // Middleware
 app.use(cors());
@@ -27,6 +29,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/buses', busRoutes);
+app.use('/api/requests', requestRoutes);
 
 // PostgreSQL database configuration (to be updated with real credentials)
 const pool = new Pool({
