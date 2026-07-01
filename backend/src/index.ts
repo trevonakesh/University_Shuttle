@@ -25,6 +25,7 @@ import requestRoutes from './routes/requestRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import noticeRoutes from './routes/noticeRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import pollRoutes from './routes/pollRoutes';
 
 // Middleware
 app.use(cors());
@@ -37,6 +38,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/polls', pollRoutes);
 
 // PostgreSQL database configuration (to be updated with real credentials)
 const pool = new Pool({
