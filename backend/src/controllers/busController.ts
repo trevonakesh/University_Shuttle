@@ -50,7 +50,7 @@ export const getBusById = async (req: AuthRequest, res: Response): Promise<void>
     const { id } = req.params;
 
     const bus = await prisma.driver.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       select: {
         id: true,
         fullName: true,

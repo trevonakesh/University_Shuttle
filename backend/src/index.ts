@@ -22,6 +22,9 @@ const io = new Server(httpServer, {
 import authRoutes from './routes/authRoutes';
 import busRoutes from './routes/busRoutes';
 import requestRoutes from './routes/requestRoutes';
+import paymentRoutes from './routes/paymentRoutes';
+import noticeRoutes from './routes/noticeRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 
 // Middleware
 app.use(cors());
@@ -31,6 +34,9 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/buses', busRoutes);
 app.use('/api/requests', requestRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/notices', noticeRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // PostgreSQL database configuration (to be updated with real credentials)
 const pool = new Pool({

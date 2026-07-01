@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
@@ -19,6 +20,12 @@ enum RequestStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
@@ -28,8 +35,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  student      Student?
-  driver       Driver?
+  student       Student?
+  driver        Driver?
+  notifications Notification[]
 }
 
 model Student {
@@ -61,6 +69,7 @@ model Student {
 
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   seatRequests     SeatRequest[]
+  payments         Payment[]
 }
 
 model Driver {
@@ -97,6 +106,8 @@ model Driver {
 
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   seatRequests     SeatRequest[]
+  payments         Payment[]
+  notices          Notice[]
 }
 
 model SeatRequest {
@@ -111,4 +122,40 @@ model SeatRequest {
   driver    Driver        @relation(fields: [driverId], references: [id], onDelete: Cascade)
   
   @@unique([studentId, driverId])
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  studentId     Int
+  driverId      Int
+  amount        Float
+  month         String        // e.g. "2026-06"
+  status        PaymentStatus @default(COMPLETED)
+  paymentMethod String        // e.g. "IN_APP", "CASH"
+  referenceNo   String?
+  paymentDate   DateTime      @default(now())
+
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  driver        Driver        @relation(fields: [driverId], references: [id], onDelete: Cascade)
+}
+
+model Notice {
+  id        Int      @id @default(autoincrement())
+  driverId  Int
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

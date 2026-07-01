@@ -19,9 +19,14 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
   const token = authHeader.split(' ')[1];
 
+  if (!token) {
+    res.status(401).json({ error: 'Authentication token missing' });
+    return;
+  }
+
   try {
     const secret = process.env.JWT_SECRET || 'fallback_secret';
-    const decoded = jwt.verify(token, secret) as { userId: number; role: Role };
+    const decoded = jwt.verify(token, secret) as unknown as { userId: number; role: Role };
     
     req.user = decoded;
     next();

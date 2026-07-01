@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import { createPayment, getStudentPayments, getDriverPayments } from '../controllers/paymentController';
+import { authenticate } from '../middleware/authMiddleware';
+
+const router = Router();
+
+// Protect all routes
+router.use(authenticate as any);
+
+router.post('/', createPayment as any);
+router.get('/student', getStudentPayments as any);
+router.get('/driver', getDriverPayments as any);
+
+export default router;
