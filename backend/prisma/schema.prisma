@@ -26,6 +26,12 @@ enum PaymentStatus {
   FAILED
 }
 
+enum DriverStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
@@ -104,6 +110,8 @@ model Driver {
   licenseCopyUrl   String?
   vehicleRegUrl    String?
   busPhotoUrl      String?
+
+  status           DriverStatus  @default(PENDING)
 
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   seatRequests     SeatRequest[]
