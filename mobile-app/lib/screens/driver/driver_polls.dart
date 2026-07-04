@@ -183,13 +183,15 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(poll['date'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 5),
-                                    Text(poll['question'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                                  ],
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(poll['date'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                                      const SizedBox(height: 5),
+                                      Text(poll['question'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                                    ],
+                                  ),
                                 ),
                                 Row(
                                   children: [

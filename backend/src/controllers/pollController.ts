@@ -57,7 +57,9 @@ export const getDriverPolls = async (req: AuthRequest, res: Response): Promise<v
               select: {
                 fullName: true,
                 pickupPoint: true,
-                phone: true
+                user: {
+                  select: { phone: true }
+                }
               }
             }
           }
@@ -73,7 +75,7 @@ export const getDriverPolls = async (req: AuthRequest, res: Response): Promise<v
         .map(r => ({
           name: r.student.fullName,
           pickupPoint: r.student.pickupPoint,
-          phone: r.student.phone
+          phone: (r.student as any).user?.phone
         }));
         
       const notComingCount = poll.responses.filter(r => !r.isComing).length;

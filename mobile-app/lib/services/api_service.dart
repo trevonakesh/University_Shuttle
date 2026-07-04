@@ -124,7 +124,7 @@ class ApiService {
         headers: await _getHeaders(),
       );
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return jsonDecode(response.body)['buses'] ?? [];
       }
       return [];
     } catch (e) {
@@ -156,7 +156,7 @@ class ApiService {
         Uri.parse('$baseUrl/requests/student'),
         headers: await _getHeaders(),
       );
-      if (response.statusCode == 200) return jsonDecode(response.body);
+      if (response.statusCode == 200) return jsonDecode(response.body)['requests'] ?? [];
       return [];
     } catch (e) {
       return [];
@@ -169,7 +169,7 @@ class ApiService {
         Uri.parse('$baseUrl/requests/driver'),
         headers: await _getHeaders(),
       );
-      if (response.statusCode == 200) return jsonDecode(response.body);
+      if (response.statusCode == 200) return jsonDecode(response.body)['requests'] ?? [];
       return [];
     } catch (e) {
       return [];

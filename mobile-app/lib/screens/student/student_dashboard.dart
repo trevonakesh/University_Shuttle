@@ -154,11 +154,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ..._buses.map((bus) => Column(
                     children: [
                       _buildBusListItem(
-                        bus['driver']['id'],
-                        bus['driver']['routeName'] ?? 'Unknown Route',
-                        bus['driver']['fullName'],
-                        'LKR ${bus['driver']['monthlyFee'] ?? '0'}',
-                        bus['status'] == 'APPROVED',
+                        bus['id'],
+                        bus['routeName'] ?? 'Unknown Route',
+                        bus['fullName'] ?? 'Driver',
+                        'LKR ${bus['monthlyFee'] ?? '0'}',
+                        _myRequests.any((req) => req['driverId'] == bus['id'] && req['status'] == 'APPROVED'),
                       ),
                       const Divider(color: Colors.white24, height: 1),
                     ],
