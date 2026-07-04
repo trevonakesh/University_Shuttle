@@ -1,14 +1,84 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../widgets/dashboard_layout.dart';
+import '../../services/api_service.dart';
 
-class StudentDashboardScreen extends StatelessWidget {
+class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({Key? key}) : super(key: key);
 
   @override
+  State<StudentDashboardScreen> createState() => _StudentDashboardScreenState();
+}
+
+class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
+  Map<String, dynamic>? _user;
+  List<dynamic> _buses = [];
+  List<dynamic> _myRequests = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    final user = await ApiService.getUser();
+    final buses = await ApiService.getAvailableBuses();
+    final requests = await ApiService.getStudentRequests();
+    
+    if (mounted) {
+      setState(() {
+        _user = user;
+        _buses = buses;
+        _myRequests = requests;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _requestSeat(int driverId) async {
+    // Show loading
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    
+    final result = await ApiService.createSeatRequest(driverId);
+    
+    // Hide loading
+    if (mounted) Navigator.pop(context);
+
+    if (result['success']) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seat requested successfully!')));
+      _fetchData(); // Refresh requests
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF12141D),
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+
+    final name = _user?['fullName'] ?? 'Student';
+    final firstName = name.split(' ').first;
+    
+    // Find active request status
+    String status = 'NO REQUEST';
+    Color statusColor = Colors.grey;
+    if (_myRequests.isNotEmpty) {
+      final req = _myRequests.first;
+      status = req['status'];
+      if (status == 'PENDING') statusColor = Colors.orange;
+      if (status == 'APPROVED') statusColor = Colors.green;
+      if (status == 'REJECTED') statusColor = Colors.red;
+    }
+
     return DashboardLayout(
-      userName: 'Supun Perera',
+      userName: name,
       userRole: 'Student',
       activeIndex: 0,
       child: Padding(
@@ -23,12 +93,12 @@ class StudentDashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Row(
-              children: const [
+              children: [
                 Text(
-                  'GOOD MORNING, SUPUN! ',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  'GOOD MORNING, ${firstName.toUpperCase()}! ',
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                Icon(Icons.wb_sunny_outlined, color: Colors.white70, size: 20),
+                const Icon(Icons.wb_sunny_outlined, color: Colors.white70, size: 20),
               ],
             ),
             const SizedBox(height: 5),
@@ -38,60 +108,14 @@ class StudentDashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             
-            // Search Bar
-            Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: Colors.white30),
-              ),
-              child: Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Icon(Icons.search, color: Colors.white54),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'SEARCH FOR ROUTES AND BUSES...',
-                        hintStyle: TextStyle(color: Colors.white54, fontSize: 12),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(5.0),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 25),
-                      ),
-                      onPressed: () {},
-                      child: const Text('SEARCH', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40),
-            
             // Stats Row
             Row(
               children: [
-                Expanded(child: _buildStatCard('MY BUS STATUS', 'ACTIVE', 'WENNAPPUWA - NSBM', Icons.assignment, Colors.green)),
+                Expanded(child: _buildStatCard('SEAT STATUS', status, 'Current Booking', Icons.event_seat, statusColor)),
                 const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('PAYMENT STATUS', 'PAID', 'NEXT: 2026-07-01', Icons.attach_money, Colors.green)),
+                Expanded(child: _buildStatCard('PAYMENT STATUS', 'PENDING', 'THIS MONTH', Icons.attach_money, Colors.orange)),
                 const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('NEXT TRIP', 'TOMORROW', '7.00 AM', Icons.calendar_today, Colors.green)),
-                const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('ATTENDANCE POLL', 'OPEN', 'RESPOND NOW', Icons.chat_bubble_outline, Colors.green)),
+                Expanded(child: _buildStatCard('ACTIVE BUSES', _buses.length.toString(), 'AVAILABLE NOW', Icons.directions_bus, Colors.green)),
               ],
             ),
             const SizedBox(height: 40),
@@ -111,22 +135,34 @@ class StudentDashboardScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'AVAILABLE BUSES NEAR YOU',
+                          'AVAILABLE BUSES',
                           style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                         ),
                         TextButton(
-                          onPressed: () {},
-                          child: const Text('VIEW ALL', style: TextStyle(color: Colors.green, fontSize: 12)),
+                          onPressed: _fetchData,
+                          child: const Text('REFRESH', style: TextStyle(color: Colors.green, fontSize: 12)),
                         ),
                       ],
                     ),
                   ),
                   const Divider(color: Colors.white24, height: 1),
-                  _buildBusListItem('WENNAPPUWA - NSBM', 'Chaminda Dias', 'LKR 4,500', true),
-                  const Divider(color: Colors.white24, height: 1),
-                  _buildBusListItem('DANKOTUWA - NSBM', 'Nimal Fernando', 'LKR 4,000', true),
-                  const Divider(color: Colors.white24, height: 1),
-                  _buildBusListItem('KANDY - NSBM', 'Ovin Perera', 'LKR 5,000', false),
+                  if (_buses.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(40.0),
+                      child: Text('NO BUSES AVAILABLE', style: TextStyle(color: Colors.white54)),
+                    ),
+                  ..._buses.map((bus) => Column(
+                    children: [
+                      _buildBusListItem(
+                        bus['driver']['id'],
+                        bus['driver']['routeName'] ?? 'Unknown Route',
+                        bus['driver']['fullName'],
+                        'LKR ${bus['driver']['monthlyFee'] ?? '0'}',
+                        bus['status'] == 'APPROVED',
+                      ),
+                      const Divider(color: Colors.white24, height: 1),
+                    ],
+                  )).toList(),
                 ],
               ),
             ),
@@ -172,7 +208,13 @@ class StudentDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBusListItem(String route, String driver, String price, bool isAvailable) {
+  Widget _buildBusListItem(int driverId, String route, String driver, String price, bool isAvailable) {
+    // Check if the student already has a pending/approved request for this driver
+    bool hasRequested = _myRequests.any((req) => 
+      req['driverId'] == driverId && 
+      (req['status'] == 'PENDING' || req['status'] == 'APPROVED')
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       child: Row(
@@ -216,7 +258,7 @@ class StudentDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                isAvailable ? 'SEATS AVAILABLE' : 'FULLY BOOKED',
+                isAvailable ? 'ACTIVE' : 'UNAVAILABLE',
                 style: const TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1),
               ),
             ],
@@ -226,15 +268,15 @@ class StudentDashboardScreen extends StatelessWidget {
           // Button
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
+              backgroundColor: hasRequested ? Colors.grey : Colors.white,
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
-            onPressed: () {},
-            child: const Text('VIEW DETAILS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
+            onPressed: (isAvailable && !hasRequested) ? () => _requestSeat(driverId) : null,
+            child: Text(hasRequested ? 'REQUESTED' : 'REQUEST SEAT', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
           ),
         ],
       ),

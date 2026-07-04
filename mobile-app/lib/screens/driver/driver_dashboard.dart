@@ -1,14 +1,68 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../widgets/dashboard_layout.dart';
+import '../../services/api_service.dart';
 
-class DriverDashboardScreen extends StatelessWidget {
+class DriverDashboardScreen extends StatefulWidget {
   const DriverDashboardScreen({Key? key}) : super(key: key);
 
   @override
+  State<DriverDashboardScreen> createState() => _DriverDashboardScreenState();
+}
+
+class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
+  Map<String, dynamic>? _user;
+  List<dynamic> _requests = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    final user = await ApiService.getUser();
+    final requests = await ApiService.getDriverRequests();
+    
+    if (mounted) {
+      setState(() {
+        _user = user;
+        _requests = requests.where((r) => r['status'] == 'PENDING').toList();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateRequest(int id, String status) async {
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    
+    final result = await ApiService.updateRequestStatus(id, status);
+    
+    if (mounted) Navigator.pop(context);
+
+    if (result['success']) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Request $status successfully!')));
+      _fetchData();
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF12141D),
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+
+    final name = _user?['fullName'] ?? 'Driver';
+    final firstName = name.split(' ').first;
+
     return DashboardLayout(
-      userName: 'Chaminda Dias',
+      userName: name,
       userRole: 'Driver',
       activeIndex: 0,
       child: Padding(
@@ -22,22 +76,22 @@ class DriverDashboardScreen extends StatelessWidget {
               style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "WELCOME BACK, CHAMINDA! HERE'S YOUR OVERVIEW",
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            Text(
+              "WELCOME BACK, ${firstName.toUpperCase()}! HERE'S YOUR OVERVIEW",
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 40),
             
             // Stats Row
             Row(
               children: [
-                Expanded(child: _buildStatCard('TOTAL STUDENTS', '28', Icons.school, Colors.white)),
+                Expanded(child: _buildStatCard('TOTAL STUDENTS', '-', Icons.school, Colors.white)),
                 const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('AVAILABLE SEATS', '7 / 35', Icons.event_seat, Colors.white)),
+                Expanded(child: _buildStatCard('SEATS', '-', Icons.event_seat, Colors.white)),
                 const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('MONTHLY INCOME', 'LKR 126,000', Icons.account_balance_wallet, Colors.redAccent)),
+                Expanded(child: _buildStatCard('MONTHLY INCOME', '-', Icons.account_balance_wallet, Colors.redAccent)),
                 const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('PENDING REQUESTS', '3', Icons.swap_calls, Colors.white)),
+                Expanded(child: _buildStatCard('PENDING REQUESTS', _requests.length.toString(), Icons.swap_calls, Colors.white)),
               ],
             ),
             const SizedBox(height: 40),
@@ -52,7 +106,7 @@ class DriverDashboardScreen extends StatelessWidget {
                     flex: 2,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white24),
                       ),
@@ -64,27 +118,33 @@ class DriverDashboardScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text(
-                                  'RECENT STUDENT REQUESTS',
+                                  'PENDING STUDENT REQUESTS',
                                   style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                                 ),
                                 TextButton(
-                                  onPressed: () {},
-                                  child: const Text('VIEW ALL', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                  onPressed: _fetchData,
+                                  child: const Text('REFRESH', style: TextStyle(color: Colors.white54, fontSize: 12)),
                                 ),
                               ],
                             ),
                           ),
                           const Divider(color: Colors.white24, height: 1),
                           Expanded(
-                            child: ListView(
-                              children: [
-                                _buildRequestItem('Supun Perera', 'Dankotuwa', '2026-05-15'),
-                                const Divider(color: Colors.white24, height: 1),
-                                _buildRequestItem('Nimal Fernando', 'Ja-Ela', '2026-05-15'),
-                                const Divider(color: Colors.white24, height: 1),
-                                _buildRequestItem('Ovin Perera', 'Wennappuwa', '2026-05-14'),
-                              ],
-                            ),
+                            child: _requests.isEmpty 
+                              ? const Center(child: Text('NO PENDING REQUESTS', style: TextStyle(color: Colors.white54)))
+                              : ListView.separated(
+                                  itemCount: _requests.length,
+                                  separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
+                                  itemBuilder: (context, index) {
+                                    final req = _requests[index];
+                                    return _buildRequestItem(
+                                      req['id'],
+                                      req['student']['fullName'],
+                                      req['student']['pickupPoint'] ?? 'Unknown',
+                                      req['createdAt'].toString().substring(0, 10),
+                                    );
+                                  },
+                                ),
                           ),
                         ],
                       ),
@@ -96,7 +156,7 @@ class DriverDashboardScreen extends StatelessWidget {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white24),
                       ),
@@ -165,9 +225,9 @@ class DriverDashboardScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(30),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -191,7 +251,7 @@ class DriverDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRequestItem(String name, String pickup, String date) {
+  Widget _buildRequestItem(int reqId, String name, String pickup, String date) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
@@ -220,11 +280,11 @@ class DriverDashboardScreen extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: Colors.green),
-              color: Colors.green.withOpacity(0.2),
+              color: Colors.green.withValues(alpha: 0.2),
             ),
             child: IconButton(
               icon: const Icon(Icons.check, color: Colors.green),
-              onPressed: () {},
+              onPressed: () => _updateRequest(reqId, 'APPROVED'),
             ),
           ),
           const SizedBox(width: 15),
@@ -232,11 +292,11 @@ class DriverDashboardScreen extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: Colors.redAccent),
-              color: Colors.redAccent.withOpacity(0.2),
+              color: Colors.redAccent.withValues(alpha: 0.2),
             ),
             child: IconButton(
               icon: const Icon(Icons.close, color: Colors.redAccent),
-              onPressed: () {},
+              onPressed: () => _updateRequest(reqId, 'REJECTED'),
             ),
           ),
         ],
@@ -255,7 +315,7 @@ class DriverDashboardScreen extends StatelessWidget {
             Container(
               height: 10,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(5),
               ),
             ),

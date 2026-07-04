@@ -38,6 +38,14 @@ class ApiService {
     await prefs.clear();
   }
 
+  static Future<Map<String, String>> _getHeaders() async {
+    final token = await getToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -96,6 +104,79 @@ class ApiService {
       } else {
         return {'success': false, 'message': data['message'] ?? 'Registration failed'};
       }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // --- Bus APIs ---
+  static Future<List<dynamic>> getAvailableBuses() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/buses'),
+        headers: await _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // --- Request APIs ---
+  static Future<Map<String, dynamic>> createSeatRequest(int driverId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/requests'),
+        headers: await _getHeaders(),
+        body: jsonEncode({'driverId': driverId}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 201) return {'success': true, 'data': data};
+      return {'success': false, 'message': data['error'] ?? 'Failed to request seat'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<List<dynamic>> getStudentRequests() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/requests/student'),
+        headers: await _getHeaders(),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body);
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<List<dynamic>> getDriverRequests() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/requests/driver'),
+        headers: await _getHeaders(),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body);
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateRequestStatus(int requestId, String status) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/requests/$requestId'),
+        headers: await _getHeaders(),
+        body: jsonEncode({'status': status}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true, 'data': data};
+      return {'success': false, 'message': data['error'] ?? 'Failed to update request'};
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
     }
