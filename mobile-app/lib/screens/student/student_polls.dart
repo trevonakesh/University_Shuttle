@@ -1,16 +1,54 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../widgets/dashboard_layout.dart';
+import '../../services/api_service.dart';
 
-class StudentPollsScreen extends StatelessWidget {
+class StudentPollsScreen extends StatefulWidget {
   const StudentPollsScreen({Key? key}) : super(key: key);
+
+  @override
+  State<StudentPollsScreen> createState() => _StudentPollsScreenState();
+}
+
+class _StudentPollsScreenState extends State<StudentPollsScreen> {
+  Map<String, dynamic>? _user;
+  List<dynamic> _polls = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    final user = await ApiService.getUser();
+    final polls = await ApiService.getStudentPolls();
+    if (mounted) {
+      setState(() {
+        _user = user;
+        _polls = polls;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _vote(int pollId, bool isComing) async {
+    final res = await ApiService.votePoll(pollId, isComing);
+    if (res['success']) {
+      _fetchData();
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return DashboardLayout(
-      userName: 'Supun Perera',
-      userRole: 'Student',
-      activeIndex: 6, // Let's use 6 for Polls/Attendance
+      userName: _user != null ? _user!['profile']['fullName'] : 'Student',
+      userRole: 'STUDENT',
+      activeIndex: 3,
       child: Padding(
         padding: const EdgeInsets.all(40.0),
         child: Column(
@@ -28,36 +66,36 @@ class StudentPollsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // Polls List
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildPollCard(
-                    date: 'Tomorrow, May 30',
-                    driverName: 'Chaminda Dias',
-                    question: 'Are you coming tomorrow morning?',
-                    hasVoted: false,
-                    isComing: null,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildPollCard(
-                    date: 'Today, May 29',
-                    driverName: 'Chaminda Dias',
-                    question: 'Are you coming this evening?',
-                    hasVoted: true,
-                    isComing: true,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildPollCard(
-                    date: 'Yesterday, May 28',
-                    driverName: 'Chaminda Dias',
-                    question: 'Are you coming tomorrow morning?',
-                    hasVoted: true,
-                    isComing: false,
-                  ),
-                ],
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (_polls.isEmpty)
+              const Center(child: Text("No polls available from your driver yet.", style: TextStyle(color: Colors.white70)))
+            else
+              // Polls List
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _polls.length,
+                  itemBuilder: (context, index) {
+                    final poll = _polls[index];
+                    final responses = poll['responses'] as List<dynamic>? ?? [];
+                    final hasVoted = responses.isNotEmpty;
+                    final isComing = hasVoted ? responses[0]['isComing'] as bool? : null;
+                    final driverName = poll['driver']?['fullName'] ?? 'Driver';
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: _buildPollCard(
+                        id: poll['id'],
+                        date: poll['date'] ?? '',
+                        driverName: driverName,
+                        question: poll['question'] ?? '',
+                        hasVoted: hasVoted,
+                        isComing: isComing,
+                      ),
+                    );
+                  }
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -65,6 +103,7 @@ class StudentPollsScreen extends StatelessWidget {
   }
 
   Widget _buildPollCard({
+    required int id,
     required String date,
     required String driverName,
     required String question,
@@ -76,7 +115,12 @@ class StudentPollsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(
+          color: hasVoted 
+              ? (isComing == true ? Colors.green.withOpacity(0.5) : Colors.redAccent.withOpacity(0.5)) 
+              : Colors.white24,
+          width: hasVoted ? 2 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +161,7 @@ class StudentPollsScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     elevation: 0,
                   ),
-                  onPressed: () {},
+                  onPressed: () => _vote(id, true),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -138,7 +182,7 @@ class StudentPollsScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     elevation: 0,
                   ),
-                  onPressed: () {},
+                  onPressed: () => _vote(id, false),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

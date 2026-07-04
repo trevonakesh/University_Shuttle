@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import prisma from '../../prisma/client';
+import prisma from '../prismaClient';
 import { DriverStatus } from '@prisma/client';
 
 export const getDrivers = async (req: Request, res: Response) => {

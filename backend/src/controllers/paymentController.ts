@@ -25,18 +25,28 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    // Since this is in-app payment simulation, we auto-mark it as COMPLETED
-    const payment = await prisma.payment.create({
-      data: {
-        studentId: student.id,
-        driverId: driver.id,
-        amount,
-        month,
-        status: PaymentStatus.COMPLETED,
-        paymentMethod: paymentMethod || 'IN_APP',
-        referenceNo
-      }
-    });
+    // Use a transaction to both record the payment and update the driver's wallet
+    const [payment] = await prisma.$transaction([
+      prisma.payment.create({
+        data: {
+          studentId: student.id,
+          driverId: driver.id,
+          amount,
+          month,
+          status: PaymentStatus.COMPLETED,
+          paymentMethod: paymentMethod || 'IN_APP',
+          referenceNo
+        }
+      }),
+      prisma.driver.update({
+        where: { id: driver.id },
+        data: {
+          walletBalance: {
+            increment: amount
+          }
+        }
+      })
+    ]);
 
     res.status(201).json({ message: 'Payment recorded successfully', payment });
   } catch (error: any) {
@@ -109,6 +119,31 @@ export const getDriverPayments = async (req: AuthRequest, res: Response): Promis
     });
 
     res.status(200).json({ payments });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+export const getWalletBalance = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (req.user?.role !== Role.DRIVER) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    const driver = await prisma.driver.findUnique({
+      where: { userId },
+      select: { walletBalance: true }
+    });
+
+    if (!driver) {
+      res.status(404).json({ error: 'Driver profile not found' });
+      return;
+    }
+
+    res.status(200).json({ balance: driver.walletBalance });
   } catch (error: any) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }

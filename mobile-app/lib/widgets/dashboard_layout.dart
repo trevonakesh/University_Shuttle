@@ -1,5 +1,16 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../screens/auth/login_screen.dart';
+import '../services/api_service.dart';
+import '../screens/student/student_dashboard.dart';
+import '../screens/driver/driver_dashboard.dart';
+import '../screens/student/student_payments.dart';
+import '../screens/driver/driver_payments.dart';
+import '../screens/shared/notice_board.dart';
+import '../screens/student/student_polls.dart';
+import '../screens/driver/driver_polls.dart';
+import '../screens/student/student_tracking.dart';
+import '../screens/driver/driver_tracking.dart';
 
 class DashboardLayout extends StatelessWidget {
   final Widget child;
@@ -88,15 +99,22 @@ class DashboardLayout extends StatelessWidget {
           const SizedBox(height: 20),
           
           // Nav Items
-          _buildNavItem(Icons.dashboard, 'DASHBOARD', 0, context),
-          _buildNavItem(Icons.check_circle_outline, 'AVAILABLE BUSES', 1, context),
-          _buildNavItem(Icons.directions_bus, 'MY BUS', 2, context),
-          _buildNavItem(Icons.how_to_reg, 'ATTENDANCE POLLS', 3, context),
-          _buildNavItem(Icons.payment, 'PAYMENTS', 4, context),
-          _buildNavItem(Icons.location_on, 'LIVE TRACKING', 5, context),
-          _buildNavItem(Icons.notifications, 'NOTICES', 6, context),
-          _buildNavItem(Icons.person, 'PROFILE', 7, context),
-          _buildNavItem(Icons.settings, 'SETTINGS', 8, context),
+          if (userRole == 'DRIVER') ...[
+            _buildNavItem(Icons.dashboard, 'DASHBOARD', 0, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()))),
+            _buildNavItem(Icons.people, 'PASSENGERS', 1, context),
+            _buildNavItem(Icons.how_to_reg, 'ATTENDANCE POLLS', 2, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverPollsScreen()))),
+            _buildNavItem(Icons.payment, 'PAYMENTS', 3, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverPaymentsScreen()))),
+            _buildNavItem(Icons.location_on, 'LIVE TRACKING', 4, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverTrackingScreen()))),
+            _buildNavItem(Icons.notifications, 'NOTICES', 5, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => NoticeBoardScreen(isDriver: true, userName: userName)))),
+          ] else ...[
+            _buildNavItem(Icons.dashboard, 'DASHBOARD', 0, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()))),
+            _buildNavItem(Icons.check_circle_outline, 'AVAILABLE BUSES', 1, context),
+            _buildNavItem(Icons.directions_bus, 'MY BUS', 2, context),
+            _buildNavItem(Icons.how_to_reg, 'ATTENDANCE POLLS', 3, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentPollsScreen()))),
+            _buildNavItem(Icons.payment, 'PAYMENTS', 4, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentPaymentsScreen()))),
+            _buildNavItem(Icons.location_on, 'LIVE TRACKING', 5, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentTrackingScreen()))),
+            _buildNavItem(Icons.notifications, 'NOTICES', 6, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => NoticeBoardScreen(isDriver: false, userName: userName)))),
+          ],
           
           const Spacer(),
           
@@ -108,7 +126,7 @@ class DashboardLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String title, int index, BuildContext context, {bool isLogout = false}) {
+  Widget _buildNavItem(IconData icon, String title, int index, BuildContext context, {bool isLogout = false, VoidCallback? onTap}) {
     final isActive = index == activeIndex;
     
     return Container(
@@ -132,11 +150,20 @@ class DashboardLayout extends StatelessWidget {
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-        onTap: () {
+        onTap: () async {
           if (isLogout) {
-            Navigator.pushReplacementNamed(context, '/login');
+            await ApiService.logout();
+            if (!context.mounted) return;
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+            return;
           }
-          // Other navigation logic would go here
+          if (onTap != null && !isActive) {
+            onTap();
+          }
         },
       ),
     );

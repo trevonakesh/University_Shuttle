@@ -243,7 +243,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                       backgroundColor: Colors.black,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25), side: const BorderSide(color: Colors.white30)),
                     ),
-                    onPressed: _isLoading ? null : _register,
+                    onPressed: _isLoading ? null : _submitRegistration,
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text('CREATE ACCOUNT', style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
@@ -288,12 +288,12 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
           child: TextFormField(
             controller: controller,
             obscureText: obscureText,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-            decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.white54, fontSize: 10), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
+            style: const TextStyle(color: Colors.black, fontSize: 12),
+            decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.black54, fontSize: 10), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
             validator: (value) => value == null || value.isEmpty ? 'Required' : null,
           ),
         ),

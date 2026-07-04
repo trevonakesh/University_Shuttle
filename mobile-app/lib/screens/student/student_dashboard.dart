@@ -79,7 +79,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
     return DashboardLayout(
       userName: name,
-      userRole: 'Student',
+      userRole: 'STUDENT',
       activeIndex: 0,
       child: Padding(
         padding: const EdgeInsets.all(40.0),

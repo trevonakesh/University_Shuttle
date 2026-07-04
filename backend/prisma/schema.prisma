@@ -112,6 +112,7 @@ model Driver {
   busPhotoUrl      String?
 
   status           DriverStatus  @default(PENDING)
+  walletBalance    Float         @default(0)
 
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   seatRequests     SeatRequest[]

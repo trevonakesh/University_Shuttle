@@ -108,3 +108,38 @@ export const getStudentNotices = async (req: AuthRequest, res: Response): Promis
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
+
+export const deleteNotice = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+
+    if (req.user?.role !== Role.DRIVER) {
+      res.status(403).json({ error: 'Only drivers can delete notices' });
+      return;
+    }
+
+    const driver = await prisma.driver.findUnique({ where: { userId } });
+    if (!driver) {
+      res.status(404).json({ error: 'Driver profile not found' });
+      return;
+    }
+
+    const notice = await prisma.notice.findUnique({ where: { id: parseInt(id) } });
+    if (!notice) {
+      res.status(404).json({ error: 'Notice not found' });
+      return;
+    }
+
+    if (notice.driverId !== driver.id) {
+      res.status(403).json({ error: 'You can only delete your own notices' });
+      return;
+    }
+
+    await prisma.notice.delete({ where: { id: parseInt(id) } });
+
+    res.status(200).json({ message: 'Notice deleted successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};

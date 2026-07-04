@@ -13,6 +13,7 @@ class DriverDashboardScreen extends StatefulWidget {
 class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _requests = [];
+  double _walletBalance = 0.0;
   bool _isLoading = true;
 
   @override
@@ -24,11 +25,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Future<void> _fetchData() async {
     final user = await ApiService.getUser();
     final requests = await ApiService.getDriverRequests();
+    final wallet = await ApiService.getWalletBalance();
     
     if (mounted) {
       setState(() {
         _user = user;
         _requests = requests.where((r) => r['status'] == 'PENDING').toList();
+        _walletBalance = wallet;
         _isLoading = false;
       });
     }
@@ -63,7 +66,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
     return DashboardLayout(
       userName: name,
-      userRole: 'Driver',
+      userRole: 'DRIVER',
       activeIndex: 0,
       child: Padding(
         padding: const EdgeInsets.all(40.0),
@@ -89,7 +92,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 const SizedBox(width: 20),
                 Expanded(child: _buildStatCard('SEATS', '-', Icons.event_seat, Colors.white)),
                 const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('MONTHLY INCOME', '-', Icons.account_balance_wallet, Colors.redAccent)),
+                Expanded(child: _buildStatCard('WALLET BALANCE', 'LKR ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, Colors.redAccent)),
                 const SizedBox(width: 20),
                 Expanded(child: _buildStatCard('PENDING REQUESTS', _requests.length.toString(), Icons.swap_calls, Colors.white)),
               ],
