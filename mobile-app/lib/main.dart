@@ -26,7 +26,7 @@ class LankaTripApp extends StatelessWidget {
       title: 'LankaTrip UI Test',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: const TestNavScreen(),
+      home: const SplashScreen(),
     );
   }
 }

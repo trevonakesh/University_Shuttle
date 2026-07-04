@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../services/api_service.dart';
+import '../student/student_dashboard.dart';
 import 'dart:convert';
 
 class StudentRegisterScreen extends StatefulWidget {
@@ -35,10 +36,10 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
   String? _destination;
   String? _relationship;
 
-  Future<void> _register() async {
+  void _submitRegistration() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       final payload = {
         'fullName': _fullNameCtrl.text,
         'nic': _nicCtrl.text,
@@ -57,35 +58,19 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         'emerContactName': _emerNameCtrl.text,
         'emerContactPhone': _emerPhoneCtrl.text,
         'emerRelationship': _relationship,
-        'profilePhotoUrl': null, // Upload logic not yet implemented
+        'profilePhotoUrl': null,
       };
 
-      try {
-        // Replace localhost with your machine's IP (e.g., 192.168.1.x) if testing on a real device
-        final url = Uri.parse('http://localhost:3000/api/auth/register-student');
-        final response = await http.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode(payload),
-        );
+      final result = await ApiService.studentRegister(payload);
+      
+      setState(() => _isLoading = false);
 
-        if (response.statusCode == 201) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account Created Successfully!')),
-          );
-          Navigator.pop(context); // Go back to login
-        } else {
-          final resBody = json.decode(response.body);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(resBody['error'] ?? 'Registration failed')),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Network error: $e')),
-        );
-      } finally {
-        setState(() => _isLoading = false);
+      if (result['success']) {
+        if (!mounted) return;
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()));
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Registration failed')));
       }
     }
   }

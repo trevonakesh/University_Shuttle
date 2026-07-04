@@ -1,6 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'role_selection_screen.dart';
+import '../../services/api_service.dart';
+import '../student/student_dashboard.dart';
+import '../driver/driver_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -14,10 +17,32 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
 
-  void _login() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Login logic to be integrated')),
-    );
+  bool _isLoading = false;
+
+  void _login() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    
+    final result = await ApiService.login(_emailController.text, _passwordController.text);
+    
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      final role = result['role'];
+      if (!mounted) return;
+      if (role == 'STUDENT') {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()));
+      } else if (role == 'DRIVER') {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
+      }
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+    }
   }
 
   @override
@@ -212,15 +237,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: _login,
-                  child: const Text(
-                    'LOGIN',
-                    style: TextStyle(
-                      color: Colors.white,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  onPressed: _isLoading ? null : _login,
+                  child: _isLoading 
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'LOGIN',
+                        style: TextStyle(
+                          color: Colors.white,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                 ),
               ),
               

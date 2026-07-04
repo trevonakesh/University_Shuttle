@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../services/api_service.dart';
+import '../driver/driver_dashboard.dart';
 
 class DriverRegisterScreen extends StatefulWidget {
   const DriverRegisterScreen({Key? key}) : super(key: key);
@@ -71,31 +71,18 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
         'busPhotoUrl': null,
       };
 
-      try {
-        final url = Uri.parse('http://localhost:3000/api/auth/register-driver');
-        final response = await http.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode(payload),
-        );
+      final result = await ApiService.driverRegister(payload);
 
-        if (response.statusCode == 201) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Driver Account Created Successfully!')),
-          );
-          Navigator.pop(context);
-        } else {
-          final resBody = json.decode(response.body);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(resBody['error'] ?? 'Registration failed')),
-          );
-        }
-      } catch (e) {
+      setState(() => _isLoading = false);
+
+      if (result['success']) {
+        if (!mounted) return;
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
+      } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Network error: $e')),
+          SnackBar(content: Text(result['message'] ?? 'Registration failed')),
         );
-      } finally {
-        setState(() => _isLoading = false);
       }
     }
   }
