@@ -5,7 +5,7 @@ import { Role } from '@prisma/client';
 
 export const createPoll = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { date, question } = req.body;
+    const { date, question, option1, option2 } = req.body;
     const userId = req.user!.userId;
 
     if (req.user?.role !== Role.DRIVER) {
@@ -23,7 +23,9 @@ export const createPoll = async (req: AuthRequest, res: Response): Promise<void>
       data: {
         driverId: driver.id,
         date,
-        question: question || 'Are you coming tomorrow?'
+        question: question || 'Are you coming tomorrow?',
+        option1: option1 || 'COMING',
+        option2: option2 || 'NOT COMING'
       }
     });
 
@@ -70,7 +72,7 @@ export const getDriverPolls = async (req: AuthRequest, res: Response): Promise<v
 
     // We can also aggregate and filter directly in JS to format it beautifully for the driver
     const formattedPolls = polls.map(poll => {
-      const comingStudents = poll.responses
+      const option1Students = poll.responses
         .filter(r => r.isComing)
         .map(r => ({
           name: r.student.fullName,
@@ -78,18 +80,20 @@ export const getDriverPolls = async (req: AuthRequest, res: Response): Promise<v
           phone: (r.student as any).user?.phone
         }));
         
-      const notComingCount = poll.responses.filter(r => !r.isComing).length;
+      const option2Count = poll.responses.filter(r => !r.isComing).length;
 
       return {
         id: poll.id,
         date: poll.date,
         question: poll.question,
+        option1: poll.option1,
+        option2: poll.option2,
         createdAt: poll.createdAt,
         stats: {
-          comingCount: comingStudents.length,
-          notComingCount
+          option1Count: option1Students.length,
+          option2Count
         },
-        comingStudents // The detailed list requested by the user
+        option1Students // The detailed list requested by the user
       };
     });
 

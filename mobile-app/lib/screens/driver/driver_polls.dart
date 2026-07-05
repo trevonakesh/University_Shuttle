@@ -35,8 +35,9 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
   }
 
   void _showCreatePollModal() {
-    final dateController = TextEditingController();
     final questionController = TextEditingController();
+    final option1Controller = TextEditingController();
+    final option2Controller = TextEditingController();
     
     showDialog(
       context: context,
@@ -47,10 +48,10 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: dateController,
+              controller: questionController,
               style: const TextStyle(color: Colors.black),
               decoration: const InputDecoration(
-                labelText: 'Date (e.g. Tomorrow, May 30)',
+                labelText: 'Question',
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
@@ -59,10 +60,22 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
             ),
             const SizedBox(height: 15),
             TextField(
-              controller: questionController,
+              controller: option1Controller,
               style: const TextStyle(color: Colors.black),
               decoration: const InputDecoration(
-                labelText: 'Question',
+                labelText: 'Option 1 (e.g. Yes / Morning)',
+                labelStyle: TextStyle(color: Colors.black54),
+                filled: true,
+                fillColor: Colors.white,
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+              ),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: option2Controller,
+              style: const TextStyle(color: Colors.black),
+              decoration: const InputDecoration(
+                labelText: 'Option 2 (e.g. No / Evening)',
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
@@ -79,10 +92,16 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
             onPressed: () async {
-              if (dateController.text.isNotEmpty && questionController.text.isNotEmpty) {
+              if (questionController.text.isNotEmpty) {
+                final now = DateTime.now();
+                // E.g. "2026-07-05 11:47"
+                final autoDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+                
                 final res = await ApiService.createPoll({
-                  'date': dateController.text,
-                  'question': questionController.text
+                  'date': autoDate,
+                  'question': questionController.text,
+                  'option1': option1Controller.text.isNotEmpty ? option1Controller.text : 'COMING',
+                  'option2': option2Controller.text.isNotEmpty ? option2Controller.text : 'NOT COMING'
                 });
                 if (res['success']) {
                   Navigator.pop(context);
@@ -168,7 +187,15 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 20),
                   itemBuilder: (context, index) {
                     final poll = _polls[index];
-                    final comingStudents = poll['comingStudents'] ?? [];
+                    final List<dynamic> option1Students = (poll['option1Students'] as List<dynamic>?) ?? (poll['comingStudents'] as List<dynamic>?) ?? [];
+                    
+                    int option1Count = 0;
+                    int option2Count = 0;
+                    if (poll['stats'] != null) {
+                      option1Count = (poll['stats']['option1Count'] as num?)?.toInt() ?? (poll['stats']['comingCount'] as num?)?.toInt() ?? 0;
+                      option2Count = (poll['stats']['option2Count'] as num?)?.toInt() ?? (poll['stats']['notComingCount'] as num?)?.toInt() ?? 0;
+                    }
+                    
                     return Container(
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.05),
@@ -195,13 +222,16 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                                 ),
                                 Row(
                                   children: [
-                                    _buildStatCard('COMING', poll['stats']['comingCount'].toString(), Colors.green),
+                                    _buildStatCard((poll['option1'] ?? 'COMING').toString().toUpperCase(), option1Count.toString(), Colors.green),
                                     const SizedBox(width: 15),
-                                    _buildStatCard('NOT COMING', poll['stats']['notComingCount'].toString(), Colors.redAccent),
+                                    _buildStatCard((poll['option2'] ?? 'NOT COMING').toString().toUpperCase(), option2Count.toString(), Colors.redAccent),
                                     const SizedBox(width: 15),
                                     IconButton(
                                       icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                      onPressed: () => _deletePoll(poll['id']),
+                                      onPressed: () {
+                                        final int pId = (poll['id'] as num?)?.toInt() ?? 0;
+                                        if (pId != 0) _deletePoll(pId);
+                                      },
                                     ),
                                   ],
                                 ),
@@ -218,20 +248,20 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                                 Expanded(flex: 3, child: Text('STUDENT NAME', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                                 Expanded(flex: 3, child: Text('PICKUP POINT', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                                 Expanded(flex: 2, child: Text('PHONE NUMBER', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                                Expanded(flex: 2, child: Text('STATUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                                Expanded(flex: 2, child: Text('SELECTION', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                               ],
                             ),
                           ),
                           const Divider(color: Colors.white24, height: 1),
                           
                           // Passengers Coming List
-                          if (comingStudents.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.all(20.0),
-                              child: Text('No students have confirmed attendance yet.', style: TextStyle(color: Colors.white54)),
+                          if (option1Students.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Text('No students have selected ${poll['option1'] ?? 'Option 1'} yet.', style: const TextStyle(color: Colors.white54)),
                             )
                           else
-                            ...comingStudents.map((s) => _buildComingPassengerRow(s['name'] ?? '', s['pickupPoint'] ?? '', s['phone'] ?? '')).toList(),
+                            ...option1Students.map((s) => _buildComingPassengerRow(s['name'] ?? '', s['pickupPoint'] ?? '', s['phone'] ?? '', poll['option1'] ?? 'COMING')).toList(),
                         ],
                       ),
                     );
@@ -262,7 +292,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
     );
   }
 
-  Widget _buildComingPassengerRow(String name, String pickup, String phone) {
+  Widget _buildComingPassengerRow(String name, String pickup, String phone, String option1Text) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       child: Row(
@@ -312,7 +342,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.green.withOpacity(0.5)),
                 ),
-                child: const Text('COMING', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                child: Text(option1Text.toUpperCase(), style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
             ),
           ),

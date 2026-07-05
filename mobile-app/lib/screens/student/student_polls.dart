@@ -91,6 +91,8 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                         question: poll['question'] ?? '',
                         hasVoted: hasVoted,
                         isComing: isComing,
+                        option1: poll['option1'] ?? 'COMING',
+                        option2: poll['option2'] ?? 'NOT COMING',
                       ),
                     );
                   }
@@ -109,6 +111,8 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
     required String question,
     required bool hasVoted,
     bool? isComing,
+    required String option1,
+    required String option2,
   }) {
     return Container(
       padding: const EdgeInsets.all(25),
@@ -167,7 +171,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                     children: [
                       Icon(Icons.check_circle_outline, color: hasVoted && isComing == true ? Colors.white : Colors.white54, size: 18),
                       const SizedBox(width: 8),
-                      const Text('YES, I AM COMING', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(option1.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -188,7 +192,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                     children: [
                       Icon(Icons.cancel_outlined, color: hasVoted && isComing == false ? Colors.white : Colors.white54, size: 18),
                       const SizedBox(width: 8),
-                      const Text('NO, I AM NOT', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(option2.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),

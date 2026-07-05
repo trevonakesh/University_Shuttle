@@ -181,7 +181,6 @@ class DashboardLayout extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          _buildHeaderLink('HOME', context),
           _buildHeaderLink('ABOUT US', context),
           _buildHeaderLink('SERVICES', context),
           _buildHeaderLink('FAQS', context),

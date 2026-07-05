@@ -59,18 +59,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   void _showComingStudents() {
     if (_todayPoll == null) return;
-    final students = _todayPoll!['comingStudents'] as List<dynamic>? ?? [];
+    final students = ((_todayPoll!['option1Students'] ?? _todayPoll!['comingStudents']) as List<dynamic>?) ?? [];
+    final String optionName = (_todayPoll!['option1'] ?? 'Coming').toString();
     
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1A1A24),
-          title: const Text('Coming Students', style: TextStyle(color: Colors.white)),
+          title: Text('$optionName Students', style: const TextStyle(color: Colors.white)),
           content: SizedBox(
             width: double.maxFinite,
             child: students.isEmpty 
-              ? const Text('No students have marked coming yet.', style: TextStyle(color: Colors.white70))
+              ? Text('No students have selected $optionName yet.', style: const TextStyle(color: Colors.white70))
               : ListView.builder(
                   shrinkWrap: true,
                   itemCount: students.length,
@@ -110,9 +111,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     int totalPollResponses = 0;
     double comingPct = 0;
     double notComingPct = 0;
+    int coming = 0;
+    int notComing = 0;
     if (_todayPoll != null) {
-      final coming = _todayPoll!['stats']['comingCount'] as int;
-      final notComing = _todayPoll!['stats']['notComingCount'] as int;
+      coming = (_todayPoll!['stats']?['option1Count'] as num?)?.toInt() ?? (_todayPoll!['stats']?['comingCount'] as num?)?.toInt() ?? 0;
+      notComing = (_todayPoll!['stats']?['option2Count'] as num?)?.toInt() ?? (_todayPoll!['stats']?['notComingCount'] as num?)?.toInt() ?? 0;
       totalPollResponses = coming + notComing;
       if (totalPollResponses > 0) {
         comingPct = coming / totalPollResponses;
@@ -247,9 +250,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                       style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
                                     ),
                                     const SizedBox(height: 30),
-                                    _buildPollBar('COMING (${_todayPoll!['stats']['comingCount']})', Colors.lightGreenAccent, comingPct),
+                                    _buildPollBar('${(_todayPoll!['option1'] ?? 'COMING').toString().toUpperCase()} ($coming)', Colors.lightGreenAccent, comingPct),
                                     const SizedBox(height: 20),
-                                    _buildPollBar('NOT COMING (${_todayPoll!['stats']['notComingCount']})', Colors.redAccent, notComingPct),
+                                    _buildPollBar('${(_todayPoll!['option2'] ?? 'NOT COMING').toString().toUpperCase()} ($notComing)', Colors.redAccent, notComingPct),
                                   ],
                                 ),
                           ),
