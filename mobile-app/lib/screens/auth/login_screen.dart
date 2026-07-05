@@ -227,7 +227,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Forgot Password feature coming soon!')),
+                      );
+                    },
                     child: const Text(
                       'FORGOT PASSWORD?',
                       style: TextStyle(color: Colors.white, fontSize: 12),
@@ -262,42 +266,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               
-              const SizedBox(height: 20),
-              Row(
-                children: const [
-                  Expanded(child: Divider(color: Colors.white30, thickness: 1)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('OR', style: TextStyle(color: Colors.white70)),
-                  ),
-                  Expanded(child: Divider(color: Colors.white30, thickness: 1)),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              // Login with OTP Button
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.black54, width: 1.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {},
-                  child: const Text(
-                    'LOGIN WITH OTP',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              
               const SizedBox(height: 30),
               
               // Sign Up Link
@@ -308,21 +276,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     "DON'T HAVE AN ACCOUNT? ",
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RoleSelectionScreen(),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RoleSelectionScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'SIGN UP',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                      );
-                    },
-                    child: const Text(
-                      'SIGN UP',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

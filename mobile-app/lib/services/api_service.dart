@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io' show Platform;
 
 class ApiService {
   // Use 10.0.2.2 for Android Emulator connecting to localhost
   // Use localhost for iOS simulator or web
   static String get baseUrl {
-    if (kIsWeb) {
+    if (kIsWeb || (!kIsWeb && Platform.isWindows)) {
       return 'http://localhost:3000/api';
     } else {
       return 'http://10.0.2.2:3000/api';

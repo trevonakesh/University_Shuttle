@@ -13,6 +13,8 @@ class DriverDashboardScreen extends StatefulWidget {
 class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _requests = [];
+  Map<String, dynamic>? _todayPoll;
+  int _totalStudents = 0;
   double _walletBalance = 0.0;
   bool _isLoading = true;
 
@@ -26,12 +28,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final user = await ApiService.getUser();
     final requests = await ApiService.getDriverRequests();
     final wallet = await ApiService.getWalletBalance();
+    final polls = await ApiService.getDriverPolls();
     
     if (mounted) {
       setState(() {
         _user = user;
+        _totalStudents = requests.where((r) => r['status'] == 'APPROVED').length;
         _requests = requests.where((r) => r['status'] == 'PENDING').toList();
         _walletBalance = wallet;
+        _todayPoll = polls.isNotEmpty ? polls.first : null;
         _isLoading = false;
       });
     }
@@ -52,6 +57,47 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     }
   }
 
+  void _showComingStudents() {
+    if (_todayPoll == null) return;
+    final students = _todayPoll!['comingStudents'] as List<dynamic>? ?? [];
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A24),
+          title: const Text('Coming Students', style: TextStyle(color: Colors.white)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: students.isEmpty 
+              ? const Text('No students have marked coming yet.', style: TextStyle(color: Colors.white70))
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: students.length,
+                  itemBuilder: (context, index) {
+                    final s = students[index];
+                    return ListTile(
+                      title: Text(s['name'] ?? 'Unknown', style: const TextStyle(color: Colors.white)),
+                      subtitle: Text(s['pickupPoint'] ?? 'Unknown', style: const TextStyle(color: Colors.white54)),
+                      leading: const CircleAvatar(
+                        backgroundColor: Colors.white10,
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                    );
+                  },
+                ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CLOSE', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      }
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -61,8 +107,23 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       );
     }
 
-    final name = _user?['fullName'] ?? 'Driver';
+    int totalPollResponses = 0;
+    double comingPct = 0;
+    double notComingPct = 0;
+    if (_todayPoll != null) {
+      final coming = _todayPoll!['stats']['comingCount'] as int;
+      final notComing = _todayPoll!['stats']['notComingCount'] as int;
+      totalPollResponses = coming + notComing;
+      if (totalPollResponses > 0) {
+        comingPct = coming / totalPollResponses;
+        notComingPct = notComing / totalPollResponses;
+      }
+    }
+
+    final profile = _user?['profile'] ?? _user?['driver'];
+    final name = profile?['fullName'] ?? 'Driver';
     final firstName = name.split(' ').first;
+    final seats = profile?['busCapacity']?.toString() ?? '-';
 
     return DashboardLayout(
       userName: name,
@@ -88,11 +149,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             // Stats Row
             Row(
               children: [
-                Expanded(child: _buildStatCard('TOTAL STUDENTS', '-', Icons.school, Colors.white)),
+                Expanded(child: _buildStatCard('TOTAL STUDENTS', _totalStudents.toString(), Icons.school, Colors.white)),
                 const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('SEATS', '-', Icons.event_seat, Colors.white)),
+                Expanded(child: _buildStatCard('SEATS', seats, Icons.event_seat, Colors.white)),
                 const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('WALLET BALANCE', 'LKR ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, Colors.redAccent)),
+                Expanded(child: _buildStatCard('WALLET BALANCE', 'LKR ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, _walletBalance > 0 ? Colors.greenAccent : Colors.redAccent)),
                 const SizedBox(width: 20),
                 Expanded(child: _buildStatCard('PENDING REQUESTS', _requests.length.toString(), Icons.swap_calls, Colors.white)),
               ],
@@ -176,37 +237,40 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                           const Divider(color: Colors.white24, height: 1),
                           Padding(
                             padding: const EdgeInsets.all(30.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'ARE YOU COMING TOMORROW?\n(2026-05-30)',
-                                  style: TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
+                            child: _todayPoll == null 
+                              ? const Center(child: Text('NO POLLS AVAILABLE', style: TextStyle(color: Colors.white54)))
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${_todayPoll!['question']}\n(${_todayPoll!['date']})',
+                                      style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
+                                    ),
+                                    const SizedBox(height: 30),
+                                    _buildPollBar('COMING (${_todayPoll!['stats']['comingCount']})', Colors.lightGreenAccent, comingPct),
+                                    const SizedBox(height: 20),
+                                    _buildPollBar('NOT COMING (${_todayPoll!['stats']['notComingCount']})', Colors.redAccent, notComingPct),
+                                  ],
                                 ),
-                                const SizedBox(height: 30),
-                                _buildPollBar('COMING', Colors.lightGreenAccent, 0.75),
-                                const SizedBox(height: 20),
-                                _buildPollBar('NOT COMING', Colors.redAccent, 0.25),
-                              ],
-                            ),
                           ),
                           const Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side: const BorderSide(color: Colors.white30),
+                          if (_todayPoll != null)
+                            Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: const BorderSide(color: Colors.white30),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                onPressed: _showComingStudents,
+                                child: const Text('VIEW DETAILS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)),
                               ),
-                              onPressed: () {},
-                              child: const Text('VIEW DETAILS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)),
                             ),
-                          ),
                         ],
                       ),
                     ),

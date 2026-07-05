@@ -115,7 +115,11 @@ export const getDriverRequests = async (req: AuthRequest, res: Response): Promis
             studentId: true,
             universityName: true,
             pickupPoint: true,
-            phone: true
+            user: {
+              select: {
+                phone: true
+              }
+            }
           }
         }
       },

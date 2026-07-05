@@ -11,6 +11,8 @@ import '../screens/student/student_polls.dart';
 import '../screens/driver/driver_polls.dart';
 import '../screens/student/student_tracking.dart';
 import '../screens/driver/driver_tracking.dart';
+import '../screens/driver/driver_passengers.dart';
+import '../screens/driver/driver_profile.dart';
 
 class DashboardLayout extends StatelessWidget {
   final Widget child;
@@ -101,7 +103,7 @@ class DashboardLayout extends StatelessWidget {
           // Nav Items
           if (userRole == 'DRIVER') ...[
             _buildNavItem(Icons.dashboard, 'DASHBOARD', 0, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()))),
-            _buildNavItem(Icons.people, 'PASSENGERS', 1, context),
+            _buildNavItem(Icons.people, 'PASSENGERS', 1, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverPassengersScreen()))),
             _buildNavItem(Icons.how_to_reg, 'ATTENDANCE POLLS', 2, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverPollsScreen()))),
             _buildNavItem(Icons.payment, 'PAYMENTS', 3, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverPaymentsScreen()))),
             _buildNavItem(Icons.location_on, 'LIVE TRACKING', 4, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverTrackingScreen()))),
@@ -185,29 +187,39 @@ class DashboardLayout extends StatelessWidget {
           const SizedBox(width: 20),
           
           // Profile
-          Row(
-            children: [
-              const CircleAvatar(
-                backgroundColor: Colors.white24,
-                child: Icon(Icons.person, color: Colors.white),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                if (userRole == 'DRIVER') {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverProfileScreen()));
+                }
+              },
+              child: Row(
                 children: [
-                  Text(
-                    userName,
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                  const CircleAvatar(
+                    backgroundColor: Colors.white24,
+                    child: Icon(Icons.person, color: Colors.white),
                   ),
-                  Text(
-                    userRole,
-                    style: const TextStyle(color: Colors.white54, fontSize: 10),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        userRole,
+                        style: const TextStyle(color: Colors.white54, fontSize: 10),
+                      ),
+                    ],
                   ),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 16),
                 ],
               ),
-              const SizedBox(width: 10),
-              const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 16),
-            ],
+            ),
           )
         ],
       ),
