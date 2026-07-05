@@ -10,9 +10,13 @@ import '../screens/shared/notice_board.dart';
 import '../screens/student/student_polls.dart';
 import '../screens/driver/driver_polls.dart';
 import '../screens/student/student_tracking.dart';
+import '../screens/student/student_profile.dart';
+import '../screens/student/student_my_bus.dart';
+import '../screens/student/student_available_buses.dart';
 import '../screens/driver/driver_tracking.dart';
 import '../screens/driver/driver_passengers.dart';
 import '../screens/driver/driver_profile.dart';
+import '../screens/shared/info_screens.dart';
 
 class DashboardLayout extends StatelessWidget {
   final Widget child;
@@ -110,8 +114,8 @@ class DashboardLayout extends StatelessWidget {
             _buildNavItem(Icons.notifications, 'NOTICES', 5, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => NoticeBoardScreen(isDriver: true, userName: userName)))),
           ] else ...[
             _buildNavItem(Icons.dashboard, 'DASHBOARD', 0, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()))),
-            _buildNavItem(Icons.check_circle_outline, 'AVAILABLE BUSES', 1, context),
-            _buildNavItem(Icons.directions_bus, 'MY BUS', 2, context),
+            _buildNavItem(Icons.check_circle_outline, 'AVAILABLE BUSES', 1, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentAvailableBusesScreen()))),
+            _buildNavItem(Icons.directions_bus, 'MY BUS', 2, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentMyBusScreen()))),
             _buildNavItem(Icons.how_to_reg, 'ATTENDANCE POLLS', 3, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentPollsScreen()))),
             _buildNavItem(Icons.payment, 'PAYMENTS', 4, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentPaymentsScreen()))),
             _buildNavItem(Icons.location_on, 'LIVE TRACKING', 5, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentTrackingScreen()))),
@@ -177,11 +181,11 @@ class DashboardLayout extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          _buildHeaderLink('HOME'),
-          _buildHeaderLink('ABOUT US'),
-          _buildHeaderLink('SERVICES'),
-          _buildHeaderLink('FAQS'),
-          _buildHeaderLink('CONTACT'),
+          _buildHeaderLink('HOME', context),
+          _buildHeaderLink('ABOUT US', context),
+          _buildHeaderLink('SERVICES', context),
+          _buildHeaderLink('FAQS', context),
+          _buildHeaderLink('CONTACT', context),
           const SizedBox(width: 20),
           const Icon(Icons.notifications_none, color: Colors.white, size: 24),
           const SizedBox(width: 20),
@@ -193,6 +197,8 @@ class DashboardLayout extends StatelessWidget {
               onTap: () {
                 if (userRole == 'DRIVER') {
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverProfileScreen()));
+                } else {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentProfileScreen()));
                 }
               },
               child: Row(
@@ -226,15 +232,37 @@ class DashboardLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderLink(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 10,
-          letterSpacing: 1.2,
+  Widget _buildHeaderLink(String text, BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          if (text == 'HOME') {
+            if (userRole == 'DRIVER') {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
+            } else {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()));
+            }
+          } else if (text == 'ABOUT US') {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AboutUsScreen()));
+          } else if (text == 'SERVICES') {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));
+          } else if (text == 'FAQS') {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const FaqsScreen()));
+          } else if (text == 'CONTACT') {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ContactScreen()));
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 10,
+              letterSpacing: 1.2,
+            ),
+          ),
         ),
       ),
     );

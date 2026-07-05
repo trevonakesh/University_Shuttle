@@ -78,7 +78,15 @@ export const getStudentRequests = async (req: AuthRequest, res: Response): Promi
             busRegNumber: true,
             routeName: true,
             destination: true,
-            pickupTime: true
+            pickupTime: true,
+            nic: true,
+            profilePhotoUrl: true,
+            busPhotoUrl: true,
+            user: {
+              select: {
+                phone: true
+              }
+            }
           }
         }
       },
