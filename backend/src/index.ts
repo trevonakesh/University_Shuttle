@@ -31,6 +31,8 @@ import noticeRoutes from './routes/noticeRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import pollRoutes from './routes/pollRoutes';
 import adminRoutes from './routes/adminRoutes';
+import uploadRoutes from './routes/uploadRoutes';
+import path from 'path';
 
 // Middleware
 app.use(cors());
@@ -45,6 +47,10 @@ app.use('/api/notices', noticeRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/polls', pollRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 // PostgreSQL database configuration (to be updated with real credentials)
 const pool = new Pool({

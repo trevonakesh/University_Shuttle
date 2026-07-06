@@ -1,5 +1,8 @@
 import 'dart:ui';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../driver/driver_dashboard.dart';
 
@@ -40,36 +43,64 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   TimeOfDay? _pickupTime;
   TimeOfDay? _dropTime;
 
+  // Documents
+  XFile? _profilePhoto;
+  XFile? _nicCopy;
+  XFile? _licenseCopy;
+  XFile? _vehicleReg;
+  XFile? _busPhoto;
+
+  final _picker = ImagePicker();
+
+  Future<void> _pickImage(String type) async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        if (type == 'profile') _profilePhoto = image;
+        else if (type == 'nic') _nicCopy = image;
+        else if (type == 'license') _licenseCopy = image;
+        else if (type == 'vehicle') _vehicleReg = image;
+        else if (type == 'bus') _busPhoto = image;
+      });
+    }
+  }
+
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
-      final payload = {
-        'fullName': _fullNameCtrl.text,
-        'nic': _nicCtrl.text,
-        'phone': _phoneCtrl.text,
-        'email': _emailCtrl.text,
-        'password': _passwordCtrl.text,
-        'licenseNumber': _licenseCtrl.text,
-        'bankName': _bankName,
-        'accNumber': _accNumCtrl.text,
-        'accHolder': _accHolderCtrl.text,
-        'busRegNumber': _busRegCtrl.text,
-        'busCapacity': _busCapCtrl.text,
-        'routeName': _routeCtrl.text,
-        'startingPoint': _startCtrl.text,
-        'destination': _destination,
-        'monthlyFee': _feeCtrl.text,
-        'scheduleType': _scheduleType,
-        'pickupTime': _pickupTime?.format(context),
-        'dropTime': _dropTime?.format(context),
-        // URLs for documents would be updated here after an upload process
-        'profilePhotoUrl': null,
-        'nicCopyUrl': null,
-        'licenseCopyUrl': null,
-        'vehicleRegUrl': null,
-        'busPhotoUrl': null,
-      };
+        // Upload images first
+        String? profileUrl = _profilePhoto != null ? await ApiService.uploadImage(_profilePhoto!) : null;
+        String? nicUrl = _nicCopy != null ? await ApiService.uploadImage(_nicCopy!) : null;
+        String? licenseUrl = _licenseCopy != null ? await ApiService.uploadImage(_licenseCopy!) : null;
+        String? vehicleRegUrl = _vehicleReg != null ? await ApiService.uploadImage(_vehicleReg!) : null;
+        String? busPhotoUrl = _busPhoto != null ? await ApiService.uploadImage(_busPhoto!) : null;
+
+        final payload = {
+          'fullName': _fullNameCtrl.text,
+          'nic': _nicCtrl.text,
+          'phone': _phoneCtrl.text,
+          'email': _emailCtrl.text,
+          'password': _passwordCtrl.text,
+          'licenseNumber': _licenseCtrl.text,
+          'bankName': _bankName,
+          'accNumber': _accNumCtrl.text,
+          'accHolder': _accHolderCtrl.text,
+          'busRegNumber': _busRegCtrl.text,
+          'busCapacity': _busCapCtrl.text,
+          'routeName': _routeCtrl.text,
+          'startingPoint': _startCtrl.text,
+          'destination': _destination,
+          'monthlyFee': _feeCtrl.text,
+          'scheduleType': _scheduleType,
+          'pickupTime': _pickupTime?.format(context),
+          'dropTime': _dropTime?.format(context),
+          'profilePhotoUrl': profileUrl,
+          'nicCopyUrl': nicUrl,
+          'licenseCopyUrl': licenseUrl,
+          'vehicleRegUrl': vehicleRegUrl,
+          'busPhotoUrl': busPhotoUrl,
+        };
 
       final result = await ApiService.driverRegister(payload);
 
@@ -208,7 +239,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildUploadCol('PROFILE PHOTO', 'UPLOAD PHOTO'),
+                  _buildUploadCol('PROFILE PHOTO', 'UPLOAD PHOTO', _profilePhoto, () => _pickImage('profile')),
                   if (isDesktop) Expanded(child: const SizedBox()),
                   if (isDesktop) Expanded(child: const SizedBox()),
                 ]),
@@ -281,10 +312,10 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 _buildSectionTitle('DOCUMENTS UPLOAD'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildUploadCol('NIC COPY', 'UPLOAD'),
-                  _buildUploadCol('DRIVING LICENSE COPY', 'UPLOAD'),
-                  _buildUploadCol('VEHICLE REGISTRATION COPY', 'UPLOAD'),
-                  _buildUploadCol('BUS PHOTO', 'UPLOAD'),
+                  _buildUploadCol('NIC COPY', 'UPLOAD', _nicCopy, () => _pickImage('nic')),
+                  _buildUploadCol('DRIVING LICENSE COPY', 'UPLOAD', _licenseCopy, () => _pickImage('license')),
+                  _buildUploadCol('VEHICLE REGISTRATION COPY', 'UPLOAD', _vehicleReg, () => _pickImage('vehicle')),
+                  _buildUploadCol('BUS PHOTO', 'UPLOAD', _busPhoto, () => _pickImage('bus')),
                 ]),
 
                 const SizedBox(height: 50),
@@ -419,26 +450,44 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     );
   }
 
-  Widget _buildUploadCol(String label, String subtext) {
+  Widget _buildUploadCol(String label, String subtext, XFile? file, VoidCallback onTap) {
+    final bool isSelected = file != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
-        Container(
-          height: 100,
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white.withOpacity(0.3), style: BorderStyle.solid)),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 24),
-                const SizedBox(height: 4),
-                Text(subtext, style: const TextStyle(color: Colors.white, fontSize: 10)),
-                const SizedBox(height: 2),
-                const Text('JPG, PNG (MAX 2MB)', style: TextStyle(color: Colors.white54, fontSize: 8)),
-              ],
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 100,
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.transparent : Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: Colors.white.withOpacity(0.3), style: BorderStyle.solid),
+              image: isSelected 
+                  ? DecorationImage(
+                      image: kIsWeb
+                          ? NetworkImage(file.path) as ImageProvider
+                          : FileImage(File(file.path)),
+                      fit: BoxFit.cover,
+                    ) 
+                  : null,
             ),
+            child: isSelected
+                ? null
+                : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 24),
+                        const SizedBox(height: 4),
+                        Text(subtext, style: const TextStyle(color: Colors.white, fontSize: 10)),
+                        const SizedBox(height: 2),
+                        const Text('JPG, PNG (MAX 2MB)', style: const TextStyle(color: Colors.white54, fontSize: 8)),
+                      ],
+                    ),
+                  ),
           ),
         ),
       ],

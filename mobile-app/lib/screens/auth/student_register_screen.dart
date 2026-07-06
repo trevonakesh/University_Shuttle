@@ -1,5 +1,8 @@
 import 'dart:ui';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../student/student_dashboard.dart';
 import 'dart:convert';
@@ -36,9 +39,21 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
   String? _destination;
   String? _relationship;
 
+  XFile? _profilePhoto;
+  final _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() => _profilePhoto = image);
+    }
+  }
+
   void _submitRegistration() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
+
+      String? profileUrl = _profilePhoto != null ? await ApiService.uploadImage(_profilePhoto!) : null;
 
       final payload = {
         'fullName': _fullNameCtrl.text,
@@ -58,7 +73,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         'emerContactName': _emerNameCtrl.text,
         'emerContactPhone': _emerPhoneCtrl.text,
         'emerRelationship': _relationship,
-        'profilePhotoUrl': null,
+        'profilePhotoUrl': profileUrl,
       };
 
       final result = await ApiService.studentRegister(payload);
@@ -327,25 +342,43 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
   }
 
   Widget _buildPhotoUploadCol() {
+    final bool isSelected = _profilePhoto != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('PROFILE PHOTO', style: TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
-        Container(
-          height: 100,
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white.withOpacity(0.3), style: BorderStyle.solid)),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 24),
-                SizedBox(height: 4),
-                Text('UPLOAD PHOTO', style: TextStyle(color: Colors.white, fontSize: 10)),
-                SizedBox(height: 2),
-                Text('JPG, PNG (MAX 2MB)', style: TextStyle(color: Colors.white54, fontSize: 8)),
-              ],
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            height: 100,
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.transparent : Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: Colors.white.withOpacity(0.3), style: BorderStyle.solid),
+              image: isSelected 
+                  ? DecorationImage(
+                      image: kIsWeb
+                          ? NetworkImage(_profilePhoto!.path) as ImageProvider
+                          : FileImage(File(_profilePhoto!.path)),
+                      fit: BoxFit.cover,
+                    ) 
+                  : null,
             ),
+            child: isSelected 
+                ? null 
+                : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 24),
+                        SizedBox(height: 4),
+                        Text('UPLOAD PHOTO', style: TextStyle(color: Colors.white, fontSize: 10)),
+                        SizedBox(height: 2),
+                        Text('JPG, PNG (MAX 2MB)', style: TextStyle(color: Colors.white54, fontSize: 8)),
+                      ],
+                    ),
+                  ),
           ),
         ),
       ],

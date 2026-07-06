@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:io' show Platform;
-
+import 'dart:io' show Platform, File;
+import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
 class ApiService {
   // Use 10.0.2.2 for Android Emulator connecting to localhost
   // Use localhost for iOS simulator or web
@@ -114,6 +115,38 @@ class ApiService {
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<String?> uploadImage(XFile imageFile) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/upload'));
+      
+      // Get auth headers and add to request if needed
+      final headers = await _getHeaders();
+      request.headers.addAll(headers);
+
+      final bytes = await imageFile.readAsBytes();
+      String filename = imageFile.name.isNotEmpty ? imageFile.name : 'upload.jpg';
+      
+      request.files.add(http.MultipartFile.fromBytes(
+        'image', 
+        bytes, 
+        filename: filename,
+        contentType: MediaType('image', 'jpeg'),
+      ));
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['url'];
+      }
+      return null;
+    } catch (e) {
+      print('Image upload error: $e');
+      return null;
     }
   }
 
