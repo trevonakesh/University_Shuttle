@@ -4,6 +4,7 @@ import 'role_selection_screen.dart';
 import '../../services/api_service.dart';
 import '../student/student_dashboard.dart';
 import '../driver/driver_dashboard.dart';
+import 'driver_pending_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -34,11 +35,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result['success']) {
       final role = result['role'];
+      final userProfile = result['data']['user']['profile'];
       if (!mounted) return;
       if (role == 'STUDENT') {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()));
       } else if (role == 'DRIVER') {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
+        if (userProfile != null && userProfile['status'] == 'PENDING') {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverPendingScreen()));
+        } else {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
+        }
       }
     } else {
       if (!mounted) return;

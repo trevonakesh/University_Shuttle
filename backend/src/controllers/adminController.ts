@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
 import { DriverStatus } from '@prisma/client';
+import { emitDriverStatusUpdated } from '../socketHandler';
 
 export const getDrivers = async (req: Request, res: Response) => {
   try {
@@ -32,6 +33,9 @@ export const updateDriverStatus = async (req: Request, res: Response) => {
       where: { id: driverId },
       data: { status }
     });
+
+    // Notify driver about status change
+    emitDriverStatusUpdated(driverId, status);
 
     res.status(200).json(driver);
   } catch (error) {

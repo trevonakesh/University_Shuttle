@@ -25,7 +25,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   }
 
   Future<void> _fetchData() async {
-    final user = await ApiService.getUser();
+    final user = await ApiService.fetchMe();
     final requests = await ApiService.getDriverRequests();
     final wallet = await ApiService.getWalletBalance();
     final polls = await ApiService.getDriverPolls();

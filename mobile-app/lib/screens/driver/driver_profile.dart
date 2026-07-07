@@ -20,7 +20,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Future<void> _fetchData() async {
-    final user = await ApiService.getUser();
+    final user = await ApiService.fetchMe();
     
     if (mounted) {
       setState(() {
@@ -103,8 +103,18 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                             color: Colors.white10,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white24, width: 2),
+                            image: profile['profilePhotoUrl'] != null 
+                              ? DecorationImage(
+                                  image: NetworkImage(profile['profilePhotoUrl'].startsWith('http') 
+                                      ? profile['profilePhotoUrl']
+                                      : '${ApiService.baseUrl.replaceAll('/api', '')}${profile['profilePhotoUrl']}'),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                           ),
-                          child: const Icon(Icons.person, color: Colors.white, size: 80),
+                          child: profile['profilePhotoUrl'] == null
+                            ? const Icon(Icons.person, color: Colors.white, size: 80)
+                            : null,
                         ),
                         const SizedBox(height: 20),
                         Container(

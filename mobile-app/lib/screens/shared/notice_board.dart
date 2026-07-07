@@ -19,6 +19,7 @@ class NoticeBoardScreen extends StatefulWidget {
 
 class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
   List<dynamic> _notices = [];
+  List<dynamic> _myRequests = [];
   bool _isLoading = true;
 
   @override
@@ -32,9 +33,16 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
     final notices = widget.isDriver 
         ? await ApiService.getDriverNotices()
         : await ApiService.getStudentNotices();
+        
+    List<dynamic> requests = [];
+    if (!widget.isDriver) {
+      requests = await ApiService.getStudentRequests();
+    }
+    
     if (mounted) {
       setState(() {
         _notices = notices;
+        _myRequests = requests;
         _isLoading = false;
       });
     }
@@ -115,6 +123,8 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasApprovedDriver = widget.isDriver || _myRequests.any((r) => r['status'] == 'APPROVED');
+
     return DashboardLayout(
       userName: widget.userName,
       userRole: widget.isDriver ? 'DRIVER' : 'STUDENT',
@@ -163,6 +173,8 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
 
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
+            else if (!hasApprovedDriver)
+              const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
             else if (_notices.isEmpty)
               const Center(child: Text("No notices available.", style: TextStyle(color: Colors.white70)))
             else

@@ -15,12 +15,14 @@ class StudentTrackingScreen extends StatefulWidget {
 
 class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
   Map<String, dynamic>? _user;
+  List<dynamic> _myRequests = [];
   IO.Socket? _socket;
   
   // Starting location in Colombo
   LatLng _busLocation = const LatLng(6.9271, 79.8612);
   bool _isBusOnline = false;
   String _driverIdToTrack = "1"; // Fallback to 1
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -29,13 +31,16 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
   }
 
   Future<void> _initUserAndSocket() async {
+    setState(() => _isLoading = true);
     final user = await ApiService.getUser();
+    final requests = await ApiService.getStudentRequests();
+    
     setState(() {
       _user = user;
+      _myRequests = requests;
     });
     
     // Attempt to get actual driver ID from student requests
-    final requests = await ApiService.getStudentRequests();
     if (requests.isNotEmpty && requests.any((r) => r['status'] == 'APPROVED')) {
       final approvedReq = requests.firstWhere((r) => r['status'] == 'APPROVED');
       _driverIdToTrack = approvedReq['driverId'].toString();
@@ -69,6 +74,10 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
         });
       }
     });
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -80,8 +89,11 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = _user != null ? (_user!['profile'] ?? _user!['student'] ?? {}) : {};
+    final hasApprovedDriver = _myRequests.any((r) => r['status'] == 'APPROVED');
+
     return DashboardLayout(
-      userName: _user != null ? _user!['profile']['fullName'] : 'Student',
+      userName: profile['fullName'] ?? 'Student',
       userRole: 'STUDENT',
       activeIndex: 5,
       child: Padding(
@@ -101,9 +113,14 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
             ),
             const SizedBox(height: 40),
 
-            // Map and Info Area
-            Expanded(
-              child: Container(
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (!hasApprovedDriver)
+              const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
+            else
+              // Map and Info Area
+              Expanded(
+                child: Container(
                 decoration: BoxDecoration(
                   color: Colors.black45,
                   borderRadius: BorderRadius.circular(30),

@@ -23,7 +23,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Future<void> _fetchData() async {
-    final user = await ApiService.getUser();
+    final user = await ApiService.fetchMe();
     final buses = await ApiService.getAvailableBuses();
     final requests = await ApiService.getStudentRequests();
     
@@ -63,8 +63,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       );
     }
 
-    final name = _user?['fullName'] ?? 'Student';
-    final firstName = name.split(' ').first;
+    final profile = _user != null ? (_user!['profile'] ?? _user!['student'] ?? {}) : {};
+    final name = profile['fullName'] ?? 'Student';
+    final firstName = name.toString().split(' ').first;
     
     // Find active request status
     String status = 'NO REQUEST';

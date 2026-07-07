@@ -137,13 +137,17 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
       include: { driver: true }
     });
 
+    const token = generateToken(user.id, user.role);
+
     res.status(201).json({
       message: 'Driver registered successfully. Pending admin approval.',
+      token,
       user: {
         id: user.id,
         email: user.email,
+        phone: user.phone,
         role: user.role,
-        driver: user.driver
+        profile: user.driver
       }
     });
   } catch (error: any) {
@@ -183,8 +187,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (user.role === Role.DRIVER && user.driver?.status !== 'APPROVED') {
-      res.status(403).json({ error: 'Your account is pending admin approval.' });
+    if (user.role === Role.DRIVER && user.driver?.status === 'REJECTED') {
+      res.status(403).json({ error: 'Your account application was rejected.' });
       return;
     }
 
@@ -195,6 +199,40 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(200).json({
       message: 'Login successful',
       token,
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        profile
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+export const getMe = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { student: true, driver: true }
+    });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const profile = user.role === Role.STUDENT ? user.student : user.driver;
+
+    res.status(200).json({
       user: {
         id: user.id,
         email: user.email,

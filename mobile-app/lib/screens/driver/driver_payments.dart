@@ -40,8 +40,9 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = _user != null ? (_user!['profile'] ?? _user!['driver'] ?? {}) : {};
     return DashboardLayout(
-      userName: _user != null ? _user!['profile']['fullName'] : 'Driver',
+      userName: profile['fullName'] ?? 'Driver',
       userRole: 'DRIVER',
       activeIndex: 3,
       child: Padding(

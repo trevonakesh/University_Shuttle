@@ -130,8 +130,9 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = _user != null ? (_user!['profile'] ?? _user!['driver'] ?? {}) : {};
     return DashboardLayout(
-      userName: _user != null ? _user!['profile']['fullName'] : 'Driver',
+      userName: profile['fullName'] ?? 'Driver',
       userRole: 'DRIVER',
       activeIndex: 2,
       child: Padding(

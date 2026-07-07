@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../driver/driver_dashboard.dart';
+import 'driver_pending_screen.dart';
 
 class DriverRegisterScreen extends StatefulWidget {
   const DriverRegisterScreen({Key? key}) : super(key: key);
@@ -108,13 +109,11 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
 
       if (result['success']) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful. Please wait for admin approval.'),
-            backgroundColor: Colors.green,
-          ),
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const DriverPendingScreen()),
+          (route) => false,
         );
-        Navigator.pop(context); // Return to login screen
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

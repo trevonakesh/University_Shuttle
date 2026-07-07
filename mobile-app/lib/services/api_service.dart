@@ -42,6 +42,27 @@ class ApiService {
     return null;
   }
 
+  static Future<Map<String, dynamic>?> fetchMe() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: await _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['user'] != null) {
+          final role = await getRole() ?? 'STUDENT';
+          final token = await getToken() ?? '';
+          await saveToken(token, role, data['user']);
+          return data['user'];
+        }
+      }
+    } catch (e) {
+      print('fetchMe error: $e');
+    }
+    return await getUser();
+  }
+
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -361,9 +382,11 @@ class ApiService {
   static Future<List<dynamic>> getDriverPayments() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/payments/driver'), headers: await _getHeaders());
+      print('getDriverPayments response: ${response.statusCode} ${response.body}');
       if (response.statusCode == 200) return jsonDecode(response.body)['payments'] ?? [];
       return [];
     } catch (e) {
+      print('getDriverPayments error: $e');
       return [];
     }
   }

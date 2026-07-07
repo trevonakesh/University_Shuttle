@@ -13,6 +13,7 @@ class StudentPaymentsScreen extends StatefulWidget {
 class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _payments = [];
+  List<dynamic> _myRequests = [];
   bool _isLoading = true;
 
   @override
@@ -25,10 +26,13 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
     setState(() => _isLoading = true);
     final user = await ApiService.getUser();
     final payments = await ApiService.getStudentPayments();
+    final requests = await ApiService.getStudentRequests();
+    
     if (mounted) {
       setState(() {
         _user = user;
         _payments = payments;
+        _myRequests = requests;
         _isLoading = false;
       });
     }
@@ -37,9 +41,8 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
   void _showMakePaymentModal() async {
     // Attempt to get actual driver ID from student requests
     String? driverId;
-    final requests = await ApiService.getStudentRequests();
-    if (requests.isNotEmpty && requests.any((r) => r['status'] == 'APPROVED')) {
-      final approvedReq = requests.firstWhere((r) => r['status'] == 'APPROVED');
+    if (_myRequests.isNotEmpty && _myRequests.any((r) => r['status'] == 'APPROVED')) {
+      final approvedReq = _myRequests.firstWhere((r) => r['status'] == 'APPROVED');
       driverId = approvedReq['driverId'].toString();
     } else {
       final buses = await ApiService.getAvailableBuses();
@@ -114,8 +117,11 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = _user != null ? (_user!['profile'] ?? _user!['student'] ?? {}) : {};
+    final hasApprovedDriver = _myRequests.any((r) => r['status'] == 'APPROVED');
+
     return DashboardLayout(
-      userName: _user != null ? _user!['profile']['fullName'] : 'Student',
+      userName: profile['fullName'] ?? 'Student',
       userRole: 'STUDENT',
       activeIndex: 4, 
       child: Padding(
@@ -153,6 +159,8 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
 
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
+            else if (!hasApprovedDriver)
+              const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
             else if (_payments.isEmpty)
               const Center(child: Text("No payments made yet.", style: TextStyle(color: Colors.white70)))
             else

@@ -53,9 +53,9 @@ export default function StudentsPage() {
           onChange={(e) => setSelectedDriver(Number(e.target.value))}
           value={selectedDriver || ''}
         >
-          <option value="">-- Choose a Driver --</option>
+          <option value="" style={{ color: 'black' }}>-- Choose a Driver --</option>
           {drivers.map(driver => (
-            <option key={driver.id} value={driver.id}>{driver.fullName}</option>
+            <option key={driver.id} value={driver.id} style={{ color: 'black' }}>{driver.fullName}</option>
           ))}
         </select>
       </div>

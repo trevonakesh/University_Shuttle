@@ -13,6 +13,7 @@ class StudentPollsScreen extends StatefulWidget {
 class _StudentPollsScreenState extends State<StudentPollsScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _polls = [];
+  List<dynamic> _myRequests = [];
   bool _isLoading = true;
 
   @override
@@ -23,12 +24,14 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
 
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
-    final user = await ApiService.getUser();
+    final user = await ApiService.fetchMe();
     final polls = await ApiService.getStudentPolls();
+    final requests = await ApiService.getStudentRequests();
     if (mounted) {
       setState(() {
         _user = user;
         _polls = polls;
+        _myRequests = requests;
         _isLoading = false;
       });
     }
@@ -45,8 +48,12 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = _user != null ? (_user!['profile'] ?? _user!['student'] ?? {}) : {};
+    final userName = profile['fullName'] ?? 'Student';
+    final hasApprovedDriver = _myRequests.any((r) => r['status'] == 'APPROVED');
+
     return DashboardLayout(
-      userName: _user != null ? _user!['profile']['fullName'] : 'Student',
+      userName: userName,
       userRole: 'STUDENT',
       activeIndex: 3,
       child: Padding(
@@ -68,6 +75,8 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
 
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
+            else if (!hasApprovedDriver)
+              const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
             else if (_polls.isEmpty)
               const Center(child: Text("No polls available from your driver yet.", style: TextStyle(color: Colors.white70)))
             else

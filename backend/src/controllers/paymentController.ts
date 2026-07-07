@@ -109,9 +109,7 @@ export const getDriverPayments = async (req: AuthRequest, res: Response): Promis
       include: {
         student: {
           select: {
-            fullName: true,
-            studentId: true,
-            phone: true
+            fullName: true
           }
         }
       },
