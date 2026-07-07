@@ -51,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Icon(Icons.directions_bus, size: 100, color: Colors.white),
             SizedBox(height: 20),
             Text(
-              'LankaTrip',
+              'Uni Shuttle',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,

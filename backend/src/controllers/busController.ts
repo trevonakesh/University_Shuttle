@@ -6,18 +6,25 @@ export const getBuses = async (req: AuthRequest, res: Response): Promise<void> =
   try {
     const { destination, startingPoint, universityName } = req.query;
 
-    // We consider 'Driver' as the entity holding bus information
-    // Build a flexible where clause based on query params
     const whereClause: any = {};
-    if (destination) {
-      whereClause.destination = { contains: String(destination), mode: 'insensitive' };
-    }
-    if (startingPoint) {
-      whereClause.startingPoint = { contains: String(startingPoint), mode: 'insensitive' };
-    }
-    // If universityName is passed, it typically matches the destination for most routes
-    if (universityName && !destination) {
-       whereClause.destination = { contains: String(universityName), mode: 'insensitive' };
+
+    if (req.user?.role === 'STUDENT') {
+      const student = await prisma.student.findUnique({
+        where: { userId: req.user.userId }
+      });
+      if (student?.universityName) {
+        whereClause.destination = { contains: student.universityName, mode: 'insensitive' };
+      }
+    } else {
+      if (destination) {
+        whereClause.destination = { contains: String(destination), mode: 'insensitive' };
+      }
+      if (startingPoint) {
+        whereClause.startingPoint = { contains: String(startingPoint), mode: 'insensitive' };
+      }
+      if (universityName && !destination) {
+         whereClause.destination = { contains: String(universityName), mode: 'insensitive' };
+      }
     }
 
     const buses = await prisma.driver.findMany({
