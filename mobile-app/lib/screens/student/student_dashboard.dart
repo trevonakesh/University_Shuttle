@@ -55,6 +55,29 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Future<void> _unassignDriver(int requestId) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A24),
+          title: const Text('Confirm Unassign', style: TextStyle(color: Colors.white)),
+          content: const Text('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.', style: TextStyle(color: Colors.white70)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('UNASSIGN', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      }
+    );
+
+    if (confirm != true) return;
+
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
     
     final success = await ApiService.deleteSeatRequest(requestId);
