@@ -204,12 +204,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                   separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
                                   itemBuilder: (context, index) {
                                     final req = _requests[index];
-                                    return _buildRequestItem(
-                                      req['id'],
-                                      req['student']['fullName'],
-                                      req['student']['pickupPoint'] ?? 'Unknown',
-                                      req['createdAt'].toString().substring(0, 10),
-                                    );
+                                    return _buildRequestItem(req);
                                   },
                                 ),
                           ),
@@ -321,7 +316,63 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
   }
 
-  Widget _buildRequestItem(int reqId, String name, String pickup, String date) {
+  void _showStudentDetails(Map<String, dynamic> student) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A24),
+          title: const Text('STUDENT DETAILS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow(Icons.person, 'NAME', student['fullName'] ?? 'N/A'),
+              const SizedBox(height: 15),
+              _buildDetailRow(Icons.school, 'UNIVERSITY', student['universityName'] ?? 'N/A'),
+              const SizedBox(height: 15),
+              _buildDetailRow(Icons.badge, 'STUDENT ID', student['studentId'] ?? 'N/A'),
+              const SizedBox(height: 15),
+              _buildDetailRow(Icons.location_on, 'PICKUP', student['pickupPoint'] ?? 'N/A'),
+              const SizedBox(height: 15),
+              _buildDetailRow(Icons.phone, 'PHONE', student['user']?['phone'] ?? 'N/A'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CLOSE', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white54, size: 20),
+        const SizedBox(width: 15),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1)),
+            const SizedBox(height: 4),
+            Text(value, style: const TextStyle(color: Colors.white, fontSize: 14)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRequestItem(Map<String, dynamic> req) {
+    final reqId = req['id'];
+    final student = req['student'] ?? {};
+    final name = student['fullName'] ?? 'Unknown';
+    final pickup = student['pickupPoint'] ?? 'Unknown';
+    final date = req['createdAt'].toString().substring(0, 10);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
@@ -349,6 +400,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.blueAccent),
+              color: Colors.blueAccent.withValues(alpha: 0.2),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.info_outline, color: Colors.blueAccent),
+              onPressed: () => _showStudentDetails(student),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
               border: Border.all(color: Colors.green),
               color: Colors.green.withValues(alpha: 0.2),
             ),
@@ -357,7 +420,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               onPressed: () => _updateRequest(reqId, 'APPROVED'),
             ),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 10),
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,

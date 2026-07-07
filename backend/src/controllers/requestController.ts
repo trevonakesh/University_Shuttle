@@ -25,28 +25,46 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    // Check if a request already exists
-    const existingRequest = await prisma.seatRequest.findUnique({
+    // Check if a request to THIS specific driver already exists (even if rejected/cancelled)
+    const existingForThisDriver = await prisma.seatRequest.findUnique({
       where: {
-        studentId_driverId: {
-          studentId: student.id,
-          driverId: driver.id
-        }
+        studentId_driverId: { studentId: student.id, driverId: driver.id }
       }
     });
 
-    if (existingRequest) {
+    if (existingForThisDriver && [RequestStatus.PENDING, RequestStatus.APPROVED].includes(existingForThisDriver.status)) {
       res.status(400).json({ error: 'You have already sent a request to this bus' });
       return;
     }
 
-    const seatRequest = await prisma.seatRequest.create({
-      data: {
+    // Check if the student already has an active request with ANY driver
+    const activeRequest = await prisma.seatRequest.findFirst({
+      where: {
         studentId: student.id,
-        driverId: driver.id,
-        status: RequestStatus.PENDING
+        status: { in: [RequestStatus.PENDING, RequestStatus.APPROVED] }
       }
     });
+
+    if (activeRequest) {
+      res.status(400).json({ error: 'You are already assigned to a driver or have a pending request. Please unassign first.' });
+      return;
+    }
+
+    let seatRequest;
+    if (existingForThisDriver) {
+      seatRequest = await prisma.seatRequest.update({
+        where: { id: existingForThisDriver.id },
+        data: { status: RequestStatus.PENDING }
+      });
+    } else {
+      seatRequest = await prisma.seatRequest.create({
+        data: {
+          studentId: student.id,
+          driverId: driver.id,
+          status: RequestStatus.PENDING
+        }
+      });
+    }
 
     res.status(201).json({ message: 'Seat request sent successfully', seatRequest });
   } catch (error: any) {
@@ -179,6 +197,43 @@ export const updateRequestStatus = async (req: AuthRequest, res: Response): Prom
     });
 
     res.status(200).json({ message: `Request ${status.toLowerCase()} successfully`, request: updatedRequest });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+export const deleteRequest = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+
+    if (req.user?.role !== Role.STUDENT) {
+      res.status(403).json({ error: 'Access denied. Only students can unassign themselves.' });
+      return;
+    }
+
+    const student = await prisma.student.findUnique({ where: { userId } });
+    if (!student) {
+      res.status(404).json({ error: 'Student profile not found' });
+      return;
+    }
+
+    const seatRequest = await prisma.seatRequest.findUnique({ where: { id: parseInt(id) } });
+    if (!seatRequest) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
+    if (seatRequest.studentId !== student.id) {
+      res.status(403).json({ error: 'You are not authorized to delete this request' });
+      return;
+    }
+
+    await prisma.seatRequest.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.status(200).json({ message: 'Request deleted and driver unassigned successfully' });
   } catch (error: any) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }

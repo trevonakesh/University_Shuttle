@@ -12,6 +12,7 @@ class StudentAvailableBusesScreen extends StatefulWidget {
 class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _buses = [];
+  List<dynamic> _myRequests = [];
   bool _isLoading = true;
   bool _isRequesting = false;
 
@@ -24,11 +25,13 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
   Future<void> _fetchData() async {
     final user = await ApiService.getUser();
     final buses = await ApiService.getAvailableBuses();
+    final requests = await ApiService.getStudentRequests();
     
     if (mounted) {
       setState(() {
         _user = user;
         _buses = buses;
+        _myRequests = requests;
         _isLoading = false;
       });
     }
@@ -51,10 +54,46 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
           backgroundColor: result['success'] ? Colors.green : Colors.redAccent,
         ),
       );
+      if (result['success']) _fetchData();
+    }
+  }
+
+  Future<void> _unassignDriver(int requestId) async {
+    setState(() {
+      _isRequesting = true;
+    });
+
+    final success = await ApiService.deleteSeatRequest(requestId);
+    
+    if (mounted) {
+      setState(() {
+        _isRequesting = false;
+      });
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unassigned successfully!', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+        _fetchData();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to unassign', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
     }
   }
 
   Widget _buildBusCard(Map<String, dynamic> bus) {
+    int driverId = bus['id'];
+    int? requestId;
+    bool hasRequestedThis = false;
+    bool hasActiveRequestAnywhere = false;
+
+    for (var req in _myRequests) {
+      if (req['status'] == 'PENDING' || req['status'] == 'APPROVED') {
+        hasActiveRequestAnywhere = true;
+        if (req['driverId'] == driverId) {
+          hasRequestedThis = true;
+          requestId = req['id'];
+        }
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -155,11 +194,11 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
                 Container(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton.icon(
-                    onPressed: _isRequesting ? null : () => _requestSeat(bus['id']),
-                    icon: const Icon(Icons.send, color: Colors.white),
-                    label: const Text('REQUEST SEAT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    onPressed: _isRequesting ? null : (hasRequestedThis ? () => _unassignDriver(requestId!) : (hasActiveRequestAnywhere ? null : () => _requestSeat(bus['id']))),
+                    icon: Icon(hasRequestedThis ? Icons.cancel : Icons.send, color: Colors.white),
+                    label: Text(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? Colors.white24 : Colors.blueAccent),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),

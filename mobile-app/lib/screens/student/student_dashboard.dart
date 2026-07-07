@@ -54,6 +54,21 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     }
   }
 
+  Future<void> _unassignDriver(int requestId) async {
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    
+    final success = await ApiService.deleteSeatRequest(requestId);
+    
+    if (mounted) Navigator.pop(context);
+
+    if (success) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unassigned successfully!')));
+      _fetchData(); // Refresh data
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to unassign')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -70,12 +85,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     // Find active request status
     String status = 'NO REQUEST';
     Color statusColor = Colors.grey;
-    if (_myRequests.isNotEmpty) {
-      final req = _myRequests.first;
-      status = req['status'];
-      if (status == 'PENDING') statusColor = Colors.orange;
-      if (status == 'APPROVED') statusColor = Colors.green;
-      if (status == 'REJECTED') statusColor = Colors.red;
+    bool hasActiveRequestAnywhere = false;
+
+    for (var req in _myRequests) {
+      if (req['status'] == 'PENDING' || req['status'] == 'APPROVED') {
+        hasActiveRequestAnywhere = true;
+        status = req['status'];
+        if (status == 'PENDING') statusColor = Colors.orange;
+        if (status == 'APPROVED') statusColor = Colors.green;
+        break;
+      }
     }
 
     return DashboardLayout(
@@ -159,7 +178,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         bus['routeName'] ?? 'Unknown Route',
                         bus['fullName'] ?? 'Driver',
                         'LKR ${bus['monthlyFee'] ?? '0'}',
-                        _myRequests.any((req) => req['driverId'] == bus['id'] && req['status'] == 'APPROVED'),
+                        hasActiveRequestAnywhere
                       ),
                       const Divider(color: Colors.white24, height: 1),
                     ],
@@ -209,12 +228,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildBusListItem(int driverId, String route, String driver, String price, bool isAvailable) {
-    // Check if the student already has a pending/approved request for this driver
-    bool hasRequested = _myRequests.any((req) => 
-      req['driverId'] == driverId && 
-      (req['status'] == 'PENDING' || req['status'] == 'APPROVED')
-    );
+  Widget _buildBusListItem(int driverId, String route, String driver, String price, bool hasActiveRequestAnywhere) {
+    int? requestId;
+    bool hasRequestedThis = false;
+    for (var req in _myRequests) {
+      if (req['driverId'] == driverId && (req['status'] == 'PENDING' || req['status'] == 'APPROVED')) {
+        hasRequestedThis = true;
+        requestId = req['id'];
+        break;
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -252,15 +275,15 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isAvailable ? Colors.green : Colors.red,
+                  color: Colors.green,
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                isAvailable ? 'ACTIVE' : 'UNAVAILABLE',
-                style: const TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1),
+              const Text(
+                'ACTIVE',
+                style: TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1),
               ),
             ],
           ),
@@ -269,15 +292,15 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           // Button
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: hasRequested ? Colors.grey : Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? Colors.white24 : Colors.white),
+              foregroundColor: hasRequestedThis ? Colors.white : Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
-            onPressed: (isAvailable && !hasRequested) ? () => _requestSeat(driverId) : null,
-            child: Text(hasRequested ? 'REQUESTED' : 'REQUEST SEAT', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
+            onPressed: hasRequestedThis ? () => _unassignDriver(requestId!) : (hasActiveRequestAnywhere ? null : () => _requestSeat(driverId)),
+            child: Text(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
           ),
         ],
       ),

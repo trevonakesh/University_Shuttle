@@ -248,6 +248,18 @@ class ApiService {
     }
   }
 
+  static Future<bool> deleteSeatRequest(int requestId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/requests/$requestId'),
+        headers: await _getHeaders(),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // --- Poll APIs ---
   static Future<Map<String, dynamic>> createPoll(Map<String, dynamic> data) async {
     try {

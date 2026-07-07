@@ -13,6 +13,7 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
   Map<String, dynamic>? _user;
   Map<String, dynamic>? _myBus;
   bool _isLoading = true;
+  bool _isRequesting = false;
 
   @override
   void initState() {
@@ -35,6 +36,26 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
         }
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _unassignDriver(int requestId) async {
+    setState(() {
+      _isRequesting = true;
+    });
+
+    final success = await ApiService.deleteSeatRequest(requestId);
+    
+    if (mounted) {
+      setState(() {
+        _isRequesting = false;
+      });
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unassigned successfully!', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+        _fetchData();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to unassign', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
     }
   }
 
@@ -166,7 +187,21 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   ),
                                 ),
-                              )
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _isRequesting ? null : () => _unassignDriver(_myBus!['id']),
+                                  icon: const Icon(Icons.cancel, color: Colors.white),
+                                  label: const Text('UNASSIGN BUS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.redAccent,
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
