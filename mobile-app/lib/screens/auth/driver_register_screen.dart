@@ -108,7 +108,13 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
 
       if (result['success']) {
         if (!mounted) return;
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration successful. Please wait for admin approval.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Return to login screen
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

@@ -50,7 +50,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 
 // Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // PostgreSQL database configuration (to be updated with real credentials)
 const pool = new Pool({
@@ -64,7 +64,7 @@ const pool = new Pool({
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).json({ message: 'Something broke!', error: err.message, stack: err.stack });
 });
 
 app.get('/', (req: Request, res: Response) => {

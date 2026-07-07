@@ -69,7 +69,7 @@ class ApiService {
         await saveToken(data['token'], data['user']['role'], data['user']);
         return {'success': true, 'role': data['user']['role'], 'data': data};
       } else {
-        return {'success': false, 'message': data['message'] ?? 'Login failed'};
+        return {'success': false, 'message': data['error'] ?? data['message'] ?? 'Login failed'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
@@ -90,7 +90,7 @@ class ApiService {
         await saveToken(data['token'], data['user']['role'], data['user']);
         return {'success': true, 'data': data};
       } else {
-        return {'success': false, 'message': data['message'] ?? 'Registration failed'};
+        return {'success': false, 'message': data['error'] ?? data['message'] ?? 'Registration failed'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
@@ -108,10 +108,12 @@ class ApiService {
       final data = jsonDecode(response.body);
       
       if (response.statusCode == 201) {
-        await saveToken(data['token'], data['user']['role'], data['user']);
+        if (data['token'] != null) {
+          await saveToken(data['token'], data['user']['role'], data['user']);
+        }
         return {'success': true, 'data': data};
       } else {
-        return {'success': false, 'message': data['message'] ?? 'Registration failed'};
+        return {'success': false, 'message': data['error'] ?? data['message'] ?? 'Registration failed'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};

@@ -72,6 +72,12 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
       }
     });
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      const target = error.meta?.target as string[];
+      const field = target ? target.join(', ') : 'field';
+      res.status(400).json({ error: `Student with this ${field} already exists` });
+      return;
+    }
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
@@ -131,11 +137,8 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
       include: { driver: true }
     });
 
-    const token = generateToken(user.id, user.role);
-
     res.status(201).json({
-      message: 'Driver registered successfully',
-      token,
+      message: 'Driver registered successfully. Pending admin approval.',
       user: {
         id: user.id,
         email: user.email,
@@ -144,6 +147,12 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
       }
     });
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      const target = error.meta?.target as string[];
+      const field = target ? target.join(', ') : 'field';
+      res.status(400).json({ error: `Driver with this ${field} already exists` });
+      return;
+    }
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
@@ -171,6 +180,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     if (!isMatch) {
       res.status(401).json({ error: 'Invalid credentials' });
+      return;
+    }
+
+    if (user.role === Role.DRIVER && user.driver?.status !== 'APPROVED') {
+      res.status(403).json({ error: 'Your account is pending admin approval.' });
       return;
     }
 
