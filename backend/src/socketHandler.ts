@@ -47,3 +47,11 @@ export const emitDriverStatusUpdated = (driverId: number, status: string) => {
     ioInstance.to(`driver_status_${driverId}`).emit('driver_status_updated', { status });
   }
 };
+
+// Notifies the driver's open sessions that a fare status changed (e.g. a
+// student just paid in-app), so the fare tracker can refresh live.
+export const emitFareUpdated = (driverId: number, payload: { studentId: number; month: string; status: string }) => {
+  if (ioInstance) {
+    ioInstance.to(`driver_status_${driverId}`).emit('fareUpdated', payload);
+  }
+};

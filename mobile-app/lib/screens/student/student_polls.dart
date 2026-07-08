@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../widgets/dashboard_layout.dart';
+import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
 
 class StudentPollsScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _polls = [];
   List<dynamic> _myRequests = [];
+  Map<String, dynamic>? _myFare;
   bool _isLoading = true;
 
   @override
@@ -27,11 +29,13 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
     final user = await ApiService.fetchMe();
     final polls = await ApiService.getStudentPolls();
     final requests = await ApiService.getStudentRequests();
+    final fare = await ApiService.getMyFare();
     if (mounted) {
       setState(() {
         _user = user;
         _polls = polls;
         _myRequests = requests;
+        _myFare = fare;
         _isLoading = false;
       });
     }
@@ -75,6 +79,13 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
 
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
+            else if (_myFare?['frozen'] == true)
+              Expanded(
+                child: FrozenLock(
+                  amountDue: (_myFare?['amountDue'] as num?)?.toDouble() ?? 0,
+                  month: _myFare?['month'] ?? '',
+                ),
+              )
             else if (!hasApprovedDriver)
               const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
             else if (_polls.isEmpty)

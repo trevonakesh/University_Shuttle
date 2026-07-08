@@ -426,6 +426,43 @@ class ApiService {
     }
   }
 
+  // --- Monthly Fare APIs ---
+  static Future<Map<String, dynamic>?> getDriverFares({String? month}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/fares/driver${month != null ? '?month=$month' : ''}');
+      final response = await http.get(uri, headers: await _getHeaders());
+      if (response.statusCode == 200) return jsonDecode(response.body);
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>> setFareStatus(int studentId, String month, String status) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/fares/$studentId'),
+        headers: await _getHeaders(),
+        body: jsonEncode({'month': month, 'status': status}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true, 'data': data};
+      return {'success': false, 'message': data['error'] ?? 'Failed to update fare status'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getMyFare() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/fares/me'), headers: await _getHeaders());
+      if (response.statusCode == 200) return jsonDecode(response.body);
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // --- Notification APIs ---
   static Future<List<dynamic>> getNotifications() async {
     try {

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../widgets/dashboard_layout.dart';
+import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
@@ -14,7 +15,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _buses = [];
   List<dynamic> _myRequests = [];
-  List<dynamic> _payments = [];
+  Map<String, dynamic>? _myFare;
   bool _isLoading = true;
 
   @override
@@ -27,14 +28,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     final user = await ApiService.fetchMe();
     final buses = await ApiService.getAvailableBuses();
     final requests = await ApiService.getStudentRequests();
-    final payments = await ApiService.getStudentPayments();
+    final fare = await ApiService.getMyFare();
 
     if (mounted) {
       setState(() {
         _user = user;
         _buses = buses;
         _myRequests = requests;
-        _payments = payments;
+        _myFare = fare;
         _isLoading = false;
       });
     }
@@ -140,12 +141,27 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       }
     }
 
-    // Payment status for the current month, from real payment history
-    final now = DateTime.now();
-    final currentMonth = '${now.year}-${now.month.toString().padLeft(2, '0')}';
-    final hasPaidThisMonth = _payments.any((p) => p['month'] == currentMonth && (p['status'] ?? 'COMPLETED') == 'COMPLETED');
-    final String paymentStatus = !hasApprovedRequest ? 'N/A' : (hasPaidThisMonth ? 'PAID' : 'PENDING');
-    final Color paymentColor = !hasApprovedRequest ? Colors.grey : (hasPaidThisMonth ? Colors.green : Colors.orange);
+    // Payment status for the current month, from the fare ledger
+    final fareStatus = _myFare?['status'];
+    final isFrozen = _myFare?['frozen'] == true;
+    String paymentStatus;
+    Color paymentColor;
+    if (!hasApprovedRequest || fareStatus == null) {
+      paymentStatus = 'N/A';
+      paymentColor = Colors.grey;
+    } else if (isFrozen) {
+      paymentStatus = 'FROZEN';
+      paymentColor = Colors.redAccent;
+    } else if (fareStatus == 'PAID') {
+      paymentStatus = 'PAID';
+      paymentColor = Colors.green;
+    } else if (fareStatus == 'EXEMPT') {
+      paymentStatus = 'EXEMPT';
+      paymentColor = Colors.white54;
+    } else {
+      paymentStatus = 'DUE BY 10TH';
+      paymentColor = Colors.orange;
+    }
 
     final isNarrow = MediaQuery.of(context).size.width < 900;
     final statCards = [
@@ -163,6 +179,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (isFrozen)
+              FrozenBanner(
+                amountDue: (_myFare?['amountDue'] as num?)?.toDouble() ?? 0,
+                month: _myFare?['month'] ?? '',
+              ),
+
             // Welcome Section
             const Text(
               'DASHBOARD',

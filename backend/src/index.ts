@@ -32,6 +32,8 @@ import notificationRoutes from './routes/notificationRoutes';
 import pollRoutes from './routes/pollRoutes';
 import adminRoutes from './routes/adminRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import fareRoutes from './routes/fareRoutes';
+import { startFareReminderJob } from './fareReminders';
 import path from 'path';
 
 // Middleware
@@ -48,6 +50,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/polls', pollRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/fares', fareRoutes);
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -73,4 +76,5 @@ app.get('/', (req: Request, res: Response) => {
 
 server.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+  startFareReminderJob();
 });

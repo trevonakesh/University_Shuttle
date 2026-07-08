@@ -22,63 +22,64 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
     _fetchData();
   }
 
+  Map<String, dynamic>? _myFare;
+
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
     final user = await ApiService.getUser();
     final payments = await ApiService.getStudentPayments();
     final requests = await ApiService.getStudentRequests();
-    
+    final fare = await ApiService.getMyFare();
+
     if (mounted) {
       setState(() {
         _user = user;
         _payments = payments;
         _myRequests = requests;
+        _myFare = fare;
         _isLoading = false;
       });
     }
   }
 
   void _showMakePaymentModal() async {
-    // Payments may only go to the driver the student is actually assigned to.
-    String? driverId;
-    if (_myRequests.any((r) => r['status'] == 'APPROVED')) {
-      final approvedReq = _myRequests.firstWhere((r) => r['status'] == 'APPROVED');
-      driverId = approvedReq['driverId'].toString();
+    final fare = _myFare;
+    if (fare == null || fare['assigned'] != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You need an approved bus assignment before you can pay.')),
+      );
+      return;
     }
-
-    if (driverId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You need an approved bus assignment before you can pay.')),
-        );
-      }
+    if (fare['status'] == 'PAID') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You have already paid for ${fare['month']}.')),
+      );
+      return;
+    }
+    if (fare['status'] == 'EXEMPT') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No fare is due for ${fare['month']} — your driver marked you as not travelling.')),
+      );
       return;
     }
 
-    final now = DateTime.now();
-    final month = '${now.year}-${now.month.toString().padLeft(2, '0')}';
-    final amountController = TextEditingController();
+    final month = fare['month'];
+    final amount = (fare['amountDue'] as num?)?.toDouble() ?? 0;
+    final driverName = fare['driverName'] ?? 'your driver';
 
+    // The server decides the amount and month; this dialog just confirms.
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E2128),
-        title: Text('Make a Payment ($month)', style: const TextStyle(color: Colors.white)),
+        title: Text('Pay $month Fare', style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.black),
-              decoration: const InputDecoration(
-                labelText: 'Amount (LKR)',
-                labelStyle: TextStyle(color: Colors.black54),
-                filled: true,
-                fillColor: Colors.white,
-                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
-              ),
-            ),
+            Text('Monthly fare to $driverName', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+            const SizedBox(height: 12),
+            Text('LKR ${amount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
@@ -89,27 +90,84 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
             onPressed: () async {
-              if (amountController.text.isNotEmpty) {
-                final amount = double.tryParse(amountController.text);
-                if (amount != null && amount > 0) {
-                  final res = await ApiService.createPayment({
-                    'driverId': int.parse(driverId!),
-                    'amount': amount,
-                    'month': month,
-                    'paymentMethod': 'IN_APP',
-                    'referenceNo': 'APP-${DateTime.now().millisecondsSinceEpoch}'
-                  });
-                  if (res['success']) {
-                    Navigator.pop(context);
-                    _fetchData();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Successful!')));
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
-                  }
-                }
+              final res = await ApiService.createPayment({
+                'referenceNo': 'APP-${DateTime.now().millisecondsSinceEpoch}'
+              });
+              if (!context.mounted) return;
+              if (res['success']) {
+                Navigator.pop(context);
+                _fetchData();
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Successful!')));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
               }
             },
             child: const Text('PAY NOW', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Status card for the current month: paid / due / overdue-frozen / exempt.
+  Widget _buildFareStatusCard() {
+    final fare = _myFare;
+    if (fare == null || fare['assigned'] != true) return const SizedBox.shrink();
+
+    final status = fare['status'] ?? 'UNPAID';
+    final frozen = fare['frozen'] == true;
+    final month = fare['month'] ?? '';
+    final dueDay = fare['dueDay'] ?? 10;
+    final amount = (fare['amountDue'] as num?)?.toDouble() ?? 0;
+
+    Color color;
+    IconData icon;
+    String title;
+    String message;
+
+    if (frozen) {
+      color = Colors.redAccent;
+      icon = Icons.lock;
+      title = 'ACCOUNT FROZEN';
+      message = 'Your $month fare (LKR ${amount.toStringAsFixed(2)}) was not paid by the ${dueDay}th. Pay now to unfreeze your account.';
+    } else if (status == 'PAID') {
+      color = Colors.green;
+      icon = Icons.check_circle;
+      title = '$month FARE PAID';
+      message = 'You are all set for this month. Thank you!';
+    } else if (status == 'EXEMPT') {
+      color = Colors.white54;
+      icon = Icons.event_busy;
+      title = 'NOT TRAVELLING THIS MONTH';
+      message = 'Your driver marked you as not travelling in $month. No fare is due.';
+    } else {
+      color = Colors.orange;
+      icon = Icons.schedule;
+      title = '$month FARE DUE';
+      message = 'Pay LKR ${amount.toStringAsFixed(2)} before the ${dueDay}th of the month to avoid your account being frozen.';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 25),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 30),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Text(message, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
           ),
         ],
       ),
@@ -156,7 +214,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
               "TRACK YOUR MONTHLY TRANSPORTATION FEES.",
               style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 25),
+
+            if (!_isLoading) _buildFareStatusCard(),
 
             if (_isLoading)
               const Center(child: CircularProgressIndicator())

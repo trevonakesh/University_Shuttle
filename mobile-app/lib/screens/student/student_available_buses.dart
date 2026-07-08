@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/dashboard_layout.dart';
+import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
 
 class StudentAvailableBusesScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
   Map<String, dynamic>? _user;
   List<dynamic> _buses = [];
   List<dynamic> _myRequests = [];
+  Map<String, dynamic>? _myFare;
   bool _isLoading = true;
   bool _isRequesting = false;
 
@@ -26,12 +28,14 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
     final user = await ApiService.getUser();
     final buses = await ApiService.getAvailableBuses();
     final requests = await ApiService.getStudentRequests();
-    
+    final fare = await ApiService.getMyFare();
+
     if (mounted) {
       setState(() {
         _user = user;
         _buses = buses;
         _myRequests = requests;
+        _myFare = fare;
         _isLoading = false;
       });
     }
@@ -267,7 +271,14 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
               style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 40),
-            if (_buses.isEmpty)
+            if (_myFare?['frozen'] == true)
+              Expanded(
+                child: FrozenLock(
+                  amountDue: (_myFare?['amountDue'] as num?)?.toDouble() ?? 0,
+                  month: _myFare?['month'] ?? '',
+                ),
+              )
+            else if (_buses.isEmpty)
               const Expanded(
                 child: Center(
                   child: Text('No buses available at the moment.', style: TextStyle(color: Colors.white54, fontSize: 18)),
