@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
 
 type Driver = {
   id: number;
@@ -30,29 +31,34 @@ type Driver = {
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/admin/drivers')
-      .then(res => res.json())
+    fetch(`${API_BASE}/api/admin/drivers`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data)) {
           setDrivers(data);
         } else {
           console.error('Expected array of drivers, got:', data);
-          setDrivers([]);
+          setError('Unexpected response from the server.');
         }
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
+        setError('Could not reach the backend. Is the API server running?');
         setLoading(false);
       });
   }, []);
 
   const updateStatus = async (id: number, status: string) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/admin/drivers/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/admin/drivers/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -62,9 +68,12 @@ export default function DriversPage() {
         if (selectedDriver?.id === id) {
           setSelectedDriver(null); // Close modal on action
         }
+      } else {
+        alert(`Failed to update driver status (HTTP ${res.status}).`);
       }
     } catch (err) {
       console.error(err);
+      alert('Failed to update driver status: could not reach the backend.');
     }
   };
 
@@ -74,7 +83,13 @@ export default function DriversPage() {
     <div>
       <h1>Driver Registrations</h1>
       <p className="subtitle">Manage and verify bus drivers on the platform.</p>
-      
+
+      {error && (
+        <div className="glass-panel" style={{ marginBottom: '20px', color: 'var(--danger, #e5484d)' }}>
+          {error}
+        </div>
+      )}
+
       <div className="glass-panel">
         <table className="data-table">
           <thead>
@@ -153,40 +168,40 @@ export default function DriversPage() {
                 {selectedDriver.profilePhotoUrl && (
                   <div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>Profile Photo</div>
-                    <a href={`http://localhost:3000${selectedDriver.profilePhotoUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`http://localhost:3000${selectedDriver.profilePhotoUrl}`} alt="Profile" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
+                    <a href={`${API_BASE}${selectedDriver.profilePhotoUrl}`} target="_blank" rel="noreferrer">
+                      <img src={`${API_BASE}${selectedDriver.profilePhotoUrl}`} alt="Profile" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
                     </a>
                   </div>
                 )}
                 {selectedDriver.nicCopyUrl && (
                   <div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>NIC Copy</div>
-                    <a href={`http://localhost:3000${selectedDriver.nicCopyUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`http://localhost:3000${selectedDriver.nicCopyUrl}`} alt="NIC" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
+                    <a href={`${API_BASE}${selectedDriver.nicCopyUrl}`} target="_blank" rel="noreferrer">
+                      <img src={`${API_BASE}${selectedDriver.nicCopyUrl}`} alt="NIC" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
                     </a>
                   </div>
                 )}
                 {selectedDriver.licenseCopyUrl && (
                   <div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>License</div>
-                    <a href={`http://localhost:3000${selectedDriver.licenseCopyUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`http://localhost:3000${selectedDriver.licenseCopyUrl}`} alt="License" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
+                    <a href={`${API_BASE}${selectedDriver.licenseCopyUrl}`} target="_blank" rel="noreferrer">
+                      <img src={`${API_BASE}${selectedDriver.licenseCopyUrl}`} alt="License" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
                     </a>
                   </div>
                 )}
                 {selectedDriver.vehicleRegUrl && (
                   <div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>Vehicle Reg</div>
-                    <a href={`http://localhost:3000${selectedDriver.vehicleRegUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`http://localhost:3000${selectedDriver.vehicleRegUrl}`} alt="Vehicle Reg" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
+                    <a href={`${API_BASE}${selectedDriver.vehicleRegUrl}`} target="_blank" rel="noreferrer">
+                      <img src={`${API_BASE}${selectedDriver.vehicleRegUrl}`} alt="Vehicle Reg" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
                     </a>
                   </div>
                 )}
                 {selectedDriver.busPhotoUrl && (
                   <div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>Bus Photo</div>
-                    <a href={`http://localhost:3000${selectedDriver.busPhotoUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`http://localhost:3000${selectedDriver.busPhotoUrl}`} alt="Bus Photo" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
+                    <a href={`${API_BASE}${selectedDriver.busPhotoUrl}`} target="_blank" rel="noreferrer">
+                      <img src={`${API_BASE}${selectedDriver.busPhotoUrl}`} alt="Bus Photo" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
                     </a>
                   </div>
                 )}

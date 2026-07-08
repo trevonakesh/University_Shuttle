@@ -171,10 +171,10 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                                   CircleAvatar(
                                     radius: 40,
                                     backgroundColor: Colors.white10,
-                                    backgroundImage: _myBus!['driver']['profilePhotoUrl'] != null 
-                                      ? NetworkImage(_myBus!['driver']['profilePhotoUrl']) 
+                                    backgroundImage: ApiService.resolveUrl(_myBus!['driver']['profilePhotoUrl']) != null
+                                      ? NetworkImage(ApiService.resolveUrl(_myBus!['driver']['profilePhotoUrl'])!)
                                       : null,
-                                    child: _myBus!['driver']['profilePhotoUrl'] == null 
+                                    child: ApiService.resolveUrl(_myBus!['driver']['profilePhotoUrl']) == null
                                       ? const Icon(Icons.person, color: Colors.white54, size: 40)
                                       : null,
                                   ),
@@ -242,23 +242,27 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                height: 200,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Colors.white10,
-                                  borderRadius: BorderRadius.circular(15),
-                                  image: _myBus!['driver']['busPhotoUrl'] != null
-                                    ? DecorationImage(
-                                        image: NetworkImage(_myBus!['driver']['busPhotoUrl']),
-                                        fit: BoxFit.cover,
-                                      )
+                              Builder(builder: (context) {
+                                final busPhotoUrl = ApiService.resolveUrl(_myBus!['driver']['busPhotoUrl']);
+                                return Container(
+                                  height: 200,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white10,
+                                    borderRadius: BorderRadius.circular(15),
+                                    image: busPhotoUrl != null
+                                      ? DecorationImage(
+                                          image: NetworkImage(busPhotoUrl),
+                                          fit: BoxFit.cover,
+                                          onError: (_, __) {},
+                                        )
+                                      : null,
+                                  ),
+                                  child: busPhotoUrl == null
+                                    ? const Icon(Icons.directions_bus, color: Colors.white24, size: 80)
                                     : null,
-                                ),
-                                child: _myBus!['driver']['busPhotoUrl'] == null
-                                  ? const Icon(Icons.directions_bus, color: Colors.white24, size: 80)
-                                  : null,
-                              ),
+                                );
+                              }),
                               const SizedBox(height: 30),
                               _buildInfoCard('Bus Registration', _myBus!['driver']['busRegNumber'] ?? 'N/A', Icons.confirmation_number),
                               _buildInfoCard('Route', _myBus!['driver']['routeName'] ?? 'N/A', Icons.route),

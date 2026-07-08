@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../widgets/app_background.dart';
 import 'student_register_screen.dart';
 import 'driver_register_screen.dart';
 
@@ -15,14 +16,7 @@ class RoleSelectionScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background Image with dark overlay
-          Image.network(
-            'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=3538&auto=format&fit=crop',
-            fit: BoxFit.cover,
-          ),
-          Container(
-            color: Colors.black.withOpacity(0.6),
-          ),
+          const AppBackground(overlayOpacity: 0.6),
           
           // Main Content
           SafeArea(

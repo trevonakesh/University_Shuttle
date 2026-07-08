@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/app_background.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../student/student_dashboard.dart';
@@ -115,11 +116,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=3538&auto=format&fit=crop',
-            fit: BoxFit.cover,
-          ),
-          Container(color: Colors.black.withOpacity(0.75)),
+          const AppBackground(overlayOpacity: 0.75),
           
           SafeArea(
             child: CustomScrollView(

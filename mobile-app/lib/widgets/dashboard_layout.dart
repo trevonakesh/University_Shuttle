@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../services/api_service.dart';
@@ -17,12 +16,15 @@ import '../screens/driver/driver_tracking.dart';
 import '../screens/driver/driver_passengers.dart';
 import '../screens/driver/driver_profile.dart';
 import '../screens/shared/info_screens.dart';
+import 'app_background.dart';
 
 class DashboardLayout extends StatelessWidget {
   final Widget child;
   final String userName;
   final String userRole;
   final int activeIndex;
+
+  static const double _mobileBreakpoint = 900;
 
   const DashboardLayout({
     Key? key,
@@ -34,19 +36,17 @@ class DashboardLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < _mobileBreakpoint;
+    return isMobile ? _buildMobile(context) : _buildDesktop(context);
+  }
+
+  Widget _buildDesktop(BuildContext context) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background Image with dark overlay
-          Image.network(
-            'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=3538&auto=format&fit=crop',
-            fit: BoxFit.cover,
-          ),
-          Container(
-            color: Colors.black.withOpacity(0.75),
-          ),
-          
+          const AppBackground(),
+
           // Main Layout
           Row(
             children: [
@@ -55,14 +55,14 @@ class DashboardLayout extends StatelessWidget {
                 width: 250,
                 child: _buildSidebar(context),
               ),
-              
+
               // Main Content Area
               Expanded(
                 child: Column(
                   children: [
                     // Top Header
                     _buildHeader(context),
-                    
+
                     // Dynamic Content (Student or Driver Dashboard)
                     Expanded(
                       child: child,
@@ -77,9 +77,110 @@ class DashboardLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildSidebar(BuildContext context) {
+  Widget _buildMobile(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.black87,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'UNI SHUTTLE',
+          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.white),
+            onPressed: () => _showNotifications(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.white),
+            onPressed: () => _openProfile(context),
+          ),
+        ],
+      ),
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF12141D),
+        child: SafeArea(child: _buildSidebar(context, inDrawer: true)),
+      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const AppBackground(),
+          child,
+        ],
+      ),
+    );
+  }
+
+  void _openProfile(BuildContext context) {
+    if (userRole == 'DRIVER') {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverProfileScreen()));
+    } else {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentProfileScreen()));
+    }
+  }
+
+  void _showNotifications(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A24),
+          title: const Text('NOTIFICATIONS', style: TextStyle(color: Colors.white, fontSize: 14, letterSpacing: 1)),
+          content: SizedBox(
+            width: 400,
+            child: FutureBuilder<List<dynamic>>(
+              future: ApiService.getNotifications(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const SizedBox(
+                    height: 80,
+                    child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                  );
+                }
+                final notifications = snapshot.data ?? [];
+                if (notifications.isEmpty) {
+                  return const SizedBox(
+                    height: 80,
+                    child: Center(child: Text('No notifications yet.', style: TextStyle(color: Colors.white54))),
+                  );
+                }
+                return SizedBox(
+                  height: 300,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: notifications.length,
+                    itemBuilder: (context, index) {
+                      final n = notifications[index];
+                      final isRead = n['isRead'] == true;
+                      return ListTile(
+                        leading: Icon(
+                          isRead ? Icons.notifications_none : Icons.notifications_active,
+                          color: isRead ? Colors.white38 : Colors.orangeAccent,
+                        ),
+                        title: Text(n['title'] ?? '', style: TextStyle(color: isRead ? Colors.white54 : Colors.white, fontSize: 13)),
+                        subtitle: Text(n['message'] ?? '', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                        onTap: isRead ? null : () => ApiService.markNotificationRead(n['id']),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CLOSE', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSidebar(BuildContext context, {bool inDrawer = false}) {
     return Container(
-      color: Colors.black.withOpacity(0.4),
+      color: inDrawer ? Colors.transparent : Colors.black.withOpacity(0.4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -91,7 +192,7 @@ class DashboardLayout extends StatelessWidget {
                 Icon(Icons.directions_bus, color: Colors.white, size: 28),
                 SizedBox(width: 12),
                 Text(
-                  'CAMPUS BUS SERVICE',
+                  'UNI SHUTTLE',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -103,7 +204,7 @@ class DashboardLayout extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Nav Items
           if (userRole == 'DRIVER') ...[
             _buildNavItem(Icons.dashboard, 'DASHBOARD', 0, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()))),
@@ -121,9 +222,9 @@ class DashboardLayout extends StatelessWidget {
             _buildNavItem(Icons.location_on, 'LIVE TRACKING', 5, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentTrackingScreen()))),
             _buildNavItem(Icons.notifications, 'NOTICES', 6, context, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => NoticeBoardScreen(isDriver: false, userName: userName)))),
           ],
-          
+
           const Spacer(),
-          
+
           // Logout
           _buildNavItem(Icons.logout, 'LOGOUT', 9, context, isLogout: true),
           const SizedBox(height: 20),
@@ -134,7 +235,7 @@ class DashboardLayout extends StatelessWidget {
 
   Widget _buildNavItem(IconData icon, String title, int index, BuildContext context, {bool isLogout = false, VoidCallback? onTap}) {
     final isActive = index == activeIndex;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -186,20 +287,17 @@ class DashboardLayout extends StatelessWidget {
           _buildHeaderLink('FAQS', context),
           _buildHeaderLink('CONTACT', context),
           const SizedBox(width: 20),
-          const Icon(Icons.notifications_none, color: Colors.white, size: 24),
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.white, size: 24),
+            onPressed: () => _showNotifications(context),
+          ),
           const SizedBox(width: 20),
-          
+
           // Profile
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
-              onTap: () {
-                if (userRole == 'DRIVER') {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverProfileScreen()));
-                } else {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentProfileScreen()));
-                }
-              },
+              onTap: () => _openProfile(context),
               child: Row(
                 children: [
                   const CircleAvatar(
@@ -236,13 +334,7 @@ class DashboardLayout extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          if (text == 'HOME') {
-            if (userRole == 'DRIVER') {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
-            } else {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()));
-            }
-          } else if (text == 'ABOUT US') {
+          if (text == 'ABOUT US') {
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AboutUsScreen()));
           } else if (text == 'SERVICES') {
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));

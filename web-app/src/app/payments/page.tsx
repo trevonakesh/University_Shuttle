@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../../lib/api';
 
 type Payment = {
   id: number;
   amount: number;
+  adminCommission: number;
   month: string;
   status: string;
   paymentDate: string;
@@ -12,50 +14,32 @@ type Payment = {
   driver: { fullName: string; busRegNumber: string };
 };
 
-type DriverEarning = {
-  driverName: string;
-  busReg: string;
-  totalEarnings: number;
-  paymentCount: number;
-};
-
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [driverEarnings, setDriverEarnings] = useState<DriverEarning[]>([]);
+  const [selectedDriver, setSelectedDriver] = useState<string>('All');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/admin/payments')
-      .then(res => res.json())
-      .then(data => {
+    fetch(`${API_BASE}/api/admin/payments`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+        return res.json();
+      })
+      .then(raw => {
+        if (!Array.isArray(raw)) {
+          console.error('Expected array of payments, got:', raw);
+          setError('Unexpected response from the server.');
+          setLoading(false);
+          return;
+        }
+        const data = raw;
         setPayments(data);
-        
-        // Calculate earnings per driver
-        const earningsMap = new Map<string, DriverEarning>();
-        
-        data.forEach((p: Payment) => {
-          if (p.status === 'COMPLETED') {
-            const key = p.driver.fullName;
-            if (earningsMap.has(key)) {
-              const current = earningsMap.get(key)!;
-              current.totalEarnings += p.amount;
-              current.paymentCount += 1;
-            } else {
-              earningsMap.set(key, {
-                driverName: p.driver.fullName,
-                busReg: p.driver.busRegNumber,
-                totalEarnings: p.amount,
-                paymentCount: 1
-              });
-            }
-          }
-        });
-        
-        setDriverEarnings(Array.from(earningsMap.values()));
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
+        setError('Could not reach the backend. Is the API server running?');
         setLoading(false);
       });
   }, []);
@@ -66,29 +50,27 @@ export default function PaymentsPage() {
     <div>
       <h1>Platform Payments</h1>
       <p className="subtitle">Overview of all transactions and driver earnings.</p>
-      
-      <div style={{ display: 'flex', gap: '24px', marginBottom: '40px' }}>
-        {driverEarnings.map((earning, idx) => (
-          <div key={idx} className="glass-panel" style={{ flex: 1, minWidth: '200px' }}>
-            <h3 style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '8px' }}>
-              {earning.driverName} ({earning.busReg})
-            </h3>
-            <div style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--success)' }}>
-              Rs. {earning.totalEarnings.toLocaleString()}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>
-              From {earning.paymentCount} completed payments
-            </div>
-          </div>
-        ))}
-        {driverEarnings.length === 0 && (
-          <div className="glass-panel" style={{ flex: 1 }}>
-            No earnings data available yet.
-          </div>
-        )}
+
+      {error && (
+        <div className="glass-panel" style={{ marginBottom: '20px', color: 'var(--danger, #e5484d)' }}>
+          {error}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ margin: 0 }}>Recent Transactions</h2>
+        <select
+          value={selectedDriver}
+          onChange={(e) => setSelectedDriver(e.target.value)}
+          style={{ padding: '10px 15px', borderRadius: '8px', background: 'var(--bg-glass)', color: 'var(--text)', border: '1px solid var(--border)', outline: 'none' }}
+        >
+          <option value="All" style={{ color: 'black' }}>All Drivers</option>
+          {Array.from(new Set(payments.map(p => p.driver.fullName))).map(driver => (
+            <option key={driver} value={driver} style={{ color: 'black' }}>{driver}</option>
+          ))}
+        </select>
       </div>
 
-      <h2>Recent Transactions</h2>
       <div className="glass-panel">
         <table className="data-table">
           <thead>
@@ -97,14 +79,16 @@ export default function PaymentsPage() {
               <th>Student</th>
               <th>Driver</th>
               <th>Month</th>
-              <th>Amount</th>
+              <th>Total Amount</th>
+              <th>Admin Earns</th>
+              <th>Driver Earns</th>
               <th>Method</th>
               <th>Status</th>
               <th>Date</th>
             </tr>
           </thead>
           <tbody>
-            {payments.map(payment => (
+            {(selectedDriver === 'All' ? payments : payments.filter(p => p.driver.fullName === selectedDriver)).map(payment => (
               <tr key={payment.id}>
                 <td>#{payment.id}</td>
                 <td>
@@ -117,6 +101,8 @@ export default function PaymentsPage() {
                 </td>
                 <td>{payment.month}</td>
                 <td style={{ fontWeight: 'bold' }}>Rs. {payment.amount}</td>
+                <td style={{ color: 'var(--accent)' }}>Rs. {payment.adminCommission || 0}</td>
+                <td style={{ color: 'var(--success)' }}>Rs. {payment.amount - (payment.adminCommission || 0)}</td>
                 <td>{payment.paymentMethod}</td>
                 <td>
                   <span className={`badge ${payment.status.toLowerCase()}`}>
@@ -126,9 +112,9 @@ export default function PaymentsPage() {
                 <td>{new Date(payment.paymentDate).toLocaleDateString()}</td>
               </tr>
             ))}
-            {payments.length === 0 && (
+            {(selectedDriver === 'All' ? payments : payments.filter(p => p.driver.fullName === selectedDriver)).length === 0 && (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center' }}>No payments found.</td>
+                <td colSpan={10} style={{ textAlign: 'center' }}>No payments found.</td>
               </tr>
             )}
           </tbody>

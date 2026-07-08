@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../widgets/app_background.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../services/api_service.dart';
 import '../driver/driver_dashboard.dart';
@@ -97,14 +98,7 @@ class _DriverPendingScreenState extends State<DriverPendingScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background Image with dark overlay
-          Image.network(
-            'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=3538&auto=format&fit=crop',
-            fit: BoxFit.cover,
-          ),
-          Container(
-            color: Colors.black.withOpacity(0.6),
-          ),
+          const AppBackground(overlayOpacity: 0.6),
           
           SafeArea(
             child: Center(

@@ -16,6 +16,13 @@ class ApiService {
     }
   }
 
+  // Converts a backend-relative path (e.g. /uploads/x.jpg) to an absolute URL.
+  static String? resolveUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    if (path.startsWith('http')) return path;
+    return '${baseUrl.replaceAll('/api', '')}$path';
+  }
+
   static Future<void> saveToken(String token, String role, Map<String, dynamic> user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('jwt_token', token);
@@ -61,6 +68,22 @@ class ApiService {
       print('fetchMe error: $e');
     }
     return await getUser();
+  }
+
+  // Returns false only when the server explicitly rejects the token (401),
+  // so an offline user can still reach their cached session.
+  static Future<bool> validateToken() async {
+    final token = await getToken();
+    if (token == null) return false;
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: await _getHeaders(),
+      );
+      return response.statusCode != 401;
+    } catch (e) {
+      return true;
+    }
   }
 
   static Future<void> logout() async {
@@ -400,6 +423,26 @@ class ApiService {
     } catch (e) {
       print('getDriverPayments error: $e');
       return [];
+    }
+  }
+
+  // --- Notification APIs ---
+  static Future<List<dynamic>> getNotifications() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/notifications'), headers: await _getHeaders());
+      if (response.statusCode == 200) return jsonDecode(response.body)['notifications'] ?? [];
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<bool> markNotificationRead(int id) async {
+    try {
+      final response = await http.patch(Uri.parse('$baseUrl/notifications/$id/read'), headers: await _getHeaders());
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 

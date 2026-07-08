@@ -39,30 +39,31 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
   }
 
   void _showMakePaymentModal() async {
-    // Attempt to get actual driver ID from student requests
+    // Payments may only go to the driver the student is actually assigned to.
     String? driverId;
-    if (_myRequests.isNotEmpty && _myRequests.any((r) => r['status'] == 'APPROVED')) {
+    if (_myRequests.any((r) => r['status'] == 'APPROVED')) {
       final approvedReq = _myRequests.firstWhere((r) => r['status'] == 'APPROVED');
       driverId = approvedReq['driverId'].toString();
-    } else {
-      final buses = await ApiService.getAvailableBuses();
-      if (buses.isNotEmpty) {
-        driverId = buses[0]['id'].toString();
-      }
     }
 
     if (driverId == null) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No assigned driver found')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You need an approved bus assignment before you can pay.')),
+        );
+      }
       return;
     }
 
+    final now = DateTime.now();
+    final month = '${now.year}-${now.month.toString().padLeft(2, '0')}';
     final amountController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E2128),
-        title: const Text('Make a Payment', style: TextStyle(color: Colors.white)),
+        title: Text('Make a Payment ($month)', style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -90,11 +91,11 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
             onPressed: () async {
               if (amountController.text.isNotEmpty) {
                 final amount = double.tryParse(amountController.text);
-                if (amount != null) {
+                if (amount != null && amount > 0) {
                   final res = await ApiService.createPayment({
                     'driverId': int.parse(driverId!),
                     'amount': amount,
-                    'month': '2026-06',
+                    'month': month,
                     'paymentMethod': 'IN_APP',
                     'referenceNo': 'APP-${DateTime.now().millisecondsSinceEpoch}'
                   });

@@ -12,8 +12,12 @@ export const getBuses = async (req: AuthRequest, res: Response): Promise<void> =
       const student = await prisma.student.findUnique({
         where: { userId: req.user.userId }
       });
-      if (student?.universityName) {
-        whereClause.destination = { contains: student.universityName, mode: 'insensitive' };
+      whereClause.status = 'APPROVED'; // Only show approved drivers
+      if (student?.destination) {
+        whereClause.OR = [
+          { destination: { contains: student.destination, mode: 'insensitive' } },
+          { routeName: { contains: student.destination, mode: 'insensitive' } }
+        ];
       }
     } else {
       if (destination) {

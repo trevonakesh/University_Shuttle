@@ -132,20 +132,24 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
             // Bus Image (1:1 Thumbnail)
             AspectRatio(
               aspectRatio: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white10,
-                  image: bus['busPhotoUrl'] != null
-                    ? DecorationImage(
-                        image: NetworkImage(bus['busPhotoUrl']),
-                        fit: BoxFit.cover,
-                      )
+              child: Builder(builder: (context) {
+                final busPhotoUrl = ApiService.resolveUrl(bus['busPhotoUrl']);
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    image: busPhotoUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(busPhotoUrl),
+                          fit: BoxFit.cover,
+                          onError: (_, __) {},
+                        )
+                      : null,
+                  ),
+                  child: busPhotoUrl == null
+                    ? const Center(child: Icon(Icons.directions_bus, color: Colors.white24, size: 40))
                     : null,
-                ),
-                child: bus['busPhotoUrl'] == null
-                  ? const Center(child: Icon(Icons.directions_bus, color: Colors.white24, size: 40))
-                  : null,
-              ),
+                );
+              }),
             ),
             
             // Bus Details

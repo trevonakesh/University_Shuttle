@@ -21,7 +21,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
   // Starting location in Colombo
   LatLng _busLocation = const LatLng(6.9271, 79.8612);
   bool _isBusOnline = false;
-  String _driverIdToTrack = "1"; // Fallback to 1
+  String? _driverIdToTrack;
   bool _isLoading = true;
 
   @override
@@ -40,40 +40,35 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
       _myRequests = requests;
     });
     
-    // Attempt to get actual driver ID from student requests
-    if (requests.isNotEmpty && requests.any((r) => r['status'] == 'APPROVED')) {
+    // Only track the driver the student is actually assigned to.
+    if (requests.any((r) => r['status'] == 'APPROVED')) {
       final approvedReq = requests.firstWhere((r) => r['status'] == 'APPROVED');
       _driverIdToTrack = approvedReq['driverId'].toString();
-    } else {
-      // Try to get any driver from available buses if no request exists
-      final buses = await ApiService.getAvailableBuses();
-      if (buses.isNotEmpty) {
-        _driverIdToTrack = buses[0]['id'].toString();
-      }
     }
-    
-    // Connect to Socket.IO
-    final baseUrl = ApiService.baseUrl.replaceAll('/api', '');
-    _socket = IO.io(baseUrl, <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-    });
-    
-    _socket!.connect();
-    
-    _socket!.onConnect((_) {
-      print('Connected to Socket.IO server. Joining room driver_$_driverIdToTrack');
-      _socket!.emit('joinStudentRoom', _driverIdToTrack);
-    });
-    
-    _socket!.on('busLocationUpdate', (data) {
-      if (mounted) {
-        setState(() {
-          _isBusOnline = true;
-          _busLocation = LatLng(data['latitude'], data['longitude']);
-        });
-      }
-    });
+
+    // Connect to Socket.IO only when there is a bus to track.
+    if (_driverIdToTrack != null) {
+      final baseUrl = ApiService.baseUrl.replaceAll('/api', '');
+      _socket = IO.io(baseUrl, <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': false,
+      });
+
+      _socket!.connect();
+
+      _socket!.onConnect((_) {
+        _socket!.emit('joinStudentRoom', _driverIdToTrack);
+      });
+
+      _socket!.on('busLocationUpdate', (data) {
+        if (mounted) {
+          setState(() {
+            _isBusOnline = true;
+            _busLocation = LatLng(data['latitude'], data['longitude']);
+          });
+        }
+      });
+    }
 
     if (mounted) {
       setState(() => _isLoading = false);

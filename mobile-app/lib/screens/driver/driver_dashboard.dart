@@ -14,6 +14,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _requests = [];
   Map<String, dynamic>? _todayPoll;
+  bool _isTodayPoll = false;
   int _totalStudents = 0;
   double _walletBalance = 0.0;
   bool _isLoading = true;
@@ -30,13 +31,26 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final wallet = await ApiService.getWalletBalance();
     final polls = await ApiService.getDriverPolls();
     
+    // Prefer the poll targeting today's date; otherwise fall back to the
+    // most recently created one (and label it as such).
+    final now = DateTime.now();
+    final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    Map<String, dynamic>? todayPoll;
+    for (final p in polls) {
+      if (p['date'] == today) {
+        todayPoll = p;
+        break;
+      }
+    }
+
     if (mounted) {
       setState(() {
         _user = user;
         _totalStudents = requests.where((r) => r['status'] == 'APPROVED').length;
         _requests = requests.where((r) => r['status'] == 'PENDING').toList();
         _walletBalance = wallet;
-        _todayPoll = polls.isNotEmpty ? polls.first : null;
+        _isTodayPoll = todayPoll != null;
+        _todayPoll = todayPoll ?? (polls.isNotEmpty ? polls.first : null);
         _isLoading = false;
       });
     }
@@ -128,156 +142,192 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final firstName = name.split(' ').first;
     final seats = profile?['busCapacity']?.toString() ?? '-';
 
-    return DashboardLayout(
-      userName: name,
-      userRole: 'DRIVER',
-      activeIndex: 0,
-      child: Padding(
+    final isNarrow = MediaQuery.of(context).size.width < 900;
+    final statCards = [
+      _buildStatCard('TOTAL STUDENTS', _totalStudents.toString(), Icons.school, Colors.white),
+      _buildStatCard('SEATS', seats, Icons.event_seat, Colors.white),
+      _buildStatCard('WALLET BALANCE', 'LKR ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, _walletBalance > 0 ? Colors.greenAccent : Colors.redAccent),
+      _buildStatCard('PENDING REQUESTS', _requests.length.toString(), Icons.swap_calls, Colors.white),
+    ];
+
+    final header = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'DRIVER DASHBOARD',
+          style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          "WELCOME BACK, ${firstName.toUpperCase()}! HERE'S YOUR OVERVIEW",
+          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+
+    final Widget body;
+    if (isNarrow) {
+      // Stacked, scrollable layout for phones / narrow windows
+      body = SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            header,
+            const SizedBox(height: 25),
+            for (final card in statCards) ...[card, const SizedBox(height: 15)],
+            const SizedBox(height: 15),
+            SizedBox(height: 420, child: _buildRequestsPanel()),
+            const SizedBox(height: 20),
+            SizedBox(height: 400, child: _buildPollPanel(coming, notComing, comingPct, notComingPct)),
+          ],
+        ),
+      );
+    } else {
+      body = Padding(
         padding: const EdgeInsets.all(40.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Section
-            const Text(
-              'DRIVER DASHBOARD',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "WELCOME BACK, ${firstName.toUpperCase()}! HERE'S YOUR OVERVIEW",
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            header,
             const SizedBox(height: 40),
-            
+
             // Stats Row
             Row(
               children: [
-                Expanded(child: _buildStatCard('TOTAL STUDENTS', _totalStudents.toString(), Icons.school, Colors.white)),
-                const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('SEATS', seats, Icons.event_seat, Colors.white)),
-                const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('WALLET BALANCE', 'LKR ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, _walletBalance > 0 ? Colors.greenAccent : Colors.redAccent)),
-                const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('PENDING REQUESTS', _requests.length.toString(), Icons.swap_calls, Colors.white)),
+                for (int i = 0; i < statCards.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 20),
+                  Expanded(child: statCards[i]),
+                ],
               ],
             ),
             const SizedBox(height: 40),
-            
+
             // Bottom Section (Requests & Poll)
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Recent Student Requests
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'PENDING STUDENT REQUESTS',
-                                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
-                                ),
-                                TextButton(
-                                  onPressed: _fetchData,
-                                  child: const Text('REFRESH', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Divider(color: Colors.white24, height: 1),
-                          Expanded(
-                            child: _requests.isEmpty 
-                              ? const Center(child: Text('NO PENDING REQUESTS', style: TextStyle(color: Colors.white54)))
-                              : ListView.separated(
-                                  itemCount: _requests.length,
-                                  separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
-                                  itemBuilder: (context, index) {
-                                    final req = _requests[index];
-                                    return _buildRequestItem(req);
-                                  },
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  Expanded(flex: 2, child: _buildRequestsPanel()),
                   const SizedBox(width: 20),
-                  
-                  // Today's Poll
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(20.0),
-                            child: Text(
-                              "TODAY'S POLL",
-                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
-                            ),
-                          ),
-                          const Divider(color: Colors.white24, height: 1),
-                          Padding(
-                            padding: const EdgeInsets.all(30.0),
-                            child: _todayPoll == null 
-                              ? const Center(child: Text('NO POLLS AVAILABLE', style: TextStyle(color: Colors.white54)))
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${_todayPoll!['question']}\n(${_todayPoll!['date']})',
-                                      style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
-                                    ),
-                                    const SizedBox(height: 30),
-                                    _buildPollBar('${(_todayPoll!['option1'] ?? 'COMING').toString().toUpperCase()} ($coming)', Colors.lightGreenAccent, comingPct),
-                                    const SizedBox(height: 20),
-                                    _buildPollBar('${(_todayPoll!['option2'] ?? 'NOT COMING').toString().toUpperCase()} ($notComing)', Colors.redAccent, notComingPct),
-                                  ],
-                                ),
-                          ),
-                          const Spacer(),
-                          if (_todayPoll != null)
-                            Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                    side: const BorderSide(color: Colors.white30),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
-                                ),
-                                onPressed: _showComingStudents,
-                                child: const Text('VIEW DETAILS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  Expanded(child: _buildPollPanel(coming, notComing, comingPct, notComingPct)),
                 ],
               ),
             ),
           ],
         ),
+      );
+    }
+
+    return DashboardLayout(
+      userName: name,
+      userRole: 'DRIVER',
+      activeIndex: 0,
+      child: body,
+    );
+  }
+
+  Widget _buildRequestsPanel() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Flexible(
+                  child: Text(
+                    'PENDING STUDENT REQUESTS',
+                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                TextButton(
+                  onPressed: _fetchData,
+                  child: const Text('REFRESH', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+          const Divider(color: Colors.white24, height: 1),
+          Expanded(
+            child: _requests.isEmpty
+              ? const Center(child: Text('NO PENDING REQUESTS', style: TextStyle(color: Colors.white54)))
+              : ListView.separated(
+                  itemCount: _requests.length,
+                  separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
+                  itemBuilder: (context, index) {
+                    final req = _requests[index];
+                    return _buildRequestItem(req);
+                  },
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPollPanel(int coming, int notComing, double comingPct, double notComingPct) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text(
+              _isTodayPoll ? "TODAY'S POLL" : 'LATEST POLL',
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+            ),
+          ),
+          const Divider(color: Colors.white24, height: 1),
+          Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: _todayPoll == null
+              ? const Center(child: Text('NO POLLS AVAILABLE', style: TextStyle(color: Colors.white54)))
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_todayPoll!['question']}\n(${_todayPoll!['date']})',
+                      style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
+                    ),
+                    const SizedBox(height: 30),
+                    _buildPollBar('${(_todayPoll!['option1'] ?? 'COMING').toString().toUpperCase()} ($coming)', Colors.lightGreenAccent, comingPct),
+                    const SizedBox(height: 20),
+                    _buildPollBar('${(_todayPoll!['option2'] ?? 'NOT COMING').toString().toUpperCase()} ($notComing)', Colors.redAccent, notComingPct),
+                  ],
+                ),
+          ),
+          const Spacer(),
+          if (_todayPoll != null)
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: Colors.white30),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                ),
+                onPressed: _showComingStudents,
+                child: const Text('VIEW DETAILS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -371,7 +421,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final student = req['student'] ?? {};
     final name = student['fullName'] ?? 'Unknown';
     final pickup = student['pickupPoint'] ?? 'Unknown';
-    final date = req['createdAt'].toString().substring(0, 10);
+    final created = (req['createdAt'] ?? '').toString();
+    final date = created.length >= 10 ? created.substring(0, 10) : created;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),

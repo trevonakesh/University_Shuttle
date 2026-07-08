@@ -139,8 +139,9 @@ model Payment {
   id            Int           @id @default(autoincrement())
   studentId     Int
   driverId      Int
-  amount        Float
-  month         String        // e.g. "2026-06"
+  amount          Float
+  adminCommission Float         @default(0)
+  month           String        // e.g. "2026-06"
   status        PaymentStatus @default(COMPLETED)
   paymentMethod String        // e.g. "IN_APP", "CASH"
   referenceNo   String?

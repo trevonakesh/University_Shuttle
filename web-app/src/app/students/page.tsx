@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../../lib/api';
 
 type Driver = { id: number; fullName: string };
 type Student = {
@@ -15,25 +16,44 @@ export default function StudentsPage() {
   const [selectedDriver, setSelectedDriver] = useState<number | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/admin/drivers')
-      .then(res => res.json())
-      .then(data => setDrivers(data.filter((d: any) => d.status === 'APPROVED')))
-      .catch(console.error);
+    fetch(`${API_BASE}/api/admin/drivers`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setDrivers(data.filter((d: any) => d.status === 'APPROVED'));
+        } else {
+          console.error('Expected array of drivers, got:', data);
+          setError('Unexpected response from the server.');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        setError('Could not reach the backend. Is the API server running?');
+      });
   }, []);
 
   useEffect(() => {
     if (selectedDriver) {
       setLoading(true);
-      fetch(`http://localhost:3000/api/admin/drivers/${selectedDriver}/students`)
-        .then(res => res.json())
+      fetch(`${API_BASE}/api/admin/drivers/${selectedDriver}/students`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+          return res.json();
+        })
         .then(data => {
-          setStudents(data);
+          setStudents(Array.isArray(data) ? data : []);
           setLoading(false);
         })
         .catch(err => {
           console.error(err);
+          setError('Failed to load students for this driver.');
+          setStudents([]);
           setLoading(false);
         });
     } else {
@@ -45,7 +65,13 @@ export default function StudentsPage() {
     <div>
       <h1>Student Management</h1>
       <p className="subtitle">View students assigned to specific drivers.</p>
-      
+
+      {error && (
+        <div className="glass-panel" style={{ marginBottom: '20px', color: 'var(--danger, #e5484d)' }}>
+          {error}
+        </div>
+      )}
+
       <div style={{ marginBottom: '24px' }}>
         <label style={{ marginRight: '16px', color: 'var(--text-muted)' }}>Select Driver:</label>
         <select 

@@ -23,7 +23,7 @@ class LankaTripApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LankaTrip UI Test',
+      title: 'Uni Shuttle',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),

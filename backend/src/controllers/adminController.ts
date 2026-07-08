@@ -79,7 +79,7 @@ export const getPayments = async (req: Request, res: Response) => {
           select: { fullName: true, studentId: true }
         },
         driver: {
-          select: { fullName: true, busRegNumber: true }
+          select: { fullName: true, busRegNumber: true, walletBalance: true }
         }
       },
       orderBy: { paymentDate: 'desc' }

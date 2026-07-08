@@ -14,6 +14,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _buses = [];
   List<dynamic> _myRequests = [];
+  List<dynamic> _payments = [];
   bool _isLoading = true;
 
   @override
@@ -26,15 +27,30 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     final user = await ApiService.fetchMe();
     final buses = await ApiService.getAvailableBuses();
     final requests = await ApiService.getStudentRequests();
-    
+    final payments = await ApiService.getStudentPayments();
+
     if (mounted) {
       setState(() {
         _user = user;
         _buses = buses;
         _myRequests = requests;
+        _payments = payments;
         _isLoading = false;
       });
     }
+  }
+
+  String get _greeting {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'GOOD MORNING';
+    if (hour < 17) return 'GOOD AFTERNOON';
+    return 'GOOD EVENING';
+  }
+
+  IconData get _greetingIcon {
+    final hour = DateTime.now().hour;
+    if (hour < 17) return Icons.wb_sunny_outlined;
+    return Icons.nightlight_outlined;
   }
 
   Future<void> _requestSeat(int driverId) async {
@@ -109,23 +125,41 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     String status = 'NO REQUEST';
     Color statusColor = Colors.grey;
     bool hasActiveRequestAnywhere = false;
+    bool hasApprovedRequest = false;
 
     for (var req in _myRequests) {
       if (req['status'] == 'PENDING' || req['status'] == 'APPROVED') {
         hasActiveRequestAnywhere = true;
         status = req['status'];
         if (status == 'PENDING') statusColor = Colors.orange;
-        if (status == 'APPROVED') statusColor = Colors.green;
+        if (status == 'APPROVED') {
+          statusColor = Colors.green;
+          hasApprovedRequest = true;
+        }
         break;
       }
     }
+
+    // Payment status for the current month, from real payment history
+    final now = DateTime.now();
+    final currentMonth = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    final hasPaidThisMonth = _payments.any((p) => p['month'] == currentMonth && (p['status'] ?? 'COMPLETED') == 'COMPLETED');
+    final String paymentStatus = !hasApprovedRequest ? 'N/A' : (hasPaidThisMonth ? 'PAID' : 'PENDING');
+    final Color paymentColor = !hasApprovedRequest ? Colors.grey : (hasPaidThisMonth ? Colors.green : Colors.orange);
+
+    final isNarrow = MediaQuery.of(context).size.width < 900;
+    final statCards = [
+      _buildStatCard('SEAT STATUS', status, 'Current Booking', Icons.event_seat, statusColor),
+      _buildStatCard('PAYMENT STATUS', paymentStatus, 'THIS MONTH', Icons.attach_money, paymentColor),
+      _buildStatCard('ACTIVE BUSES', _buses.length.toString(), 'AVAILABLE NOW', Icons.directions_bus, Colors.green),
+    ];
 
     return DashboardLayout(
       userName: name,
       userRole: 'STUDENT',
       activeIndex: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(40.0),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(isNarrow ? 16.0 : 40.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -137,11 +171,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             const SizedBox(height: 10),
             Row(
               children: [
-                Text(
-                  'GOOD MORNING, ${firstName.toUpperCase()}! ',
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                Flexible(
+                  child: Text(
+                    '$_greeting, ${firstName.toUpperCase()}! ',
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Icon(Icons.wb_sunny_outlined, color: Colors.white70, size: 20),
+                Icon(_greetingIcon, color: Colors.white70, size: 20),
               ],
             ),
             const SizedBox(height: 5),
@@ -150,19 +187,25 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 30),
-            
-            // Stats Row
-            Row(
-              children: [
-                Expanded(child: _buildStatCard('SEAT STATUS', status, 'Current Booking', Icons.event_seat, statusColor)),
-                const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('PAYMENT STATUS', 'PENDING', 'THIS MONTH', Icons.attach_money, Colors.orange)),
-                const SizedBox(width: 20),
-                Expanded(child: _buildStatCard('ACTIVE BUSES', _buses.length.toString(), 'AVAILABLE NOW', Icons.directions_bus, Colors.green)),
-              ],
-            ),
+
+            // Stats: side by side on wide screens, stacked on narrow ones
+            if (isNarrow)
+              Column(
+                children: [
+                  for (final card in statCards) ...[card, const SizedBox(height: 15)],
+                ],
+              )
+            else
+              Row(
+                children: [
+                  for (int i = 0; i < statCards.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 20),
+                    Expanded(child: statCards[i]),
+                  ],
+                ],
+              ),
             const SizedBox(height: 40),
-            
+
             // Available Buses Near You
             Container(
               decoration: BoxDecoration(
@@ -292,26 +335,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             ),
           ),
           
-          // Status
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.green,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'ACTIVE',
-                style: TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1),
-              ),
-            ],
-          ),
-          const SizedBox(width: 40),
-          
+          const SizedBox(width: 10),
+
           // Button
           ElevatedButton(
             style: ElevatedButton.styleFrom(

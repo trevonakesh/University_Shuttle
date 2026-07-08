@@ -25,13 +25,18 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    const numAmount = Number(amount);
+    const adminCommission = numAmount * 0.10;
+    const driverAmount = numAmount - adminCommission;
+
     // Use a transaction to both record the payment and update the driver's wallet
     const [payment] = await prisma.$transaction([
       prisma.payment.create({
         data: {
           studentId: student.id,
           driverId: driver.id,
-          amount,
+          amount: numAmount,
+          adminCommission,
           month,
           status: PaymentStatus.COMPLETED,
           paymentMethod: paymentMethod || 'IN_APP',
@@ -42,7 +47,7 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
         where: { id: driver.id },
         data: {
           walletBalance: {
-            increment: amount
+            increment: driverAmount
           }
         }
       })
@@ -50,7 +55,8 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
 
     res.status(201).json({ message: 'Payment recorded successfully', payment });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('Error creating payment:', error);
+    res.status(500).json({ error: 'Server error', details: error.message || error.toString() });
   }
 };
 

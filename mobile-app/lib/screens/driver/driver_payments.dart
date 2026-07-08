@@ -114,11 +114,12 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> {
                         padding: const EdgeInsets.all(20.0),
                         child: Row(
                           children: const [
-                            Expanded(flex: 3, child: Text('STUDENT NAME', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                            Expanded(flex: 3, child: Text('STUDENT', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                             Expanded(flex: 2, child: Text('MONTH', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                            Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                            Expanded(flex: 2, child: Text('TOTAL', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                            Expanded(flex: 2, child: Text('PLATFORM FEE', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                            Expanded(flex: 2, child: Text('NET EARNED', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                             Expanded(flex: 2, child: Text('STATUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                            Expanded(flex: 2, child: Text('METHOD', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                           ],
                         ),
                       ),
@@ -129,14 +130,19 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> {
                           itemBuilder: (context, index) {
                             final payment = _payments[index];
                             final studentName = payment['student']?['fullName'] ?? 'Student';
+                            final totalAmount = payment['amount'] ?? 0;
+                            final commission = payment['adminCommission'] ?? 0;
+                            final netEarned = totalAmount - commission;
+                            
                             return Column(
                               children: [
                                 _buildPassengerRow(
                                   studentName, 
                                   payment['month'] ?? '-', 
-                                  'LKR ${payment['amount']}', 
+                                  'LKR $totalAmount', 
+                                  'LKR $commission', 
+                                  'LKR $netEarned', 
                                   payment['status'] == 'COMPLETED',
-                                  payment['paymentMethod'] ?? 'IN_APP',
                                 ),
                                 if (index < _payments.length - 1)
                                   const Divider(color: Colors.white10, height: 1),
@@ -155,7 +161,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> {
     );
   }
 
-  Widget _buildPassengerRow(String name, String month, String amount, bool hasPaid, String method) {
+  Widget _buildPassengerRow(String name, String month, String amount, String commission, String netEarned, bool hasPaid) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       child: Row(
@@ -175,7 +181,9 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> {
             ),
           ),
           Expanded(flex: 2, child: Text(month, style: const TextStyle(color: Colors.white70))),
-          Expanded(flex: 2, child: Text(amount, style: const TextStyle(color: Colors.white))),
+          Expanded(flex: 2, child: Text(amount, style: const TextStyle(color: Colors.white54))),
+          Expanded(flex: 2, child: Text(commission, style: const TextStyle(color: Colors.redAccent))),
+          Expanded(flex: 2, child: Text(netEarned, style: const TextStyle(color: Colors.green))),
           Expanded(
             flex: 2,
             child: Row(
@@ -196,7 +204,6 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> {
               ],
             ),
           ),
-          Expanded(flex: 2, child: Text(method, style: const TextStyle(color: Colors.white54))),
         ],
       ),
     );

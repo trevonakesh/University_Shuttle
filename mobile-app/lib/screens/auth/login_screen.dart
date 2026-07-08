@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'role_selection_screen.dart';
+import '../../widgets/app_background.dart';
 import '../../services/api_service.dart';
 import '../student/student_dashboard.dart';
 import '../driver/driver_dashboard.dart';
@@ -16,7 +17,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = false;
   bool _isPasswordVisible = false;
 
   bool _isLoading = false;
@@ -45,6 +45,12 @@ class _LoginScreenState extends State<LoginScreen> {
         } else {
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
         }
+      } else {
+        // Admin accounts have no screens in the mobile app.
+        await ApiService.logout();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Admin accounts must use the web admin panel.')),
+        );
       }
     } else {
       if (!mounted) return;
@@ -61,15 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background Image with dark overlay
-          Image.network(
-            'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=3538&auto=format&fit=crop',
-            fit: BoxFit.cover,
-          ),
-          Container(
-            color: Colors.black.withOpacity(0.5),
-          ),
-          
+          const AppBackground(overlayOpacity: 0.5),
+
           // Main Content
           SafeArea(
             child: isDesktop 
@@ -206,32 +205,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              
-              // Forgot Password & Remember Me
+
+              // Forgot Password
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _rememberMe,
-                        onChanged: (val) {
-                          setState(() {
-                            _rememberMe = val ?? false;
-                          });
-                        },
-                        fillColor: MaterialStateProperty.resolveWith(
-                          (states) => Colors.transparent,
-                        ),
-                        checkColor: Colors.white,
-                        side: const BorderSide(color: Colors.white70),
-                      ),
-                      const Text(
-                        'REMEMBER ME',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
-                    ],
-                  ),
                   TextButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(

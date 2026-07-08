@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'auth/login_screen.dart';
+import 'auth/driver_pending_screen.dart';
 import '../services/api_service.dart';
 import 'student/student_dashboard.dart';
 import 'driver/driver_dashboard.dart';
@@ -21,23 +22,48 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkAuthStatus() async {
     // Artificial delay for splash screen branding
     await Future.delayed(const Duration(seconds: 2));
-    
+
     final token = await ApiService.getToken();
     final role = await ApiService.getRole();
 
+    if (token == null || role == null) {
+      _goToLogin();
+      return;
+    }
+
+    // Reject sessions whose token the server no longer accepts (e.g. expired
+    // after the 7-day JWT lifetime) instead of showing empty dashboards.
+    final isValid = await ApiService.validateToken();
+    if (!isValid) {
+      await ApiService.logout();
+      _goToLogin();
+      return;
+    }
+
     if (!mounted) return;
 
-    if (token != null && role != null) {
-      if (role == 'STUDENT') {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()));
-      } else if (role == 'DRIVER') {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
+    if (role == 'STUDENT') {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()));
+    } else if (role == 'DRIVER') {
+      // A driver still awaiting admin approval must land on the pending
+      // screen, same as right after registration. fetchMe refreshes the
+      // cached profile so an approval granted while away is picked up.
+      final user = await ApiService.fetchMe();
+      final status = user?['profile']?['status'];
+      if (!mounted) return;
+      if (status == 'PENDING') {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverPendingScreen()));
       } else {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen()));
       }
     } else {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+      _goToLogin();
     }
+  }
+
+  void _goToLogin() {
+    if (!mounted) return;
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
   @override
