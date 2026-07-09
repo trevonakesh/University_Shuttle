@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { API_BASE } from '../lib/api';
+import { API_BASE, authFetch } from '../lib/api';
+import PhotoField from '../components/PhotoField';
 
 type Driver = {
   id: number;
@@ -28,23 +29,29 @@ type Driver = {
   user: { email: string; phone: string };
 };
 
+const emptyForm = {
+  fullName: '', email: '', phone: '', password: '', nic: '', licenseNumber: '',
+  busRegNumber: '', busCapacity: '', routeName: '', startingPoint: '', destination: '', monthlyFee: '',
+  profilePhotoUrl: '', nicCopyUrl: '', licenseCopyUrl: '', vehicleRegUrl: '', busPhotoUrl: ''
+};
+
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch(`${API_BASE}/api/admin/drivers`)
-      .then(res => {
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-        return res.json();
-      })
+  const loadDrivers = () => {
+    authFetch('/api/admin/drivers')
+      .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
           setDrivers(data);
         } else {
-          console.error('Expected array of drivers, got:', data);
           setError('Unexpected response from the server.');
         }
         setLoading(false);
@@ -54,13 +61,14 @@ export default function DriversPage() {
         setError('Could not reach the backend. Is the API server running?');
         setLoading(false);
       });
-  }, []);
+  };
+
+  useEffect(loadDrivers, []);
 
   const updateStatus = async (id: number, status: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/drivers/${id}/status`, {
+      const res = await authFetch(`/api/admin/drivers/${id}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
       if (res.ok) {
@@ -73,19 +81,84 @@ export default function DriversPage() {
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to update driver status: could not reach the backend.');
     }
   };
+
+  const deleteDriver = async (driver: Driver) => {
+    const sure = confirm(
+      `Delete driver ${driver.fullName} (${driver.user?.email})?\n\nThis permanently removes their account, bus, passengers' assignments, payment history and fare records. This cannot be undone.`
+    );
+    if (!sure) return;
+    try {
+      const res = await authFetch(`/api/admin/drivers/${driver.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        setDrivers(drivers.filter(d => d.id !== driver.id));
+        if (selectedDriver?.id === driver.id) setSelectedDriver(null);
+      } else {
+        alert(data.message ?? 'Failed to delete driver.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const submitAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    setSaving(true);
+    try {
+      const res = await authFetch('/api/admin/drivers', {
+        method: 'POST',
+        body: JSON.stringify(form)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setShowAdd(false);
+        setForm(emptyForm);
+        loadDrivers();
+      } else {
+        setFormError(data.message ?? 'Failed to create driver.');
+      }
+    } catch {
+      setFormError('Could not reach the backend.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const field = (key: keyof typeof emptyForm, label: string, type = 'text', required = false) => (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
+      {label}{required ? ' *' : ''}
+      <input
+        type={type}
+        value={form[key]}
+        required={required}
+        onChange={e => setForm({ ...form, [key]: e.target.value })}
+        style={{
+          padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--surface-border)',
+          background: 'rgba(255,255,255,0.06)', color: 'var(--text)', fontFamily: 'inherit', fontSize: '14px'
+        }}
+      />
+    </label>
+  );
 
   if (loading) return <div>Loading drivers...</div>;
 
   return (
     <div>
-      <h1>Driver Registrations</h1>
-      <p className="subtitle">Manage and verify bus drivers on the platform.</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1>Driver Registrations</h1>
+          <p className="subtitle">Manage and verify bus drivers on the platform.</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setFormError(null); setShowAdd(true); }}>
+          + Add Driver
+        </button>
+      </div>
 
       {error && (
-        <div className="glass-panel" style={{ marginBottom: '20px', color: 'var(--danger, #e5484d)' }}>
+        <div className="glass-panel" style={{ marginBottom: '20px', color: 'var(--danger)' }}>
           {error}
         </div>
       )}
@@ -118,7 +191,10 @@ export default function DriversPage() {
                   </span>
                 </td>
                 <td>
-                  <button className="btn btn-primary" onClick={() => setSelectedDriver(driver)}>Review</button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn btn-primary" onClick={() => setSelectedDriver(driver)}>Review</button>
+                    <button className="btn btn-danger" onClick={() => deleteDriver(driver)}>Delete</button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -131,19 +207,61 @@ export default function DriversPage() {
         </table>
       </div>
 
+      {showAdd && (
+        <div style={overlayStyle}>
+          <form onSubmit={submitAdd} className="glass-panel" style={{ width: '620px', maxHeight: '85vh', overflowY: 'auto', padding: '30px', backgroundColor: '#1e212b' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2>Add Driver</h2>
+              <button type="button" onClick={() => setShowAdd(false)} style={closeBtnStyle}>&times;</button>
+            </div>
+            <p className="subtitle" style={{ marginBottom: '20px' }}>
+              Admin-created drivers are approved immediately and appear in student bus search.
+            </p>
+
+            {formError && <div style={{ color: 'var(--danger)', marginBottom: '15px' }}>{formError}</div>}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              {field('fullName', 'Full Name', 'text', true)}
+              {field('nic', 'NIC', 'text', true)}
+              {field('email', 'Email', 'email', true)}
+              {field('phone', 'Phone')}
+              {field('password', 'Password', 'password', true)}
+              {field('licenseNumber', 'License Number')}
+              {field('busRegNumber', 'Bus Registration')}
+              {field('busCapacity', 'Bus Capacity')}
+              {field('routeName', 'Route Name')}
+              {field('monthlyFee', 'Monthly Fee (LKR)')}
+              {field('startingPoint', 'Starting Point')}
+              {field('destination', 'Destination')}
+            </div>
+
+            <h3 style={{ margin: '20px 0 12px', fontSize: '15px', color: 'var(--text)' }}>Photos & Documents</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <PhotoField label="Profile Photo" value={form.profilePhotoUrl} onChange={url => setForm({ ...form, profilePhotoUrl: url })} />
+              <PhotoField label="NIC Copy" value={form.nicCopyUrl} onChange={url => setForm({ ...form, nicCopyUrl: url })} />
+              <PhotoField label="License Copy" value={form.licenseCopyUrl} onChange={url => setForm({ ...form, licenseCopyUrl: url })} />
+              <PhotoField label="Vehicle Registration" value={form.vehicleRegUrl} onChange={url => setForm({ ...form, vehicleRegUrl: url })} />
+              <PhotoField label="Bus Photo" value={form.busPhotoUrl} onChange={url => setForm({ ...form, busPhotoUrl: url })} />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-outline" onClick={() => setShowAdd(false)}>Cancel</button>
+              <button type="submit" className="btn btn-success" disabled={saving}>
+                {saving ? 'Creating…' : 'Create Driver'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {selectedDriver && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex',
-          justifyContent: 'center', alignItems: 'center', zIndex: 1000,
-          backdropFilter: 'blur(5px)'
-        }}>
+        <div style={overlayStyle}>
           <div className="glass-panel" style={{ width: '650px', maxHeight: '85vh', overflowY: 'auto', padding: '30px', backgroundColor: '#1e212b', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2>Review Driver: {selectedDriver.fullName}</h2>
-              <button onClick={() => setSelectedDriver(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+              <button onClick={() => setSelectedDriver(null)} style={closeBtnStyle}>&times;</button>
             </div>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div><strong>NIC:</strong> {selectedDriver.nic || '-'}</div>
               <div><strong>License:</strong> {selectedDriver.licenseNumber || '-'}</div>
@@ -165,66 +283,51 @@ export default function DriversPage() {
             <div style={{ marginTop: '25px', borderTop: '1px solid var(--surface-border)', paddingTop: '20px' }}>
               <h3 style={{ marginBottom: '15px', fontSize: '16px', color: 'var(--text)' }}>Submitted Documents</h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                {selectedDriver.profilePhotoUrl && (
-                  <div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>Profile Photo</div>
-                    <a href={`${API_BASE}${selectedDriver.profilePhotoUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`${API_BASE}${selectedDriver.profilePhotoUrl}`} alt="Profile" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
-                    </a>
-                  </div>
-                )}
-                {selectedDriver.nicCopyUrl && (
-                  <div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>NIC Copy</div>
-                    <a href={`${API_BASE}${selectedDriver.nicCopyUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`${API_BASE}${selectedDriver.nicCopyUrl}`} alt="NIC" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
-                    </a>
-                  </div>
-                )}
-                {selectedDriver.licenseCopyUrl && (
-                  <div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>License</div>
-                    <a href={`${API_BASE}${selectedDriver.licenseCopyUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`${API_BASE}${selectedDriver.licenseCopyUrl}`} alt="License" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
-                    </a>
-                  </div>
-                )}
-                {selectedDriver.vehicleRegUrl && (
-                  <div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>Vehicle Reg</div>
-                    <a href={`${API_BASE}${selectedDriver.vehicleRegUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`${API_BASE}${selectedDriver.vehicleRegUrl}`} alt="Vehicle Reg" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
-                    </a>
-                  </div>
-                )}
-                {selectedDriver.busPhotoUrl && (
-                  <div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>Bus Photo</div>
-                    <a href={`${API_BASE}${selectedDriver.busPhotoUrl}`} target="_blank" rel="noreferrer">
-                      <img src={`${API_BASE}${selectedDriver.busPhotoUrl}`} alt="Bus Photo" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
-                    </a>
-                  </div>
-                )}
+                {(['profilePhotoUrl', 'nicCopyUrl', 'licenseCopyUrl', 'vehicleRegUrl', 'busPhotoUrl'] as const).map(key => (
+                  selectedDriver[key] && (
+                    <div key={key}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                        {{ profilePhotoUrl: 'Profile Photo', nicCopyUrl: 'NIC Copy', licenseCopyUrl: 'License', vehicleRegUrl: 'Vehicle Reg', busPhotoUrl: 'Bus Photo' }[key]}
+                      </div>
+                      <a href={`${API_BASE}${selectedDriver[key]}`} target="_blank" rel="noreferrer">
+                        <img src={`${API_BASE}${selectedDriver[key]}`} alt={key} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
+                      </a>
+                    </div>
+                  )
+                ))}
                 {!selectedDriver.profilePhotoUrl && !selectedDriver.nicCopyUrl && !selectedDriver.licenseCopyUrl && !selectedDriver.vehicleRegUrl && !selectedDriver.busPhotoUrl && (
                   <div style={{ color: 'var(--text-muted)', fontSize: '14px', fontStyle: 'italic' }}>No documents submitted.</div>
                 )}
               </div>
             </div>
 
-            {selectedDriver.status === 'PENDING' && (
-              <div style={{ display: 'flex', gap: '10px', marginTop: '30px', justifyContent: 'flex-end', borderTop: '1px solid var(--surface-border)', paddingTop: '20px' }}>
-                <button className="btn btn-danger" onClick={() => updateStatus(selectedDriver.id, 'REJECTED')}>Reject Driver</button>
-                <button className="btn btn-success" onClick={() => updateStatus(selectedDriver.id, 'APPROVED')}>Approve Driver</button>
-              </div>
-            )}
-            {selectedDriver.status !== 'PENDING' && (
-              <div style={{ marginTop: '30px', textAlign: 'right', color: 'var(--text-muted)' }}>
-                This driver is currently <strong>{selectedDriver.status}</strong>.
-              </div>
-            )}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '30px', justifyContent: 'space-between', borderTop: '1px solid var(--surface-border)', paddingTop: '20px' }}>
+              <button className="btn btn-danger" onClick={() => deleteDriver(selectedDriver)}>Delete Driver</button>
+              {selectedDriver.status === 'PENDING' ? (
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button className="btn btn-danger" onClick={() => updateStatus(selectedDriver.id, 'REJECTED')}>Reject Driver</button>
+                  <button className="btn btn-success" onClick={() => updateStatus(selectedDriver.id, 'APPROVED')}>Approve Driver</button>
+                </div>
+              ) : (
+                <div style={{ color: 'var(--text-muted)', alignSelf: 'center' }}>
+                  This driver is currently <strong>{selectedDriver.status}</strong>.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
+
+const overlayStyle: React.CSSProperties = {
+  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex',
+  justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+  backdropFilter: 'blur(5px)'
+};
+
+const closeBtnStyle: React.CSSProperties = {
+  background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--text-muted)'
+};

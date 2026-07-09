@@ -21,6 +21,9 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
 
   late DateTime _selectedMonth;
 
+  // Which fare list is shown: ALL, PAID, UNPAID, or EXEMPT.
+  String _filter = 'ALL';
+
   @override
   void initState() {
     super.initState();
@@ -241,14 +244,33 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
 
   // ---------- FARE TRACKER ----------
 
-  Widget _buildFareTracker(bool isNarrow) {
+  List<dynamic> get _filteredStudents {
     final students = (_fareData?['students'] as List<dynamic>?) ?? [];
+    if (_filter == 'ALL') return students;
+    return students.where((s) => (s['status'] ?? 'UNPAID') == _filter).toList();
+  }
+
+  String get _emptyListText {
+    switch (_filter) {
+      case 'PAID':
+        return 'NO ONE HAS PAID FOR THIS MONTH YET';
+      case 'UNPAID':
+        return 'EVERYONE IS SETTLED — NO UNPAID STUDENTS';
+      case 'EXEMPT':
+        return 'NO STUDENTS MARKED AS NOT TRAVELLING';
+      default:
+        return 'NO PASSENGERS ASSIGNED YET';
+    }
+  }
+
+  Widget _buildFareTracker(bool isNarrow) {
+    final students = _filteredStudents;
     final summary = _fareData?['summary'] as Map<String, dynamic>?;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Month selector + summary
+        // Month selector + collection totals
         Row(
           children: [
             IconButton(
@@ -261,14 +283,33 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
               onPressed: () => _changeMonth(1),
             ),
             const Spacer(),
-            if (summary != null && !isNarrow) _buildSummaryText(summary),
+            if (summary != null && !isNarrow) _buildCollectedText(summary),
           ],
         ),
         if (summary != null && isNarrow) ...[
-          _buildSummaryText(summary),
+          _buildCollectedText(summary),
           const SizedBox(height: 10),
         ],
-        const SizedBox(height: 10),
+        const SizedBox(height: 5),
+
+        // Paid / Unpaid list switcher
+        if (summary != null)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip('ALL', 'ALL', summary['total'], Colors.white),
+                const SizedBox(width: 8),
+                _buildFilterChip('PAID', 'PAID', summary['paid'], Colors.green),
+                const SizedBox(width: 8),
+                _buildFilterChip('UNPAID', 'UNPAID', summary['unpaid'], Colors.redAccent),
+                const SizedBox(width: 8),
+                _buildFilterChip('EXEMPT', "DIDN'T COME", summary['exempt'], Colors.white54),
+              ],
+            ),
+          ),
+        const SizedBox(height: 15),
+
         Expanded(
           child: Container(
             decoration: BoxDecoration(
@@ -279,7 +320,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
             child: _fareData == null
                 ? const Center(child: CircularProgressIndicator(color: Colors.white))
                 : students.isEmpty
-                    ? const Center(child: Text('NO PASSENGERS ASSIGNED YET', style: TextStyle(color: Colors.white54)))
+                    ? Center(child: Text(_emptyListText, style: const TextStyle(color: Colors.white54)))
                     : ListView.separated(
                         itemCount: students.length,
                         separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
@@ -291,11 +332,35 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
     );
   }
 
-  Widget _buildSummaryText(Map<String, dynamic> summary) {
+  Widget _buildFilterChip(String value, String label, dynamic count, Color color) {
+    final isActive = _filter == value;
+    return GestureDetector(
+      onTap: () => setState(() => _filter = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? color.withValues(alpha: 0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isActive ? color : Colors.white24),
+        ),
+        child: Text(
+          '$label (${count ?? 0})',
+          style: TextStyle(
+            color: isActive ? color : Colors.white54,
+            fontSize: 11,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            letterSpacing: 1,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCollectedText(Map<String, dynamic> summary) {
     final collected = (summary['collected'] as num?)?.toDouble() ?? 0;
     final expected = (summary['expected'] as num?)?.toDouble() ?? 0;
     return Text(
-      'PAID ${summary['paid']} · UNPAID ${summary['unpaid']} · EXEMPT ${summary['exempt']}   |   LKR ${collected.toStringAsFixed(0)} / ${expected.toStringAsFixed(0)}',
+      'COLLECTED LKR ${collected.toStringAsFixed(0)} / ${expected.toStringAsFixed(0)}',
       style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
     );
   }

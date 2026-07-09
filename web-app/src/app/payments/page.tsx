@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { API_BASE } from '../../lib/api';
+import { authFetch } from '../../lib/api';
 
 type Payment = {
   id: number;
@@ -21,7 +21,7 @@ export default function PaymentsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/admin/payments`)
+    authFetch('/api/admin/payments')
       .then(res => {
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         return res.json();
