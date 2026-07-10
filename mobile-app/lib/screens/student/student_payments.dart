@@ -1,5 +1,7 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
@@ -56,18 +58,13 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
       );
       return;
     }
-    if (fare['status'] == 'EXEMPT') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No fare is due for ${fare['month']} — your driver marked you as not travelling.')),
-      );
-      return;
-    }
-
+    // EXEMPT students may still pay: paying reactivates the frozen month.
     final month = fare['month'];
     final amount = (fare['amountDue'] as num?)?.toDouble() ?? 0;
     final driverName = fare['driverName'] ?? 'your driver';
 
     // The server decides the amount and month; this dialog just confirms.
+    // The fare is fixed — there is nothing for the student to edit.
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -80,6 +77,11 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
             Text('Monthly fare to $driverName', style: const TextStyle(color: Colors.white70, fontSize: 13)),
             const SizedBox(height: 12),
             Text('LKR ${amount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            const Text(
+              'You will be taken to the secure PayHere page to pay with your card.',
+              style: TextStyle(color: Colors.white54, fontSize: 11),
+            ),
           ],
         ),
         actions: [
@@ -87,26 +89,95 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
           ),
-          ElevatedButton(
+          ElevatedButton.icon(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+            icon: const Icon(Icons.credit_card, size: 18, color: Colors.white),
             onPressed: () async {
-              final res = await ApiService.createPayment({
-                'referenceNo': 'APP-${DateTime.now().millisecondsSinceEpoch}'
-              });
+              final res = await ApiService.initiatePayment();
               if (!context.mounted) return;
-              if (res['success']) {
-                Navigator.pop(context);
+              Navigator.pop(context);
+              if (res['success'] != true) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Payment failed')));
+                return;
+              }
+              if (res['mode'] == 'PAYHERE') {
+                await _openPayhereCheckout(res['checkoutUrl'], res['paymentId']);
+              } else {
+                // DIRECT (development fallback): settled instantly.
                 _fetchData();
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Successful!')));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
               }
             },
-            child: const Text('PAY NOW', style: TextStyle(color: Colors.white)),
+            label: const Text('PAY WITH CARD', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
+  }
+
+  // Opens the PayHere hosted card page in the browser, then polls the
+  // payment status so the app updates itself once the card is charged.
+  Future<void> _openPayhereCheckout(String checkoutUrl, int paymentId) async {
+    final launched = await launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication);
+    if (!mounted) return;
+    if (!launched) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open the payment page.')));
+      return;
+    }
+
+    Timer? poller;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        poller = Timer.periodic(const Duration(seconds: 4), (t) async {
+          final status = await ApiService.getPaymentStatus(paymentId);
+          if (!dialogContext.mounted) {
+            t.cancel();
+            return;
+          }
+          if (status == 'COMPLETED') {
+            t.cancel();
+            Navigator.pop(dialogContext);
+            _fetchData();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Payment Successful!'), backgroundColor: Colors.green),
+            );
+          } else if (status == 'FAILED') {
+            t.cancel();
+            Navigator.pop(dialogContext);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Payment was cancelled or failed. You can retry anytime.'), backgroundColor: Colors.redAccent),
+            );
+          }
+        });
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E2128),
+          title: const Text('Waiting for payment…', style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(color: Colors.blueAccent),
+              SizedBox(height: 20),
+              Text(
+                'Complete the card payment in your browser. This screen updates automatically once PayHere confirms it.',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                poller?.cancel();
+                Navigator.pop(dialogContext);
+                _fetchData();
+              },
+              child: const Text('CLOSE', style: TextStyle(color: Colors.white54)),
+            ),
+          ],
+        );
+      },
+    ).then((_) => poller?.cancel());
   }
 
   // Status card for the current month: paid / due / overdue-frozen / exempt.
@@ -125,7 +196,12 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
     String title;
     String message;
 
-    if (frozen) {
+    if (frozen && fare['freezeReason'] == 'EXEMPT') {
+      color = Colors.redAccent;
+      icon = Icons.event_busy;
+      title = 'FROZEN — NOT TRAVELLING IN $month';
+      message = 'Your driver marked you as not travelling this month, so your account is frozen for $month. It unfreezes automatically next month — or pay LKR ${amount.toStringAsFixed(2)} if you plan to travel.';
+    } else if (frozen) {
       color = Colors.redAccent;
       icon = Icons.lock;
       title = 'ACCOUNT FROZEN';
@@ -135,11 +211,6 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
       icon = Icons.check_circle;
       title = '$month FARE PAID';
       message = 'You are all set for this month. Thank you!';
-    } else if (status == 'EXEMPT') {
-      color = Colors.white54;
-      icon = Icons.event_busy;
-      title = 'NOT TRAVELLING THIS MONTH';
-      message = 'Your driver marked you as not travelling in $month. No fare is due.';
     } else {
       color = Colors.orange;
       icon = Icons.schedule;

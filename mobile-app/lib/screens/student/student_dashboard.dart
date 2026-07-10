@@ -183,6 +183,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               FrozenBanner(
                 amountDue: (_myFare?['amountDue'] as num?)?.toDouble() ?? 0,
                 month: _myFare?['month'] ?? '',
+                reason: _myFare?['freezeReason'],
               ),
 
             // Welcome Section

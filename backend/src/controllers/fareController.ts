@@ -52,7 +52,12 @@ export const getDriverFares = async (req: AuthRequest, res: Response): Promise<v
     const students = assignments.map(a => {
       const fare = fareByStudent.get(a.studentId);
       const status = fare?.status ?? FareStatus.UNPAID;
-      const settled = status === FareStatus.PAID || status === FareStatus.EXEMPT;
+      // Frozen this month if unpaid past the 10th (grace applies) or marked
+      // as not travelling ("didn't come" freezes that month's account).
+      const frozen = isCurrentMonth && (
+        status === FareStatus.EXEMPT ||
+        (status === FareStatus.UNPAID && pastDueDay && !isInGracePeriod(a.updatedAt))
+      );
       return {
         studentId: a.studentId,
         fullName: a.student.fullName,
@@ -64,7 +69,7 @@ export const getDriverFares = async (req: AuthRequest, res: Response): Promise<v
         paymentMethod: fare?.payment?.paymentMethod ?? null,
         paidAt: fare?.payment?.paymentDate ?? null,
         amount: fare?.amount ?? fee,
-        frozen: isCurrentMonth && !settled && pastDueDay && !isInGracePeriod(a.updatedAt)
+        frozen
       };
     });
 
@@ -148,21 +153,26 @@ export const setFareStatus = async (req: AuthRequest, res: Response): Promise<vo
     let fare;
 
     if (status === FareStatus.PAID) {
-      // Cash collected in person: record the payment for history, but do not
-      // touch the wallet (the driver already holds the money) and take no
-      // platform commission.
+      // Cash collected in person. The driver already holds the full amount,
+      // so the platform's 10% commission is deducted from their wallet
+      // (PickMe/Uber style — the balance may go negative until settled).
+      const commission = Math.round(fee * 0.10 * 100) / 100;
       fare = await prisma.$transaction(async (tx) => {
         const payment = await tx.payment.create({
           data: {
             studentId,
             driverId: driver.id,
             amount: fee,
-            adminCommission: 0,
+            adminCommission: commission,
             month,
             status: PaymentStatus.COMPLETED,
             paymentMethod: 'CASH',
             referenceNo: `CASH-${Date.now()}`
           }
+        });
+        await tx.driver.update({
+          where: { id: driver.id },
+          data: { walletBalance: { decrement: commission } }
         });
         return tx.monthlyFare.upsert({
           where: fareKey,
@@ -187,8 +197,8 @@ export const setFareStatus = async (req: AuthRequest, res: Response): Promise<vo
       });
       await createNotification(
         assignment.student.user.id,
-        'Fare Waived',
-        `Your driver marked you as not travelling for ${month}. No fare is due.`
+        'Marked As Not Travelling',
+        `Your driver marked you as not travelling for ${month}. Your account is frozen for this month and unfreezes automatically next month — or pay the monthly fare if you plan to travel.`
       );
     } else {
       // Undo back to UNPAID. In-app payments cannot be undone by the driver.
@@ -198,6 +208,14 @@ export const setFareStatus = async (req: AuthRequest, res: Response): Promise<vo
       }
       const ops: any[] = [];
       if (existing?.paymentId) {
+        // Undoing a cash payment also refunds the commission that was
+        // deducted from the wallet when it was recorded.
+        if ((existing.payment?.adminCommission ?? 0) > 0) {
+          ops.push(prisma.driver.update({
+            where: { id: driver.id },
+            data: { walletBalance: { increment: existing.payment!.adminCommission } }
+          }));
+        }
         ops.push(prisma.payment.delete({ where: { id: existing.paymentId } }));
       }
       ops.push(
@@ -247,7 +265,8 @@ export const getMyFare = async (req: AuthRequest, res: Response): Promise<void> 
       status: check.status,
       amountDue: check.amountDue,
       dueDay: FREEZE_DAY,
-      frozen: check.frozen
+      frozen: check.frozen,
+      freezeReason: check.reason
     });
   } catch (error: any) {
     res.status(500).json({ error: 'Server error', details: error.message });

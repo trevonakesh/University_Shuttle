@@ -22,8 +22,11 @@ export const isInGracePeriod = (approvedAt: Date): boolean => {
   return approved.month === currentMonth() && approved.day > FREEZE_DAY;
 };
 
+export type FreezeReason = 'UNPAID' | 'EXEMPT' | null;
+
 export interface FrozenCheck {
   frozen: boolean;
+  reason: FreezeReason;
   month: string;
   status: FareStatus | null; // null = no assignment
   amountDue: number;
@@ -31,14 +34,16 @@ export interface FrozenCheck {
   driverName: string | null;
 }
 
-// Frozen = past the 10th (Colombo time) and the current month's fare is
-// neither PAID nor EXEMPT. Computed on the fly so paying unfreezes instantly.
+// Frozen when, for the current Colombo month, either:
+//  - the fare is UNPAID past the 10th (grace applies), or
+//  - the driver marked the student EXEMPT ("didn't come") — frozen for that
+//    month only; lifts automatically at month end, or instantly by paying.
 export const checkFrozen = async (studentId: number): Promise<FrozenCheck> => {
   const month = currentMonth();
   const assignment = await getActiveAssignment(studentId);
 
   if (!assignment) {
-    return { frozen: false, month, status: null, amountDue: 0, driverId: null, driverName: null };
+    return { frozen: false, reason: null, month, status: null, amountDue: 0, driverId: null, driverName: null };
   }
 
   const fare = await prisma.monthlyFare.findUnique({
@@ -48,17 +53,29 @@ export const checkFrozen = async (studentId: number): Promise<FrozenCheck> => {
   });
 
   const status = fare?.status ?? FareStatus.UNPAID;
-  const settled = status === FareStatus.PAID || status === FareStatus.EXEMPT;
-  const frozen =
-    !settled &&
+
+  let frozen = false;
+  let reason: FreezeReason = null;
+  if (status === FareStatus.EXEMPT) {
+    frozen = true;
+    reason = 'EXEMPT';
+  } else if (
+    status === FareStatus.UNPAID &&
     currentDay() > FREEZE_DAY &&
-    !isInGracePeriod(assignment.updatedAt);
+    !isInGracePeriod(assignment.updatedAt)
+  ) {
+    frozen = true;
+    reason = 'UNPAID';
+  }
 
   return {
     frozen,
+    reason,
     month,
     status,
-    amountDue: settled ? 0 : parseFee(assignment.driver.monthlyFee),
+    // Paying reactivates the account in both frozen cases, so the fee is
+    // still "due" unless the month is already PAID.
+    amountDue: status === FareStatus.PAID ? 0 : parseFee(assignment.driver.monthlyFee),
     driverId: assignment.driverId,
     driverName: assignment.driver.fullName
   };

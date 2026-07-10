@@ -20,12 +20,12 @@ export const freezeGuard = async (req: AuthRequest, res: Response, next: NextFun
       return;
     }
 
-    const { frozen, amountDue, month } = await checkFrozen(student.id);
+    const { frozen, reason, amountDue, month } = await checkFrozen(student.id);
     if (frozen) {
-      res.status(403).json({
-        error: `Your account is frozen: the ${month} fare (LKR ${amountDue.toFixed(2)}) was not paid by the 10th. Pay your monthly fare to unfreeze it.`,
-        code: 'ACCOUNT_FROZEN'
-      });
+      const message = reason === 'EXEMPT'
+        ? `Your account is frozen for ${month}: your driver marked you as not travelling this month. It unfreezes automatically next month, or pay the fare (LKR ${amountDue.toFixed(2)}) if you plan to travel.`
+        : `Your account is frozen: the ${month} fare (LKR ${amountDue.toFixed(2)}) was not paid by the 10th. Pay your monthly fare to unfreeze it.`;
+      res.status(403).json({ error: message, code: 'ACCOUNT_FROZEN', reason });
       return;
     }
 

@@ -39,6 +39,8 @@ import path from 'path';
 // Middleware
 app.use(cors());
 app.use(express.json());
+// PayHere's notify callback posts form-encoded data
+app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use('/api/auth', authRoutes);

@@ -404,6 +404,36 @@ class ApiService {
     }
   }
 
+  // Starts a payment for the current month. The server decides the amount.
+  // Returns mode DIRECT (settled instantly, dev) or PAYHERE (open checkoutUrl
+  // in the browser and poll getPaymentStatus).
+  static Future<Map<String, dynamic>> initiatePayment() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/payments/initiate'),
+        headers: await _getHeaders(),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 201) return {'success': true, ...data};
+      return {'success': false, 'message': data['error'] ?? 'Failed to start payment'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<String?> getPaymentStatus(int paymentId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/payments/$paymentId/status'),
+        headers: await _getHeaders(),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body)['status'];
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<List<dynamic>> getStudentPayments() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/payments/student'), headers: await _getHeaders());

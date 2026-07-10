@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../widgets/dashboard_layout.dart';
+import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
 
 class StudentTrackingScreen extends StatefulWidget {
@@ -30,18 +31,25 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
     _initUserAndSocket();
   }
 
+  Map<String, dynamic>? _myFare;
+
   Future<void> _initUserAndSocket() async {
     setState(() => _isLoading = true);
     final user = await ApiService.getUser();
     final requests = await ApiService.getStudentRequests();
-    
+    final fare = await ApiService.getMyFare();
+
     setState(() {
       _user = user;
       _myRequests = requests;
+      _myFare = fare;
     });
-    
+
+    // Frozen accounts don't get live tracking.
+    final frozen = fare?['frozen'] == true;
+
     // Only track the driver the student is actually assigned to.
-    if (requests.any((r) => r['status'] == 'APPROVED')) {
+    if (!frozen && requests.any((r) => r['status'] == 'APPROVED')) {
       final approvedReq = requests.firstWhere((r) => r['status'] == 'APPROVED');
       _driverIdToTrack = approvedReq['driverId'].toString();
     }
@@ -110,6 +118,14 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
 
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
+            else if (_myFare?['frozen'] == true)
+              Expanded(
+                child: FrozenLock(
+                  amountDue: (_myFare?['amountDue'] as num?)?.toDouble() ?? 0,
+                  month: _myFare?['month'] ?? '',
+                  reason: _myFare?['freezeReason'],
+                ),
+              )
             else if (!hasApprovedDriver)
               const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
             else

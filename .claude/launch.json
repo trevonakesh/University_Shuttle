@@ -8,6 +8,14 @@
       "runtimeArgs": ["run", "dev"],
       "autoPort": true,
       "port": 3002
+    },
+    {
+      "name": "student-app",
+      "cwd": "mobile-app",
+      "runtimeExecutable": "flutter",
+      "runtimeArgs": ["run", "-d", "web-server", "--web-port", "5050"],
+      "autoPort": false,
+      "port": 5050
     }
   ]
 }

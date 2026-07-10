@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import '../screens/student/student_payments.dart';
 
+String _freezeMessage(String? reason, String month, double amountDue) {
+  if (reason == 'EXEMPT') {
+    return 'Your driver marked you as not travelling in $month, so your account is frozen for this month. It unfreezes automatically next month — or pay the fare (LKR ${amountDue.toStringAsFixed(2)}) if you plan to travel.';
+  }
+  return 'Your $month fare (LKR ${amountDue.toStringAsFixed(2)}) was not paid by the 10th. Pay it to unfreeze your account.';
+}
+
 /// Red banner shown on the student dashboard when the account is frozen.
 class FrozenBanner extends StatelessWidget {
   final double amountDue;
   final String month;
+  final String? reason; // 'UNPAID' | 'EXEMPT'
 
-  const FrozenBanner({Key? key, required this.amountDue, required this.month}) : super(key: key);
+  const FrozenBanner({Key? key, required this.amountDue, required this.month, this.reason}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +34,13 @@ class FrozenBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'ACCOUNT FROZEN',
-                  style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1),
+                Text(
+                  reason == 'EXEMPT' ? 'FROZEN — NOT TRAVELLING THIS MONTH' : 'ACCOUNT FROZEN',
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Your $month fare (LKR ${amountDue.toStringAsFixed(2)}) was not paid by the 10th. Pay it to unfreeze your account.',
+                  _freezeMessage(reason, month, amountDue),
                   style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
@@ -57,8 +65,9 @@ class FrozenBanner extends StatelessWidget {
 class FrozenLock extends StatelessWidget {
   final double amountDue;
   final String month;
+  final String? reason; // 'UNPAID' | 'EXEMPT'
 
-  const FrozenLock({Key? key, required this.amountDue, required this.month}) : super(key: key);
+  const FrozenLock({Key? key, required this.amountDue, required this.month, this.reason}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -68,15 +77,15 @@ class FrozenLock extends StatelessWidget {
         children: [
           const Icon(Icons.lock, color: Colors.redAccent, size: 70),
           const SizedBox(height: 20),
-          const Text(
-            'ACCOUNT FROZEN',
-            style: TextStyle(color: Colors.redAccent, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 2),
+          Text(
+            reason == 'EXEMPT' ? 'FROZEN FOR $month' : 'ACCOUNT FROZEN',
+            style: const TextStyle(color: Colors.redAccent, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 2),
           ),
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'This feature is locked because your $month fare (LKR ${amountDue.toStringAsFixed(2)}) was not paid by the 10th.',
+              _freezeMessage(reason, month, amountDue),
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),

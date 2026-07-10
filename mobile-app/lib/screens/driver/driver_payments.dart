@@ -461,10 +461,12 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
       onSelected: (value) {
         switch (value) {
           case 'PAID':
-            _setStatus(s, 'PAID', 'Record a CASH payment of LKR ${(s['amount'] as num?)?.toStringAsFixed(2) ?? '-'} from $name for $_monthLabel?');
+            final amt = (s['amount'] as num?)?.toDouble() ?? 0;
+            final fee10 = (amt * 0.10).toStringAsFixed(2);
+            _setStatus(s, 'PAID', 'Record a CASH payment of LKR ${amt.toStringAsFixed(2)} from $name for $_monthLabel? A 10% platform fee (LKR $fee10) will be deducted from your wallet.');
             break;
           case 'EXEMPT':
-            _setStatus(s, 'EXEMPT', "Mark $name as not travelling in $_monthLabel? No fare will be due and their account won't be frozen.");
+            _setStatus(s, 'EXEMPT', "Mark $name as not travelling in $_monthLabel? Their account will be FROZEN for this month (unfreezes next month, or when they pay the fare).");
             break;
           case 'UNPAID':
             _setStatus(s, 'UNPAID', 'Set $name back to UNPAID for $_monthLabel?');

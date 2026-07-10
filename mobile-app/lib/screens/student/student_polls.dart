@@ -84,6 +84,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                 child: FrozenLock(
                   amountDue: (_myFare?['amountDue'] as num?)?.toDouble() ?? 0,
                   month: _myFare?['month'] ?? '',
+                  reason: _myFare?['freezeReason'],
                 ),
               )
             else if (!hasApprovedDriver)
