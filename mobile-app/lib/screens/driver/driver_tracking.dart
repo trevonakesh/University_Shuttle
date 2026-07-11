@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../widgets/dashboard_layout.dart';
@@ -19,10 +20,14 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
   late AnimationController _pulseController;
   IO.Socket? _socket;
   Map<String, dynamic>? _user;
-  
-  // Starting location in Colombo
+  final MapController _mapController = MapController();
+
+  // Default view before the first GPS fix (Colombo)
   LatLng _currentLocation = const LatLng(6.9271, 79.8612);
-  Timer? _locationTimer;
+  bool _hasFix = false;
+  double _speedKmh = 0;
+  DateTime? _lastSentAt;
+  StreamSubscription<Position>? _positionSub;
 
   @override
   void initState() {
@@ -31,67 +36,143 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    
+
     _initUserAndSocket();
   }
-  
+
   Future<void> _initUserAndSocket() async {
     final user = await ApiService.getUser();
     setState(() {
       _user = user;
     });
-    
+
     // Connect to Socket.IO
     final baseUrl = ApiService.baseUrl.replaceAll('/api', '');
     _socket = IO.io(baseUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
     });
-    
+
     _socket!.connect();
-    
+
     _socket!.onConnect((_) {
-      print('Connected to Socket.IO server');
       if (_user != null && _user!['profile'] != null) {
         _socket!.emit('joinDriverRoom', _user!['profile']['id'].toString());
       }
     });
   }
 
-  void _toggleBroadcasting() {
-    setState(() {
-      _isBroadcasting = !_isBroadcasting;
+  String? get _driverId => _user?['profile']?['id']?.toString();
+
+  // Asks for permission and returns true when we can read the device GPS.
+  Future<bool> _ensureLocationPermission() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showError('Location services are turned off on this device. Enable GPS and try again.');
+      return false;
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      _showError('Location permission denied. Allow location access to share your position with passengers.');
+      return false;
+    }
+    return true;
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+    );
+  }
+
+  Future<void> _toggleBroadcasting() async {
+    if (_isBroadcasting) {
+      _stopBroadcasting();
+      return;
+    }
+
+    if (!await _ensureLocationPermission()) return;
+
+    try {
+      // Immediate first fix so the map jumps to the real position right away.
+      final first = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      _onPosition(first);
+    } catch (e) {
+      _showError('Could not read GPS position: $e');
+      return;
+    }
+
+    // Continuous updates: every 10 metres of movement (or ~5s on platforms
+    // that use time-based throttling).
+    _positionSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    ).listen(_onPosition, onError: (e) {
+      _showError('GPS error: $e');
+      _stopBroadcasting();
     });
 
-    if (_isBroadcasting) {
-      // Start fake movement timer
-      _locationTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-        if (_user != null && _user!['profile'] != null && _socket != null && _socket!.connected) {
-          // Fake movement slightly northeast
-          setState(() {
-            _currentLocation = LatLng(
-              _currentLocation.latitude + 0.0005,
-              _currentLocation.longitude + 0.0005,
-            );
-          });
-          
-          _socket!.emit('updateLocation', {
-            'driverId': _user!['profile']['id'].toString(),
-            'latitude': _currentLocation.latitude,
-            'longitude': _currentLocation.longitude,
-            'timestamp': DateTime.now().toIso8601String(),
-          });
-        }
+    setState(() => _isBroadcasting = true);
+  }
+
+  void _onPosition(Position position) {
+    final point = LatLng(position.latitude, position.longitude);
+    setState(() {
+      _currentLocation = point;
+      _hasFix = true;
+      _speedKmh = position.speed > 0 ? position.speed * 3.6 : 0;
+    });
+    try {
+      _mapController.move(point, 16);
+    } catch (_) {}
+
+    // Throttle network sends to at most one per 2 seconds.
+    final now = DateTime.now();
+    if (_lastSentAt != null && now.difference(_lastSentAt!).inMilliseconds < 2000) return;
+    _lastSentAt = now;
+
+    final driverId = _driverId;
+    if (driverId != null && _socket != null && _socket!.connected) {
+      _socket!.emit('updateLocation', {
+        'driverId': driverId,
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'speed': position.speed, // m/s
+        'heading': position.heading,
+        'timestamp': now.toUtc().toIso8601String(),
       });
-    } else {
-      _locationTimer?.cancel();
     }
+  }
+
+  void _stopBroadcasting() {
+    _positionSub?.cancel();
+    _positionSub = null;
+    final driverId = _driverId;
+    if (driverId != null && _socket != null && _socket!.connected) {
+      _socket!.emit('stopBroadcast', driverId);
+    }
+    if (mounted) setState(() => _isBroadcasting = false);
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
-    _locationTimer?.cancel();
+    _positionSub?.cancel();
+    if (_isBroadcasting) {
+      final driverId = _driverId;
+      if (driverId != null && _socket != null && _socket!.connected) {
+        _socket!.emit('stopBroadcast', driverId);
+      }
+    }
     _socket?.disconnect();
     _socket?.dispose();
     super.dispose();
@@ -100,12 +181,13 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
   @override
   Widget build(BuildContext context) {
     final profile = _user != null ? (_user!['profile'] ?? _user!['driver'] ?? {}) : {};
+    final isNarrow = MediaQuery.of(context).size.width < 900;
     return DashboardLayout(
       userName: profile['fullName'] ?? 'Driver',
       userRole: 'DRIVER',
       activeIndex: 4,
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(isNarrow ? 16.0 : 40.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -116,10 +198,10 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
             ),
             const SizedBox(height: 5),
             const Text(
-              "BROADCAST YOUR LOCATION TO YOUR PASSENGERS",
+              "BROADCAST YOUR REAL LOCATION TO YOUR PASSENGERS",
               style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 25),
 
             // Map and Controls Area
             Expanded(
@@ -134,6 +216,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                     ClipRRect(
                       borderRadius: BorderRadius.circular(30),
                       child: FlutterMap(
+                        mapController: _mapController,
                         options: MapOptions(
                           initialCenter: _currentLocation,
                           initialZoom: 14.0,
@@ -149,16 +232,16 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                                 point: _currentLocation,
                                 width: 80,
                                 height: 80,
-                                child: _isBroadcasting 
+                                child: _isBroadcasting
                                   ? AnimatedBuilder(
                                       animation: _pulseController,
                                       builder: (context, child) {
                                         return Container(
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: Colors.blueAccent.withOpacity(0.2 - (_pulseController.value * 0.1)),
+                                            color: Colors.blueAccent.withValues(alpha: 0.2 - (_pulseController.value * 0.1)),
                                             border: Border.all(
-                                              color: Colors.blueAccent.withOpacity(0.5 - (_pulseController.value * 0.3)),
+                                              color: Colors.blueAccent.withValues(alpha: 0.5 - (_pulseController.value * 0.3)),
                                               width: 2,
                                             ),
                                           ),
@@ -188,7 +271,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                           child: Container(
                             padding: const EdgeInsets.all(25),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
+                              color: Colors.black.withValues(alpha: 0.6),
                               border: Border.all(color: Colors.white24),
                             ),
                             child: Row(
@@ -208,8 +291,12 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                                       ),
                                       const SizedBox(height: 5),
                                       Text(
-                                        _isBroadcasting ? 'Passengers are tracking you.' : 'Turn on to let students see your ETA.',
-                                        style: const TextStyle(color: Colors.white54, fontSize: 14),
+                                        _isBroadcasting
+                                          ? (_hasFix
+                                              ? 'GPS live · ${_speedKmh.toStringAsFixed(0)} km/h · ${_currentLocation.latitude.toStringAsFixed(5)}, ${_currentLocation.longitude.toStringAsFixed(5)}'
+                                              : 'Waiting for GPS fix…')
+                                          : 'Turn on to share your real GPS position with students.',
+                                        style: const TextStyle(color: Colors.white54, fontSize: 13),
                                       ),
                                     ],
                                   ),

@@ -11,7 +11,13 @@ export const payhereConfig = () => ({
   merchantId: process.env.PAYHERE_MERCHANT_ID || '',
   merchantSecret: process.env.PAYHERE_MERCHANT_SECRET || '',
   mode: (process.env.PAYHERE_MODE || 'sandbox').toLowerCase(),
-  publicUrl: (process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '')
+  // publicUrl: where PayHere's SERVER calls back (notify) — must be
+  // internet-reachable (tunnel in dev).
+  publicUrl: (process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, ''),
+  // appUrl: what the STUDENT'S BROWSER opens (checkout + return pages).
+  // localhost is fine when testing on this machine; set APP_PUBLIC_URL to a
+  // reachable address when students pay from their phones.
+  appUrl: (process.env.APP_PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '')
 });
 
 // When no merchant credentials are set (local dev), payments fall back to

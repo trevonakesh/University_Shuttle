@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../widgets/dashboard_layout.dart';
@@ -17,11 +19,20 @@ class StudentTrackingScreen extends StatefulWidget {
 class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _myRequests = [];
+  Map<String, dynamic>? _myFare;
   IO.Socket? _socket;
-  
-  // Starting location in Colombo
+  final MapController _mapController = MapController();
+
+  // Default view before the first update (Colombo)
   LatLng _busLocation = const LatLng(6.9271, 79.8612);
   bool _isBusOnline = false;
+  double? _busSpeedKmh;
+  DateTime? _lastUpdate;
+  Timer? _staleTimer;
+
+  // Student's own position (optional — used for distance/ETA)
+  LatLng? _myLocation;
+
   String? _driverIdToTrack;
   bool _isLoading = true;
 
@@ -29,9 +40,15 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
   void initState() {
     super.initState();
     _initUserAndSocket();
+    // If no update arrives for 30s, show the bus as offline.
+    _staleTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (_isBusOnline && _lastUpdate != null && DateTime.now().difference(_lastUpdate!).inSeconds > 30) {
+        if (mounted) setState(() => _isBusOnline = false);
+      } else if (mounted) {
+        setState(() {}); // refresh the "x seconds ago" label
+      }
+    });
   }
-
-  Map<String, dynamic>? _myFare;
 
   Future<void> _initUserAndSocket() async {
     setState(() => _isLoading = true);
@@ -45,11 +62,8 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
       _myFare = fare;
     });
 
-    // Frozen accounts don't get live tracking.
-    final frozen = fare?['frozen'] == true;
-
     // Only track the driver the student is actually assigned to.
-    if (!frozen && requests.any((r) => r['status'] == 'APPROVED')) {
+    if (requests.any((r) => r['status'] == 'APPROVED')) {
       final approvedReq = requests.firstWhere((r) => r['status'] == 'APPROVED');
       _driverIdToTrack = approvedReq['driverId'].toString();
     }
@@ -69,13 +83,27 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
       });
 
       _socket!.on('busLocationUpdate', (data) {
-        if (mounted) {
-          setState(() {
-            _isBusOnline = true;
-            _busLocation = LatLng(data['latitude'], data['longitude']);
-          });
-        }
+        if (!mounted) return;
+        final lat = (data['latitude'] as num?)?.toDouble();
+        final lng = (data['longitude'] as num?)?.toDouble();
+        if (lat == null || lng == null) return;
+        final speed = (data['speed'] as num?)?.toDouble();
+        setState(() {
+          _isBusOnline = true;
+          _busLocation = LatLng(lat, lng);
+          _busSpeedKmh = (speed != null && speed > 0) ? speed * 3.6 : null;
+          _lastUpdate = DateTime.now();
+        });
+        try {
+          _mapController.move(_busLocation, 15);
+        } catch (_) {}
       });
+
+      _socket!.on('busOffline', (_) {
+        if (mounted) setState(() => _isBusOnline = false);
+      });
+
+      _fetchMyLocation();
     }
 
     if (mounted) {
@@ -83,8 +111,56 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
     }
   }
 
+  // Best-effort: used only to compute distance/ETA. Silently skipped when
+  // the student declines permission.
+  Future<void> _fetchMyLocation() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+      if (mounted) setState(() => _myLocation = LatLng(pos.latitude, pos.longitude));
+    } catch (_) {
+      // distance/ETA simply stay unavailable
+    }
+  }
+
+  double? get _distanceKm {
+    if (_myLocation == null || !_isBusOnline) return null;
+    final metres = Geolocator.distanceBetween(
+      _myLocation!.latitude, _myLocation!.longitude,
+      _busLocation.latitude, _busLocation.longitude,
+    );
+    return metres / 1000;
+  }
+
+  String get _etaText {
+    final dist = _distanceKm;
+    if (dist == null) return '--';
+    // Use the bus's live speed when it's actually moving; otherwise assume
+    // typical Sri Lankan urban traffic (~25 km/h).
+    final speed = (_busSpeedKmh != null && _busSpeedKmh! > 5) ? _busSpeedKmh! : 25.0;
+    final mins = (dist / speed * 60).round();
+    if (mins < 1) return 'ARRIVING';
+    return '$mins MIN${mins == 1 ? '' : 'S'}';
+  }
+
+  String get _lastSeenText {
+    if (_lastUpdate == null) return 'Waiting for the bus to come online…';
+    final secs = DateTime.now().difference(_lastUpdate!).inSeconds;
+    if (secs < 5) return 'Live · updated just now';
+    if (secs < 60) return 'Live · updated ${secs}s ago';
+    return 'Last seen ${(secs / 60).floor()} min ago';
+  }
+
   @override
   void dispose() {
+    _staleTimer?.cancel();
     _socket?.disconnect();
     _socket?.dispose();
     super.dispose();
@@ -94,13 +170,15 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
   Widget build(BuildContext context) {
     final profile = _user != null ? (_user!['profile'] ?? _user!['student'] ?? {}) : {};
     final hasApprovedDriver = _myRequests.any((r) => r['status'] == 'APPROVED');
+    final isNarrow = MediaQuery.of(context).size.width < 900;
+    final dist = _distanceKm;
 
     return DashboardLayout(
       userName: profile['fullName'] ?? 'Student',
       userRole: 'STUDENT',
       activeIndex: 5,
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(isNarrow ? 16.0 : 40.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -114,7 +192,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
               "TRACK YOUR BUS IN REAL-TIME AND VIEW ETA",
               style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 25),
 
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
@@ -142,6 +220,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(30),
                       child: FlutterMap(
+                        mapController: _mapController,
                         options: MapOptions(
                           initialCenter: _busLocation,
                           initialZoom: 14.0,
@@ -159,6 +238,13 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                                 height: 40,
                                 child: Icon(Icons.directions_bus, color: _isBusOnline ? Colors.blueAccent : Colors.grey, size: 40),
                               ),
+                              if (_myLocation != null)
+                                Marker(
+                                  point: _myLocation!,
+                                  width: 30,
+                                  height: 30,
+                                  child: const Icon(Icons.person_pin_circle, color: Colors.greenAccent, size: 30),
+                                ),
                             ],
                           ),
                         ],
@@ -177,7 +263,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                             width: 350,
                             padding: const EdgeInsets.all(25),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
+                              color: Colors.black.withValues(alpha: 0.6),
                               border: Border.all(color: Colors.white24),
                             ),
                             child: Column(
@@ -191,12 +277,17 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                                       child: Icon(Icons.directions_bus, color: Colors.white, size: 20),
                                     ),
                                     const SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text('Status', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                                        Text(_isBusOnline ? 'Online (Broadcasting)' : 'Offline', style: TextStyle(color: _isBusOnline ? Colors.green : Colors.red, fontSize: 12)),
-                                      ],
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Status', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                          Text(
+                                            _isBusOnline ? _lastSeenText : 'Offline',
+                                            style: TextStyle(color: _isBusOnline ? Colors.green : Colors.red, fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -204,11 +295,18 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    _buildEtaStat('ETA', _isBusOnline ? '12 MINS' : '--', Colors.blueAccent),
-                                    _buildEtaStat('DISTANCE', _isBusOnline ? '4.2 KM' : '--', Colors.green),
-                                    _buildEtaStat('SPEED', _isBusOnline ? '35 KM/H' : '--', Colors.orange),
+                                    _buildEtaStat('ETA', _isBusOnline ? _etaText : '--', Colors.blueAccent),
+                                    _buildEtaStat('DISTANCE', (dist != null) ? '${dist.toStringAsFixed(1)} KM' : '--', Colors.green),
+                                    _buildEtaStat('SPEED', (_isBusOnline && _busSpeedKmh != null) ? '${_busSpeedKmh!.toStringAsFixed(0)} KM/H' : '--', Colors.orange),
                                   ],
                                 ),
+                                if (_myLocation == null && _isBusOnline) ...[
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Allow location access to see distance and ETA to you.',
+                                    style: TextStyle(color: Colors.white38, fontSize: 10),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

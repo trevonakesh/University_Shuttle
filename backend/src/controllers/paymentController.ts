@@ -141,7 +141,8 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
       paymentId: payment.id,
       amount,
       month,
-      checkoutUrl: `${payhereConfig().publicUrl}/api/payments/checkout/${payment.id}?t=${token}`
+      // Browser-facing URL — the notify callback separately uses publicUrl.
+      checkoutUrl: `${payhereConfig().appUrl}/api/payments/checkout/${payment.id}?t=${token}`
     });
   } catch (error: any) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -191,8 +192,10 @@ export const payhereCheckout = async (req: Request, res: Response): Promise<void
     const names = payment.student.fullName.trim().split(/\s+/);
     const fields: Record<string, string> = {
       merchant_id: cfg.merchantId,
-      return_url: `${cfg.publicUrl}/api/payments/return`,
-      cancel_url: `${cfg.publicUrl}/api/payments/return?cancelled=1`,
+      // return/cancel are opened by the student's browser; notify is called
+      // by PayHere's server and must go through the public tunnel.
+      return_url: `${cfg.appUrl}/api/payments/return`,
+      cancel_url: `${cfg.appUrl}/api/payments/return?cancelled=1`,
       notify_url: `${cfg.publicUrl}/api/payments/notify`,
       order_id: String(payment.id),
       items: `Monthly bus fare ${payment.month} — ${payment.driver.fullName}`,
