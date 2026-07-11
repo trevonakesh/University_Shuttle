@@ -17,6 +17,7 @@ import '../screens/driver/driver_passengers.dart';
 import '../screens/driver/driver_profile.dart';
 import '../screens/shared/info_screens.dart';
 import 'app_background.dart';
+import 'profile_avatar.dart';
 
 class DashboardLayout extends StatelessWidget {
   final Widget child;
@@ -91,9 +92,12 @@ class DashboardLayout extends StatelessWidget {
             icon: const Icon(Icons.notifications_none, color: Colors.white),
             onPressed: () => _showNotifications(context),
           ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.white),
-            onPressed: () => _openProfile(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 12, left: 4),
+            child: GestureDetector(
+              onTap: () => _openProfile(context),
+              child: const ProfileAvatar(radius: 16),
+            ),
           ),
         ],
       ),
@@ -300,10 +304,7 @@ class DashboardLayout extends StatelessWidget {
               onTap: () => _openProfile(context),
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    backgroundColor: Colors.white24,
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
+                  const ProfileAvatar(radius: 20),
                   const SizedBox(width: 10),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
