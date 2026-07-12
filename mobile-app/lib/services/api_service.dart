@@ -120,6 +120,38 @@ class ApiService {
     }
   }
 
+  // Requests a password-reset code for the given email. In dev (no email
+  // provider configured) the backend returns the code in `devCode`.
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true, ...data};
+      return {'success': false, 'message': data['error'] ?? 'Request failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> resetPassword(String email, String code, String newPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'code': code, 'newPassword': newPassword}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true, ...data};
+      return {'success': false, 'message': data['error'] ?? 'Reset failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
   static Future<Map<String, dynamic>> studentRegister(Map<String, dynamic> payload) async {
     try {
       final response = await http.post(

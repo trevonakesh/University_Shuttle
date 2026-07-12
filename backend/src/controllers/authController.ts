@@ -9,6 +9,92 @@ const generateToken = (userId: number, role: Role) => {
   return jwt.sign({ userId, role }, secret, { expiresIn: '7d' });
 };
 
+// True once a real email/SMS delivery provider is wired up. Until then the
+// reset code is returned in the API response (dev convenience) instead of
+// being delivered — clearly not for production.
+const deliveryConfigured = (): boolean => Boolean(process.env.SMTP_HOST || process.env.EMAIL_API_KEY);
+
+// POST /api/auth/forgot-password  { email }
+// Generates a 6-digit code, stores it hashed with a 15-minute expiry.
+// Always responds the same way so the endpoint can't be used to discover
+// which emails have accounts.
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ error: 'Email is required' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    const generic = { message: 'If an account exists for that email, a reset code has been sent.' };
+
+    if (!user) {
+      res.status(200).json(generic);
+      return;
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+    const codeHash = await bcrypt.hash(code, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetCodeHash: codeHash, resetCodeExpiry: new Date(Date.now() + 15 * 60 * 1000) }
+    });
+
+    // TODO: when SMTP/EMAIL_API_KEY is set, send `code` to user.email here.
+    if (!deliveryConfigured()) {
+      console.log(`[password-reset] code for ${email}: ${code}`);
+      res.status(200).json({ ...generic, devCode: code });
+      return;
+    }
+
+    res.status(200).json(generic);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// POST /api/auth/reset-password  { email, code, newPassword }
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) {
+      res.status(400).json({ error: 'Email, code and new password are required' });
+      return;
+    }
+    if (String(newPassword).length < 6) {
+      res.status(400).json({ error: 'Password must be at least 6 characters' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !user.resetCodeHash || !user.resetCodeExpiry) {
+      res.status(400).json({ error: 'No reset request found. Please request a new code.' });
+      return;
+    }
+    if (user.resetCodeExpiry.getTime() < Date.now()) {
+      res.status(400).json({ error: 'This code has expired. Please request a new one.' });
+      return;
+    }
+
+    const matches = await bcrypt.compare(String(code), user.resetCodeHash);
+    if (!matches) {
+      res.status(400).json({ error: 'Invalid reset code.' });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(String(newPassword), 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash, resetCodeHash: null, resetCodeExpiry: null }
+    });
+
+    res.status(200).json({ message: 'Password reset successful. You can now log in.' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 export const registerStudent = async (req: Request, res: Response): Promise<void> => {
   try {
     const { 

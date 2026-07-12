@@ -44,6 +44,9 @@ model User {
   phone        String?  @unique
   passwordHash String
   role         Role
+  // Password reset (OTP): hashed 6-digit code + its expiry
+  resetCodeHash   String?
+  resetCodeExpiry DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
