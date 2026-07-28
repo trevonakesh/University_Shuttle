@@ -121,48 +121,100 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
       }
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Bus Image (1:1 Thumbnail)
-            AspectRatio(
-              aspectRatio: 1,
-              child: Builder(builder: (context) {
-                final busPhotoUrl = ApiService.resolveUrl(bus['busPhotoUrl']);
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    image: busPhotoUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(busPhotoUrl),
-                          fit: BoxFit.cover,
-                          onError: (_, __) {},
-                        )
-                      : null,
-                  ),
-                  child: busPhotoUrl == null
-                    ? const Center(child: Icon(Icons.directions_bus, color: Colors.white24, size: 40))
-                    : null,
-                );
-              }),
-            ),
-            
-            // Bus Details
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+    final isNarrow = MediaQuery.of(context).size.width < 900;
+    
+    final imageWidget = Builder(builder: (context) {
+      final busPhotoUrl = ApiService.resolveUrl(bus['busPhotoUrl']);
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          image: busPhotoUrl != null
+            ? DecorationImage(
+                image: NetworkImage(busPhotoUrl),
+                fit: BoxFit.cover,
+                onError: (_, __) {},
+              )
+            : null,
+        ),
+        child: busPhotoUrl == null
+          ? const Center(child: Icon(Icons.directions_bus, color: Colors.white24, size: 40))
+          : null,
+      );
+    });
+    
+    final detailsWidget = Padding(
+      padding: const EdgeInsets.all(20),
+      child: isNarrow
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  bus['routeName'] ?? 'Unknown Route',
+                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
+                Wrap(
+                  spacing: 20,
+                  runSpacing: 10,
                   children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person, color: Colors.white54, size: 16),
+                        const SizedBox(width: 8),
+                        Text('Driver: ${bus['fullName'] ?? 'Unknown'}', style: const TextStyle(color: Colors.white70)),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.confirmation_number, color: Colors.white54, size: 16),
+                        const SizedBox(width: 8),
+                        Text('Reg: ${bus['busRegNumber'] ?? 'N/A'}', style: const TextStyle(color: Colors.white70)),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.access_time, color: Colors.white54, size: 16),
+                        const SizedBox(width: 8),
+                        Text(bus['pickupTime'] ?? 'N/A', style: const TextStyle(color: Colors.white70)),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.event_seat, color: Colors.white54, size: 16),
+                        const SizedBox(width: 8),
+                        Text('Seats: ${bus['busCapacity'] ?? 'N/A'}', style: const TextStyle(color: Colors.white70)),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.attach_money, color: Colors.white54, size: 16),
+                        const SizedBox(width: 8),
+                        Text(bus['monthlyFee'] != null ? 'LKR ${bus['monthlyFee']}' : 'N/A', style: const TextStyle(color: Colors.white70)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: _isRequesting ? null : (hasRequestedThis ? () => _unassignDriver(requestId!) : (hasActiveRequestAnywhere ? null : () => _requestSeat(bus['id']))),
+                  icon: Icon(hasRequestedThis ? Icons.cancel : Icons.send, color: Colors.white),
+                  label: Text(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? Colors.white24 : Colors.blueAccent),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
                 Expanded(
                   flex: 2,
                   child: Column(
@@ -237,12 +289,34 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
                 ),
               ],
             ),
-          ),
-        ),
-      ],
-    ),
-  ),
-);
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: isNarrow
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 180, child: imageWidget),
+                detailsWidget,
+              ],
+            )
+          : IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AspectRatio(aspectRatio: 1, child: imageWidget),
+                  Expanded(child: detailsWidget),
+                ],
+              ),
+            ),
+    );
   }
 
   @override
@@ -256,13 +330,14 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
 
     final profile = _user?['profile'] ?? _user?['student'] ?? {};
     final name = profile['fullName'] ?? 'Student';
+    final isNarrow = MediaQuery.of(context).size.width < 900;
 
     return DashboardLayout(
       userName: name,
       userRole: 'STUDENT',
       activeIndex: 1, // 'AVAILABLE BUSES' index
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(isNarrow ? 20.0 : 40.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

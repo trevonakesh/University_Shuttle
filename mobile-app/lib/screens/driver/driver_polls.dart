@@ -136,7 +136,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
       userRole: 'DRIVER',
       activeIndex: 2,
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -207,21 +207,24 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                         children: [
                           // Poll Header & Stats
                           Padding(
-                            padding: const EdgeInsets.all(25.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            padding: const EdgeInsets.all(20.0),
+                            child: Wrap(
+                              spacing: 20,
+                              runSpacing: 20,
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(poll['date'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                                      const SizedBox(height: 5),
-                                      Text(poll['question'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                                    ],
-                                  ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(poll['date'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 5),
+                                    Text(poll['question'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                                  ],
                                 ),
                                 Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _buildStatCard((poll['option1'] ?? 'COMING').toString().toUpperCase(), option1Count.toString(), Colors.green),
                                     const SizedBox(width: 15),
@@ -277,7 +280,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
 
   Widget _buildStatCard(String label, String count, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(15),
@@ -307,8 +310,8 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                   radius: 16,
                   child: Icon(Icons.person, color: Colors.white, size: 20),
                 ),
-                const SizedBox(width: 15),
-                Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 10),
+                Expanded(child: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
               ],
             ),
           ),
@@ -317,8 +320,8 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
             child: Row(
               children: [
                 const Icon(Icons.location_on, color: Colors.white54, size: 14),
-                const SizedBox(width: 8),
-                Text(pickup, style: const TextStyle(color: Colors.white70)),
+                const SizedBox(width: 4),
+                Expanded(child: Text(pickup, style: const TextStyle(color: Colors.white70), overflow: TextOverflow.ellipsis)),
               ],
             ),
           ),
@@ -327,8 +330,8 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
             child: Row(
               children: [
                 const Icon(Icons.phone, color: Colors.white54, size: 14),
-                const SizedBox(width: 8),
-                Text(phone, style: const TextStyle(color: Colors.white70)),
+                const SizedBox(width: 4),
+                Expanded(child: Text(phone, style: const TextStyle(color: Colors.white70), overflow: TextOverflow.ellipsis)),
               ],
             ),
           ),
@@ -337,13 +340,17 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 decoration: BoxDecoration(
                   color: Colors.green.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.green.withOpacity(0.5)),
                 ),
-                child: Text(option1Text.toUpperCase(), style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                child: Text(
+                  option1Text.toUpperCase(),
+                  style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ),

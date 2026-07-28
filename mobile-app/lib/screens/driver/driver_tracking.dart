@@ -261,56 +261,58 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
 
                     // Controls Panel (Glassmorphic)
                     Positioned(
-                      bottom: 30,
-                      left: 30,
-                      right: 30,
+                      bottom: isNarrow ? 15 : 30,
+                      left: isNarrow ? 15 : 30,
+                      right: isNarrow ? 15 : 30,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                           child: Container(
-                            padding: const EdgeInsets.all(25),
+                            padding: EdgeInsets.all(isNarrow ? 15 : 25),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.6),
                               border: Border.all(color: Colors.white24),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            child: Wrap(
+                              spacing: 15,
+                              runSpacing: 15,
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _isBroadcasting ? 'BROADCASTING LIVE' : 'LOCATION SHARING OFF',
-                                        style: TextStyle(
-                                          color: _isBroadcasting ? Colors.blueAccent : Colors.white70,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _isBroadcasting ? 'BROADCASTING LIVE' : 'LOCATION SHARING OFF',
+                                      style: TextStyle(
+                                        color: _isBroadcasting ? Colors.blueAccent : Colors.white70,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        _isBroadcasting
-                                          ? (_hasFix
-                                              ? 'GPS live · ${_speedKmh.toStringAsFixed(0)} km/h · ${_currentLocation.latitude.toStringAsFixed(5)}, ${_currentLocation.longitude.toStringAsFixed(5)}'
-                                              : 'Waiting for GPS fix…')
-                                          : 'Turn on to share your real GPS position with students.',
-                                        style: const TextStyle(color: Colors.white54, fontSize: 13),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      _isBroadcasting
+                                        ? (_hasFix
+                                            ? 'GPS live · ${_speedKmh.toStringAsFixed(0)} km/h · ${_currentLocation.latitude.toStringAsFixed(5)}, ${_currentLocation.longitude.toStringAsFixed(5)}'
+                                            : 'Waiting for GPS fix…')
+                                        : 'Turn on to share your real GPS position with students.',
+                                      style: const TextStyle(color: Colors.white54, fontSize: 13),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 10),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _isBroadcasting ? Colors.redAccent : Colors.white,
                                     foregroundColor: _isBroadcasting ? Colors.white : Colors.black,
-                                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                                    padding: EdgeInsets.symmetric(horizontal: isNarrow ? 20 : 30, vertical: isNarrow ? 15 : 20),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                                   ),
                                   onPressed: _toggleBroadcasting,
                                   child: Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(_isBroadcasting ? Icons.stop : Icons.play_arrow, size: 20),
                                       const SizedBox(width: 8),

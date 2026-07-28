@@ -1,0 +1,6 @@
+
+# Local Android SDK (emulator tooling)
+.android-sdk/
+build/
+.dart_tool/
+mobile-app/android/build/

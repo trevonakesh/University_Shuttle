@@ -249,36 +249,43 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
   Widget build(BuildContext context) {
     final profile = _user != null ? (_user!['profile'] ?? _user!['student'] ?? {}) : {};
     final hasApprovedDriver = _myRequests.any((r) => r['status'] == 'APPROVED');
+    final isNarrow = MediaQuery.of(context).size.width < 900;
 
     return DashboardLayout(
       userName: profile['fullName'] ?? 'Student',
       userRole: 'STUDENT',
       activeIndex: 4, 
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(isNarrow ? 20.0 : 40.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'PAYMENT HISTORY',
-                  style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
-                ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.payment, size: 18),
-                  label: const Text('MAKE PAYMENT', style: TextStyle(fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 20,
+                runSpacing: 20,
+                children: [
+                  const Text(
+                    'PAYMENT HISTORY',
+                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
                   ),
-                  onPressed: _showMakePaymentModal,
-                ),
-              ],
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.payment, size: 18),
+                    label: const Text('MAKE PAYMENT', style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: _showMakePaymentModal,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
             const Text(
@@ -306,38 +313,76 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                   ),
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Row(
-                          children: const [
-                            Expanded(flex: 2, child: Text('MONTH', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                            Expanded(flex: 3, child: Text('DRIVER/BUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                            Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                            Expanded(flex: 2, child: Text('STATUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                            Expanded(flex: 2, child: Text('METHOD', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                          ],
+                      if (!isNarrow)
+                        Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Row(
+                            children: const [
+                              Expanded(flex: 2, child: Text('MONTH', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                              Expanded(flex: 3, child: Text('DRIVER/BUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                              Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                              Expanded(flex: 2, child: Text('STATUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                              Expanded(flex: 2, child: Text('METHOD', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                            ],
+                          ),
                         ),
-                      ),
-                      const Divider(color: Colors.white24, height: 1),
+                      if (!isNarrow)
+                        const Divider(color: Colors.white24, height: 1),
                       Expanded(
                         child: ListView.builder(
                           itemCount: _payments.length,
                           itemBuilder: (context, index) {
                             final payment = _payments[index];
                             final driverName = payment['driver']?['fullName'] ?? 'Driver';
-                            return Column(
-                              children: [
-                                _buildPaymentRow(
-                                  payment['month'] ?? '-',
-                                  driverName,
-                                  'LKR ${payment['amount']}',
-                                  payment['status'] ?? 'COMPLETED',
-                                  payment['paymentMethod'] ?? 'IN_APP',
+                            
+                            if (isNarrow) {
+                              return Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white10))),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text('${payment['month'] ?? '-'}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        Text('LKR ${payment['amount']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text('Driver: $driverName', style: const TextStyle(color: Colors.white70)),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: payment['status'] == 'COMPLETED' ? Colors.green : Colors.orange)),
+                                            const SizedBox(width: 6),
+                                            Text(payment['status'] ?? 'COMPLETED', style: TextStyle(color: payment['status'] == 'COMPLETED' ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                          ],
+                                        ),
+                                        Text(payment['paymentMethod'] ?? 'IN_APP', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                if (index < _payments.length - 1)
-                                  const Divider(color: Colors.white10, height: 1),
-                              ],
-                            );
+                              );
+                            } else {
+                              return Column(
+                                children: [
+                                  _buildPaymentRow(
+                                    payment['month'] ?? '-',
+                                    driverName,
+                                    'LKR ${payment['amount']}',
+                                    payment['status'] ?? 'COMPLETED',
+                                    payment['paymentMethod'] ?? 'IN_APP',
+                                  ),
+                                  if (index < _payments.length - 1)
+                                    const Divider(color: Colors.white10, height: 1),
+                                ],
+                              );
+                            }
                           }
                         ),
                       ),
