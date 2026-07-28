@@ -131,19 +131,27 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.white),
-                              onPressed: () => Navigator.pop(context),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: IconButton(
+                                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                                onPressed: () => Navigator.pop(context),
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
+                              ),
                             ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text('STUDENT REGISTRATION', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
-                                SizedBox(height: 4),
-                                Text('PLEASE FILL IN YOUR DETAILS TO CREATE YOUR STUDENT ACCOUNT', style: TextStyle(fontSize: 10, color: Colors.white70, letterSpacing: 1)),
-                              ],
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text('STUDENT REGISTRATION', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
+                                  SizedBox(height: 4),
+                                  Text('PLEASE FILL IN YOUR DETAILS TO CREATE YOUR STUDENT ACCOUNT', style: TextStyle(fontSize: 10, color: Colors.white70, letterSpacing: 1)),
+                                ],
+                              ),
                             ),
                           ],
                         ),

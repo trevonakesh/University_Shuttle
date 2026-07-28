@@ -179,19 +179,27 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.white),
-                              onPressed: () => Navigator.pop(context),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: IconButton(
+                                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                                onPressed: () => Navigator.pop(context),
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
+                              ),
                             ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text('DRIVER REGISTRATION', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
-                                SizedBox(height: 4),
-                                Text('PLEASE FILL IN YOUR DETAILS TO REGISTER AS A DRIVER', style: TextStyle(fontSize: 10, color: Colors.white70, letterSpacing: 1)),
-                              ],
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text('DRIVER REGISTRATION', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
+                                  SizedBox(height: 4),
+                                  Text('PLEASE FILL IN YOUR DETAILS TO REGISTER AS A DRIVER', style: TextStyle(fontSize: 10, color: Colors.white70, letterSpacing: 1)),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -322,34 +330,60 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
 
                 const SizedBox(height: 50),
                 
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 50,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white54, width: 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))),
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('CANCEL', style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                if (isDesktop)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white54, width: 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))),
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('CANCEL', style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      flex: 2,
-                      child: SizedBox(
+                      const SizedBox(width: 20),
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25), side: const BorderSide(color: Colors.white30))),
+                            onPressed: _isLoading ? null : _register,
+                            child: _isLoading 
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text('SUBMIT REGISTRATION', style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
                         height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25), side: const BorderSide(color: Colors.white30))),
                           onPressed: _isLoading ? null : _register,
                           child: _isLoading 
                               ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text('SUBMIT REGISTRATION', style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                              : const Text('SUBMIT REGISTRATION', style: TextStyle(color: Colors.white, fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(height: 15),
+                      SizedBox(
+                        height: 50,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white54, width: 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('CANCEL', style: TextStyle(color: Colors.white, fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -437,13 +471,19 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
             child: Row(
               children: [
                 const Icon(Icons.access_time, color: Colors.white54, size: 16),
-                const SizedBox(width: 10),
-                Text(hint, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    hint, 
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ),
