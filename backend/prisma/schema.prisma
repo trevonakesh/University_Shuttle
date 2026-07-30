@@ -38,6 +38,12 @@ enum FareStatus {
   EXEMPT
 }
 
+enum PayoutRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
@@ -131,6 +137,7 @@ model Driver {
   polls            Poll[]
   monthlyFares     MonthlyFare[]
   payouts          Payout[]
+  payoutRequests   PayoutRequest[]
 }
 
 // Money the platform has transferred to a driver (wallet settlement),
@@ -145,6 +152,24 @@ model Payout {
   createdAt   DateTime @default(now())
 
   driver      Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  request     PayoutRequest?
+}
+
+// A driver's withdrawal request against their wallet. Admin reviews it;
+// the wallet only moves when the request is APPROVED (which creates a Payout).
+model PayoutRequest {
+  id         Int                 @id @default(autoincrement())
+  driverId   Int
+  amount     Float
+  note       String?             // driver's message to the admin
+  status     PayoutRequestStatus @default(PENDING)
+  adminNote  String?             // admin's reason / reference on review
+  payoutId   Int?                @unique
+  createdAt  DateTime            @default(now())
+  reviewedAt DateTime?
+
+  driver     Driver              @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  payout     Payout?             @relation(fields: [payoutId], references: [id], onDelete: SetNull)
 }
 
 model SeatRequest {

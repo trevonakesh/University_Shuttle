@@ -4,6 +4,7 @@ import {
   createDriver, deleteDriver, getStudents, createStudent, deleteStudent,
   createPayout, getPayouts
 } from '../controllers/adminController';
+import { getPayoutRequests, reviewPayoutRequest } from '../controllers/payoutRequestController';
 import { authenticate, authorizeRole } from '../middleware/authMiddleware';
 import { Role } from '@prisma/client';
 
@@ -27,5 +28,8 @@ router.get('/payments', getPayments as any);
 
 router.get('/payouts', getPayouts as any);
 router.post('/payouts', createPayout as any);
+
+router.get('/payout-requests', getPayoutRequests as any);
+router.patch('/payout-requests/:id', reviewPayoutRequest as any);
 
 export default router;

@@ -213,7 +213,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 _buildSectionTitle('UNIVERSITY INFORMATION'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('UNIVERSITY NAME', 'SELECT UNIVERSITY', ['Colombo', 'Peradeniya', 'Moratuwa'], _university, (val) => setState(() => _university = val)),
+                  _buildDropdownCol('UNIVERSITY NAME', 'SELECT UNIVERSITY', ['NSBM', 'SLIIT'], _university, (val) => setState(() => _university = val)),
                   _buildDropdownCol('FACULTY', 'SELECT FACULTY', ['Science', 'Engineering', 'Arts'], _faculty, (val) => setState(() => _faculty = val)),
                   _buildDropdownCol('DEGREE / PROGRAM', 'SELECT PROGRAM', ['BSc', 'BEng', 'BA'], _program, (val) => setState(() => _program = val)),
                 ]),
@@ -237,7 +237,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('DESTINATION UNIVERSITY', 'SELECT DESTINATION UNIVERSITY', ['Colombo', 'Peradeniya', 'Moratuwa'], _destination, (val) => setState(() => _destination = val)),
+                  _buildDropdownCol('DESTINATION UNIVERSITY', 'SELECT DESTINATION UNIVERSITY', ['NSBM', 'SLIIT'], _destination, (val) => setState(() => _destination = val)),
                   if (isDesktop) Expanded(child: const SizedBox()),
                   if (isDesktop) Expanded(child: const SizedBox()),
                 ]),

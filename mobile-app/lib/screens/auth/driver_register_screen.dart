@@ -280,7 +280,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
                   _buildInputCol('STARTING POINT', 'ENTER STARTING POINT', _startCtrl),
-                  _buildDropdownCol('DESTINATION (UNIVERSITY)', 'SELECT UNIVERSITY', ['Colombo', 'Peradeniya', 'Moratuwa'], _destination, (v) => setState(() => _destination = v)),
+                  _buildDropdownCol('DESTINATION (UNIVERSITY)', 'SELECT UNIVERSITY', ['NSBM', 'SLIIT'], _destination, (v) => setState(() => _destination = v)),
                   _buildInputCol('MONTHLY FEE (LKR)', 'ENTER MONTHLY FEE', _feeCtrl),
                 ]),
                 

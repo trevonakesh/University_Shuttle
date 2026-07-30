@@ -27,7 +27,7 @@ async function main() {
           nic: '123456789V',
           licenseNumber: 'B1234567',
           busRegNumber: 'ND-1234',
-          routeName: 'Colombo - Kandy',
+          routeName: 'NSBM - Kandy',
           monthlyFee: 5000,
           status: 'APPROVED',
           walletBalance: 1000

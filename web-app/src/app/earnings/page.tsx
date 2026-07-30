@@ -18,6 +18,27 @@ type Driver = {
   status: string;
 };
 
+type PayoutRequest = {
+  id: number;
+  amount: number;
+  note: string | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminNote: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+  driver: {
+    id: number;
+    fullName: string;
+    busRegNumber: string | null;
+    walletBalance: number;
+    bankName: string | null;
+    accNumber: string | null;
+    accHolder: string | null;
+    user: { email: string; phone: string };
+  };
+  payout: { method: string; referenceNo: string | null; createdAt: string } | null;
+};
+
 type Payout = {
   id: number;
   amount: number;
@@ -34,6 +55,13 @@ export default function EarningsPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [stats, setStats] = useState<Map<string, EarningStats>>(new Map());
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [requests, setRequests] = useState<PayoutRequest[]>([]);
+  const [reviewing, setReviewing] = useState<PayoutRequest | null>(null);
+  const [reviewMethod, setReviewMethod] = useState('BANK_TRANSFER');
+  const [reviewRef, setReviewRef] = useState('');
+  const [reviewNote, setReviewNote] = useState('');
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const [totalAdminRevenue, setTotalAdminRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,11 +77,14 @@ export default function EarningsPage() {
 
   const loadAll = async () => {
     try {
-      const [driversRes, paymentsRes, payoutsRes] = await Promise.all([
+      const [driversRes, paymentsRes, payoutsRes, requestsRes] = await Promise.all([
         authFetch('/api/admin/drivers'),
         authFetch('/api/admin/payments'),
-        authFetch('/api/admin/payouts')
+        authFetch('/api/admin/payouts'),
+        authFetch('/api/admin/payout-requests')
       ]);
+      const requestsData = await requestsRes.json();
+      if (Array.isArray(requestsData)) setRequests(requestsData);
       const driversData = await driversRes.json();
       const paymentsData = await paymentsRes.json();
       const payoutsData = await payoutsRes.json();
@@ -121,7 +152,50 @@ export default function EarningsPage() {
     }
   };
 
+  const openReview = (r: PayoutRequest) => {
+    setReviewing(r);
+    setReviewMethod('BANK_TRANSFER');
+    setReviewRef('');
+    setReviewNote('');
+    setReviewError(null);
+  };
+
+  const submitReview = async (action: 'APPROVE' | 'REJECT') => {
+    if (!reviewing) return;
+    if (action === 'REJECT' && !reviewNote.trim()) {
+      setReviewError('Please give the driver a reason for the rejection.');
+      return;
+    }
+    setReviewError(null);
+    setReviewBusy(true);
+    try {
+      const res = await authFetch(`/api/admin/payout-requests/${reviewing.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          action,
+          method: reviewMethod,
+          referenceNo: reviewRef,
+          adminNote: reviewNote
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReviewing(null);
+        loadAll();
+      } else {
+        setReviewError(data.error ?? data.message ?? 'Review failed.');
+      }
+    } catch {
+      setReviewError('Could not reach the backend.');
+    } finally {
+      setReviewBusy(false);
+    }
+  };
+
   if (loading) return <div>Loading earnings...</div>;
+
+  const pendingRequests = requests.filter(r => r.status === 'PENDING');
+  const reviewedRequests = requests.filter(r => r.status !== 'PENDING');
 
   const totalOwed = drivers.reduce((sum, d) => sum + (d.walletBalance || 0), 0);
   const totalPaidOut = payouts.reduce((sum, p) => sum + p.amount, 0);
@@ -160,6 +234,128 @@ export default function EarningsPage() {
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>{payouts.length} payouts</div>
         </div>
       </div>
+
+      <h2>
+        Withdrawal Requests
+        {pendingRequests.length > 0 && (
+          <span style={{
+            marginLeft: '10px', fontSize: '12px', fontWeight: 700, padding: '3px 10px',
+            borderRadius: '20px', background: 'rgba(245,158,11,.2)', color: '#fcd34d'
+          }}>
+            {pendingRequests.length} awaiting review
+          </span>
+        )}
+      </h2>
+      <div className="glass-panel" style={{ marginBottom: '32px' }}>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Driver</th>
+              <th>Requested</th>
+              <th>Amount</th>
+              <th>Wallet</th>
+              <th>Bank details</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...pendingRequests, ...reviewedRequests].map(r => (
+              <tr key={r.id}>
+                <td>
+                  <div>{r.driver.fullName}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{r.driver.busRegNumber ?? '-'}</div>
+                </td>
+                <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                <td style={{ fontWeight: 'bold' }}>Rs. {r.amount.toLocaleString()}</td>
+                <td style={{ color: 'var(--success)' }}>Rs. {(r.driver.walletBalance || 0).toLocaleString()}</td>
+                <td style={{ fontSize: '12px' }}>
+                  {r.driver.bankName
+                    ? <>{r.driver.bankName}<br /><span style={{ color: 'var(--text-muted)' }}>{r.driver.accNumber} · {r.driver.accHolder}</span></>
+                    : <span style={{ color: 'var(--text-muted)' }}>Not provided</span>}
+                </td>
+                <td>
+                  <span className={`badge ${r.status === 'PENDING' ? 'pending' : r.status === 'APPROVED' ? 'approved' : 'rejected'}`}>
+                    {r.status}
+                  </span>
+                  {r.adminNote && (
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontStyle: 'italic' }}>
+                      {r.adminNote}
+                    </div>
+                  )}
+                </td>
+                <td>
+                  {r.status === 'PENDING'
+                    ? <button className="btn btn-primary" onClick={() => openReview(r)}>Review</button>
+                    : <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                        {r.reviewedAt ? new Date(r.reviewedAt).toLocaleDateString() : '—'}
+                      </span>}
+                </td>
+              </tr>
+            ))}
+            {requests.length === 0 && (
+              <tr><td colSpan={7} style={{ textAlign: 'center' }}>No withdrawal requests yet.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {reviewing && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex',
+          justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+          backdropFilter: 'blur(5px)'
+        }}>
+          <div className="glass-panel" style={{ width: '460px', padding: '30px', backgroundColor: '#1e212b' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <h2>Review Payout Request</h2>
+              <button onClick={() => setReviewing(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+            </div>
+
+            <div style={{ display: 'grid', gap: '6px', marginBottom: '18px', fontSize: '14px' }}>
+              <div><strong>{reviewing.driver.fullName}</strong> · {reviewing.driver.user?.phone ?? reviewing.driver.user?.email}</div>
+              <div>Requesting <strong style={{ color: 'var(--success)' }}>Rs. {reviewing.amount.toLocaleString()}</strong> of Rs. {reviewing.driver.walletBalance.toLocaleString()} available</div>
+              {reviewing.driver.bankName && (
+                <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                  {reviewing.driver.bankName} · {reviewing.driver.accNumber} · {reviewing.driver.accHolder}
+                </div>
+              )}
+              {reviewing.note && (
+                <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>“{reviewing.note}”</div>
+              )}
+            </div>
+
+            {reviewError && <div style={{ color: 'var(--danger)', marginBottom: '12px', fontSize: '13px' }}>{reviewError}</div>}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <label style={labelStyle}>
+                Payment method
+                <select value={reviewMethod} onChange={e => setReviewMethod(e.target.value)} style={inputStyle}>
+                  <option value="BANK_TRANSFER" style={{ color: 'black' }}>Bank Transfer</option>
+                  <option value="CASH" style={{ color: 'black' }}>Cash</option>
+                </select>
+              </label>
+              <label style={labelStyle}>
+                Reference No (bank slip)
+                <input value={reviewRef} onChange={e => setReviewRef(e.target.value)} style={inputStyle} />
+              </label>
+              <label style={labelStyle}>
+                Note to driver {`(required when rejecting)`}
+                <input value={reviewNote} onChange={e => setReviewNote(e.target.value)} style={inputStyle} />
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '24px', justifyContent: 'flex-end' }}>
+              <button className="btn btn-outline" onClick={() => setReviewing(null)} disabled={reviewBusy}>Cancel</button>
+              <button className="btn btn-danger" onClick={() => submitReview('REJECT')} disabled={reviewBusy}>Reject</button>
+              <button className="btn btn-success" onClick={() => submitReview('APPROVE')} disabled={reviewBusy}>
+                {reviewBusy ? 'Working…' : `Approve & Pay Rs. ${reviewing.amount.toLocaleString()}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <h2>Driver Balances</h2>
       <div className="glass-panel" style={{ marginBottom: '32px' }}>

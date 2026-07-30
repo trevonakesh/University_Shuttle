@@ -15,6 +15,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
   Map<String, dynamic>? _fareData;
   List<dynamic> _payments = [];
   double _walletBalance = 0.0;
+  List<dynamic> _payoutRequests = [];
   bool _isLoading = true;
   late TabController _tabController;
   IO.Socket? _socket;
@@ -27,7 +28,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     final now = DateTime.now();
     _selectedMonth = DateTime(now.year, now.month);
     _fetchData();
@@ -55,6 +56,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         _walletBalance = balance;
         _isLoading = false;
       });
+      _loadPayoutRequests();
       _connectSocket();
     }
   }
@@ -171,6 +173,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
                     tabs: const [
                       Tab(text: 'FARE TRACKER'),
                       Tab(text: 'PAYMENT HISTORY'),
+                      Tab(text: 'WITHDRAWALS'),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -180,6 +183,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
                       children: [
                         _buildFareTracker(isNarrow),
                         _buildHistory(),
+                        _buildWithdrawals(),
                       ],
                     ),
                   ),
@@ -474,6 +478,294 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         }
       },
       itemBuilder: (context) => items,
+    );
+  }
+
+  // ---------- WITHDRAWALS ----------
+
+  Future<void> _loadPayoutRequests() async {
+    final data = await ApiService.getMyPayoutRequests();
+    if (mounted && data != null) {
+      setState(() {
+        _payoutRequests = (data['requests'] as List<dynamic>?) ?? [];
+        _walletBalance = (data['walletBalance'] as num?)?.toDouble() ?? _walletBalance;
+      });
+    }
+  }
+
+  bool get _hasPendingRequest =>
+      _payoutRequests.any((r) => r['status'] == 'PENDING');
+
+  Future<void> _showRequestPayoutDialog() async {
+    if (_walletBalance <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You have no earnings available to withdraw yet.')),
+      );
+      return;
+    }
+    if (_hasPendingRequest) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You already have a request awaiting admin review.')),
+      );
+      return;
+    }
+
+    final amountController = TextEditingController(text: _walletBalance.toStringAsFixed(2));
+    final noteController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1E2128),
+        title: const Text('Request Payout', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Available balance: LKR ${_walletBalance.toStringAsFixed(2)}',
+              style: const TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(color: Colors.black),
+              decoration: const InputDecoration(
+                labelText: 'Amount to withdraw (LKR)',
+                labelStyle: TextStyle(color: Colors.black54),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteController,
+              style: const TextStyle(color: Colors.black),
+              decoration: const InputDecoration(
+                labelText: 'Note for admin (optional)',
+                labelStyle: TextStyle(color: Colors.black54),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'The admin will review your request and transfer the money to your registered bank account.',
+              style: TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent.shade700),
+            onPressed: () async {
+              final amount = double.tryParse(amountController.text.trim());
+              if (amount == null || amount <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Enter a valid amount.'), backgroundColor: Colors.redAccent),
+                );
+                return;
+              }
+              final res = await ApiService.requestPayout(amount, note: noteController.text.trim());
+              if (!dialogContext.mounted) return;
+              Navigator.pop(dialogContext);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(res['success'] == true
+                      ? 'Payout request sent to the admin.'
+                      : res['message'] ?? 'Request failed'),
+                  backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
+                ),
+              );
+              if (res['success'] == true) _loadPayoutRequests();
+            },
+            child: const Text('SEND REQUEST', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _cancelRequest(Map<String, dynamic> request) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A24),
+        title: const Text('Cancel request?', style: TextStyle(color: Colors.white)),
+        content: Text(
+          'Withdraw your pending request for LKR ${((request['amount'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('KEEP', style: TextStyle(color: Colors.white54))),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('CANCEL REQUEST', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold))),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    final res = await ApiService.cancelPayoutRequest(request['id']);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res['success'] == true ? 'Request cancelled.' : res['message'] ?? 'Failed'),
+        backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
+      ),
+    );
+    if (res['success'] == true) _loadPayoutRequests();
+  }
+
+  Widget _buildWithdrawals() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Available balance + request button
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('AVAILABLE TO WITHDRAW',
+                        style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Text('LKR ${_walletBalance.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: _walletBalance > 0 ? Colors.greenAccent : Colors.white38,
+                          fontSize: 24, fontWeight: FontWeight.bold,
+                        )),
+                    if (_hasPendingRequest) ...[
+                      const SizedBox(height: 6),
+                      const Text('A request is awaiting admin review.',
+                          style: TextStyle(color: Colors.orangeAccent, fontSize: 11)),
+                    ],
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.account_balance, size: 18),
+                label: const Text('REQUEST', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: (_walletBalance > 0 && !_hasPendingRequest) ? Colors.white : Colors.white24,
+                  foregroundColor: (_walletBalance > 0 && !_hasPendingRequest) ? Colors.black : Colors.white54,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _showRequestPayoutDialog,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: _payoutRequests.isEmpty
+                ? const Center(child: Text('NO WITHDRAWAL REQUESTS YET', style: TextStyle(color: Colors.white54)))
+                : ListView.separated(
+                    itemCount: _payoutRequests.length,
+                    separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+                    itemBuilder: (context, index) => _buildRequestRow(_payoutRequests[index]),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRequestRow(Map<String, dynamic> r) {
+    final status = r['status'] ?? 'PENDING';
+    final amount = (r['amount'] as num?)?.toDouble() ?? 0;
+    final created = (r['createdAt'] ?? '').toString();
+    final date = created.length >= 10 ? created.substring(0, 10) : created;
+
+    Color color;
+    IconData icon;
+    switch (status) {
+      case 'APPROVED':
+        color = Colors.green;
+        icon = Icons.check_circle;
+        break;
+      case 'REJECTED':
+        color = Colors.redAccent;
+        icon = Icons.cancel;
+        break;
+      default:
+        color = Colors.orangeAccent;
+        icon = Icons.hourglass_top;
+    }
+
+    final payout = r['payout'] as Map<String, dynamic>?;
+    final adminNote = r['adminNote'];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text('LKR ${amount.toStringAsFixed(2)}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: color.withValues(alpha: 0.5)),
+                      ),
+                      child: Text(status,
+                          style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Requested $date'
+                  '${payout?['method'] != null ? ' · paid by ${payout!['method'].toString().replaceAll('_', ' ').toLowerCase()}' : ''}'
+                  '${payout?['referenceNo'] != null ? ' · ref ${payout!['referenceNo']}' : ''}',
+                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                ),
+                if (adminNote != null && adminNote.toString().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text('Admin: $adminNote',
+                      style: TextStyle(color: color.withValues(alpha: 0.9), fontSize: 11, fontStyle: FontStyle.italic)),
+                ],
+              ],
+            ),
+          ),
+          if (status == 'PENDING')
+            TextButton(
+              onPressed: () => _cancelRequest(r),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+            ),
+        ],
+      ),
     );
   }
 

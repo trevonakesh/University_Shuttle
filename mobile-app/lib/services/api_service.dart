@@ -525,6 +525,49 @@ class ApiService {
     }
   }
 
+  // --- Payout Request APIs (driver withdrawals) ---
+  static Future<Map<String, dynamic>?> getMyPayoutRequests() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/payout-requests/mine'),
+        headers: await _getHeaders(),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body);
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>> requestPayout(double amount, {String? note}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/payout-requests'),
+        headers: await _getHeaders(),
+        body: jsonEncode({'amount': amount, if (note != null && note.isNotEmpty) 'note': note}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 201) return {'success': true, 'data': data};
+      return {'success': false, 'message': data['error'] ?? 'Failed to request payout'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> cancelPayoutRequest(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/payout-requests/$id'),
+        headers: await _getHeaders(),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true};
+      return {'success': false, 'message': data['error'] ?? 'Failed to cancel'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
   // --- Notification APIs ---
   static Future<List<dynamic>> getNotifications() async {
     try {
