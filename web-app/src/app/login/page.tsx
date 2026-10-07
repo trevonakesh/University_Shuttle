@@ -28,7 +28,7 @@ export default function LoginPage() {
         return;
       }
       setToken(data.token);
-      window.location.href = '/';
+      window.location.href = '/admin';
     } catch {
       setError('Could not reach the backend. Is the API server running?');
     } finally {

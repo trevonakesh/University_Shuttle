@@ -4,34 +4,47 @@ import { usePathname } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
 import { getToken, clearToken } from '../lib/api';
 
-// Wraps every page: the login page renders bare, everything else gets the
-// sidebar and requires a stored admin token.
+// Only /admin/* is gated. Public marketing pages and /login render bare.
 export default function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isLogin = pathname === '/login';
+  const isAdmin = pathname?.startsWith('/admin') ?? false;
 
   useEffect(() => {
-    if (!isLogin && !getToken()) {
+    if (isAdmin && !getToken()) {
       window.location.href = '/login';
     }
-  }, [isLogin]);
+  }, [isAdmin]);
 
-  if (isLogin) return <>{children}</>;
+  if (!isAdmin) return <>{children}</>;
 
   const logout = () => {
     clearToken();
     window.location.href = '/login';
   };
 
+  const navItems = [
+    { href: '/admin', label: 'Drivers' },
+    { href: '/admin/students', label: 'Students' },
+    { href: '/admin/payments', label: 'Payments' },
+    { href: '/admin/earnings', label: 'Earnings' },
+    { href: '/admin/messages', label: 'Enquiries' }
+  ];
+
   return (
     <div className="admin-layout">
       <aside className="sidebar">
         <div className="sidebar-logo">Uni Shuttle Admin</div>
-        <Link href="/" className="nav-link">Drivers</Link>
-        <Link href="/students" className="nav-link">Students</Link>
-        <Link href="/payments" className="nav-link">Payments</Link>
-        <Link href="/earnings" className="nav-link">Earnings</Link>
+        {navItems.map(item => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`nav-link${pathname === item.href ? ' active' : ''}`}
+          >
+            {item.label}
+          </Link>
+        ))}
         <div style={{ flex: 1 }} />
+        <Link href="/" className="nav-link" style={{ fontSize: '13px' }}>← View public site</Link>
         <button className="btn btn-outline" onClick={logout}>Log Out</button>
       </aside>
       <main className="main-content">

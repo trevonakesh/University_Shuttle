@@ -32,8 +32,10 @@ import notificationRoutes from './routes/notificationRoutes';
 import pollRoutes from './routes/pollRoutes';
 import adminRoutes from './routes/adminRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import contactRoutes from './routes/contactRoutes';
 import fareRoutes from './routes/fareRoutes';
 import payoutRequestRoutes from './routes/payoutRequestRoutes';
+import dailyRideRoutes from './routes/dailyRideRoutes';
 import { startFareReminderJob } from './fareReminders';
 import path from 'path';
 
@@ -55,6 +57,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/fares', fareRoutes);
 app.use('/api/payout-requests', payoutRequestRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/daily-rides', dailyRideRoutes);
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

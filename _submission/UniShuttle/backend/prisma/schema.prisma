@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  DRIVER
+  ADMIN
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum DriverStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum FareStatus {
+  UNPAID
+  PAID
+  EXEMPT
+}
+
+enum PayoutRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  phone        String?  @unique
+  passwordHash String
+  role         Role
+  // Password reset (OTP): hashed 6-digit code + its expiry
+  resetCodeHash   String?
+  resetCodeExpiry DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student       Student?
+  driver        Driver?
+  notifications Notification[]
+}
+
+model Student {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  fullName         String
+  nic              String?  @unique
+  studentId        String?  @unique
+  
+  // University Info
+  universityName   String
+  faculty          String?
+  degreeProgram    String?
+  academicYear     String?
+  registrationNo   String?
+
+  // Travel Info
+  homeLocation     String?
+  pickupPoint      String?
+  destination      String?
+
+  // Emergency Contact
+  emerContactName  String?
+  emerContactPhone String?
+  emerRelationship String?
+
+  // Profile Photo URL
+  profilePhotoUrl  String?
+
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seatRequests     SeatRequest[]
+  payments         Payment[]
+  pollResponses    PollResponse[]
+  monthlyFares     MonthlyFare[]
+}
+
+model Driver {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  fullName         String
+  nic              String   @unique
+  licenseNumber    String?  @unique
+  
+  // Bank Details
+  bankName         String?
+  accNumber        String?
+  accHolder        String?
+
+  // Bus Information
+  busRegNumber     String?  @unique
+  busCapacity      String?
+  routeName        String?
+  startingPoint    String?
+  destination      String?
+  monthlyFee       String?
+
+  // Schedule
+  scheduleType     String?
+  pickupTime       String?
+  dropTime         String?
+
+  // Documents (URLs)
+  profilePhotoUrl  String?
+  nicCopyUrl       String?
+  licenseCopyUrl   String?
+  vehicleRegUrl    String?
+  busPhotoUrl      String?
+
+  status           DriverStatus  @default(PENDING)
+  walletBalance    Float         @default(0)
+
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seatRequests     SeatRequest[]
+  payments         Payment[]
+  notices          Notice[]
+  polls            Poll[]
+  monthlyFares     MonthlyFare[]
+  payouts          Payout[]
+  payoutRequests   PayoutRequest[]
+}
+
+// Money the platform has transferred to a driver (wallet settlement),
+// like PickMe/Uber driver payouts. Creating one decrements the wallet.
+model Payout {
+  id          Int      @id @default(autoincrement())
+  driverId    Int
+  amount      Float
+  method      String   // "BANK_TRANSFER" | "CASH"
+  referenceNo String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  driver      Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  request     PayoutRequest?
+}
+
+// A driver's withdrawal request against their wallet. Admin reviews it;
+// the wallet only moves when the request is APPROVED (which creates a Payout).
+model PayoutRequest {
+  id         Int                 @id @default(autoincrement())
+  driverId   Int
+  amount     Float
+  note       String?             // driver's message to the admin
+  status     PayoutRequestStatus @default(PENDING)
+  adminNote  String?             // admin's reason / reference on review
+  payoutId   Int?                @unique
+  createdAt  DateTime            @default(now())
+  reviewedAt DateTime?
+
+  driver     Driver              @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  payout     Payout?             @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+}
+
+model SeatRequest {
+  id        Int           @id @default(autoincrement())
+  studentId Int
+  driverId  Int
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  student   Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  driver    Driver        @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentId, driverId])
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  studentId     Int
+  driverId      Int
+  amount          Float
+  adminCommission Float         @default(0)
+  month           String        // e.g. "2026-06"
+  status        PaymentStatus @default(COMPLETED)
+  paymentMethod String        // e.g. "IN_APP", "CASH"
+  referenceNo   String?
+  paymentDate   DateTime      @default(now())
+
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  driver        Driver        @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  monthlyFare   MonthlyFare?
+
+  @@unique([studentId, driverId, month])
+}
+
+// One row per assigned student per month: the driver's fare ledger.
+// UNPAID rows are created lazily when a month is first viewed or acted on.
+model MonthlyFare {
+  id        Int        @id @default(autoincrement())
+  studentId Int
+  driverId  Int
+  month     String     // e.g. "2026-07"
+  status    FareStatus @default(UNPAID)
+  amount    Float
+  paymentId Int?       @unique
+  markedBy  String?    // "STUDENT_APP" | "DRIVER"
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  student   Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  driver    Driver     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  payment   Payment?   @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, driverId, month])
+}
+
+model Notice {
+  id        Int      @id @default(autoincrement())
+  driverId  Int
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Poll {
+  id        Int      @id @default(autoincrement())
+  driverId  Int
+  date      String   // Target date e.g., "2026-05-30"
+  question  String   @default("Are you coming tomorrow?")
+  option1   String   @default("COMING")
+  option2   String   @default("NOT COMING")
+  createdAt DateTime @default(now())
+
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  responses PollResponse[]
+}
+
+model PollResponse {
+  id        Int      @id @default(autoincrement())
+  pollId    Int
+  studentId Int
+  isComing  Boolean
+  createdAt DateTime @default(now())
+
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, studentId])
+}

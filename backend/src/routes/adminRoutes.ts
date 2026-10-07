@@ -5,6 +5,7 @@ import {
   createPayout, getPayouts
 } from '../controllers/adminController';
 import { getPayoutRequests, reviewPayoutRequest } from '../controllers/payoutRequestController';
+import { getContactMessages, markMessageRead, deleteContactMessage } from '../controllers/contactController';
 import { authenticate, authorizeRole } from '../middleware/authMiddleware';
 import { Role } from '@prisma/client';
 
@@ -31,5 +32,9 @@ router.post('/payouts', createPayout as any);
 
 router.get('/payout-requests', getPayoutRequests as any);
 router.patch('/payout-requests/:id', reviewPayoutRequest as any);
+
+router.get('/messages', getContactMessages as any);
+router.patch('/messages/:id/read', markMessageRead as any);
+router.delete('/messages/:id', deleteContactMessage as any);
 
 export default router;

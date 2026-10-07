@@ -1,333 +1,233 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { API_BASE, authFetch } from '../lib/api';
-import PhotoField from '../components/PhotoField';
+import Link from 'next/link';
+import SiteChrome from '../components/SiteChrome';
+import { business, services } from '../lib/business';
 
-type Driver = {
-  id: number;
-  fullName: string;
-  nic: string;
-  licenseNumber?: string;
-  bankName?: string;
-  accNumber?: string;
-  accHolder?: string;
-  busRegNumber: string;
-  busCapacity?: string;
-  routeName?: string;
-  startingPoint?: string;
-  destination?: string;
-  monthlyFee?: string;
-  scheduleType?: string;
-  pickupTime?: string;
-  dropTime?: string;
-  profilePhotoUrl?: string;
-  nicCopyUrl?: string;
-  licenseCopyUrl?: string;
-  vehicleRegUrl?: string;
-  busPhotoUrl?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  user: { email: string; phone: string };
+export const metadata = {
+  title: 'Uni Shuttle — Prepaid university bus travel, tracked live',
+  description:
+    'Reserve a seat on a verified university bus, pay one fixed monthly fare online, and track your bus in real time. Uni Shuttle also gives bus operators a complete fare and passenger management system.'
 };
 
-const emptyForm = {
-  fullName: '', email: '', phone: '', password: '', nic: '', licenseNumber: '',
-  busRegNumber: '', busCapacity: '', routeName: '', startingPoint: '', destination: '', monthlyFee: '',
-  profilePhotoUrl: '', nicCopyUrl: '', licenseCopyUrl: '', vehicleRegUrl: '', busPhotoUrl: ''
-};
+const Icon = ({ d }: { d: React.ReactNode }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {d}
+  </svg>
+);
 
-export default function DriversPage() {
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const loadDrivers = () => {
-    authFetch('/api/admin/drivers')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setDrivers(data);
-        } else {
-          setError('Unexpected response from the server.');
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setError('Could not reach the backend. Is the API server running?');
-        setLoading(false);
-      });
-  };
-
-  useEffect(loadDrivers, []);
-
-  const updateStatus = async (id: number, status: string) => {
-    try {
-      const res = await authFetch(`/api/admin/drivers/${id}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status })
-      });
-      if (res.ok) {
-        setDrivers(drivers.map(d => d.id === id ? { ...d, status: status as any } : d));
-        if (selectedDriver?.id === id) {
-          setSelectedDriver(null); // Close modal on action
-        }
-      } else {
-        alert(`Failed to update driver status (HTTP ${res.status}).`);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const deleteDriver = async (driver: Driver) => {
-    const sure = confirm(
-      `Delete driver ${driver.fullName} (${driver.user?.email})?\n\nThis permanently removes their account, bus, passengers' assignments, payment history and fare records. This cannot be undone.`
-    );
-    if (!sure) return;
-    try {
-      const res = await authFetch(`/api/admin/drivers/${driver.id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (res.ok) {
-        setDrivers(drivers.filter(d => d.id !== driver.id));
-        if (selectedDriver?.id === driver.id) setSelectedDriver(null);
-      } else {
-        alert(data.message ?? 'Failed to delete driver.');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const submitAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    setSaving(true);
-    try {
-      const res = await authFetch('/api/admin/drivers', {
-        method: 'POST',
-        body: JSON.stringify(form)
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setShowAdd(false);
-        setForm(emptyForm);
-        loadDrivers();
-      } else {
-        setFormError(data.message ?? 'Failed to create driver.');
-      }
-    } catch {
-      setFormError('Could not reach the backend.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const field = (key: keyof typeof emptyForm, label: string, type = 'text', required = false) => (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
-      {label}{required ? ' *' : ''}
-      <input
-        type={type}
-        value={form[key]}
-        required={required}
-        onChange={e => setForm({ ...form, [key]: e.target.value })}
-        style={{
-          padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--surface-border)',
-          background: 'rgba(255,255,255,0.06)', color: 'var(--text)', fontFamily: 'inherit', fontSize: '14px'
-        }}
-      />
-    </label>
-  );
-
-  if (loading) return <div>Loading drivers...</div>;
-
+export default function HomePage() {
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1>Driver Registrations</h1>
-          <p className="subtitle">Manage and verify bus drivers on the platform.</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setFormError(null); setShowAdd(true); }}>
-          + Add Driver
-        </button>
-      </div>
-
-      {error && (
-        <div className="glass-panel" style={{ marginBottom: '20px', color: 'var(--danger)' }}>
-          {error}
-        </div>
-      )}
-
-      <div className="glass-panel">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Contact</th>
-              <th>Bus Reg</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {drivers.map(driver => (
-              <tr key={driver.id}>
-                <td>#{driver.id}</td>
-                <td>{driver.fullName}</td>
-                <td>
-                  <div>{driver.user?.email}</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{driver.user?.phone}</div>
-                </td>
-                <td>{driver.busRegNumber}</td>
-                <td>
-                  <span className={`badge ${driver.status.toLowerCase()}`}>
-                    {driver.status}
-                  </span>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className="btn btn-primary" onClick={() => setSelectedDriver(driver)}>Review</button>
-                    <button className="btn btn-danger" onClick={() => deleteDriver(driver)}>Delete</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {drivers.length === 0 && (
-              <tr>
-                <td colSpan={6} style={{ textAlign: 'center' }}>No drivers found.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {showAdd && (
-        <div style={overlayStyle}>
-          <form onSubmit={submitAdd} className="glass-panel" style={{ width: '620px', maxHeight: '85vh', overflowY: 'auto', padding: '30px', backgroundColor: '#1e212b' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Add Driver</h2>
-              <button type="button" onClick={() => setShowAdd(false)} style={closeBtnStyle}>&times;</button>
-            </div>
-            <p className="subtitle" style={{ marginBottom: '20px' }}>
-              Admin-created drivers are approved immediately and appear in student bus search.
+    <SiteChrome>
+      {/* ---------------- hero ---------------- */}
+      <section className="hero">
+        <div className="wrap hero-inner">
+          <div>
+            <span className="eyebrow">For students &amp; bus operators</span>
+            <h1 style={{ marginTop: 18 }}>
+              Never wonder <span className="hl">where your bus is</span> again.
+            </h1>
+            <p className="hero-lead">
+              Reserve a seat on a verified university bus, pay one fixed fare online,
+              and watch your ride approach in real time. No cash, no group chats,
+              no guessing.
             </p>
-
-            {formError && <div style={{ color: 'var(--danger)', marginBottom: '15px' }}>{formError}</div>}
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {field('fullName', 'Full Name', 'text', true)}
-              {field('nic', 'NIC', 'text', true)}
-              {field('email', 'Email', 'email', true)}
-              {field('phone', 'Phone')}
-              {field('password', 'Password', 'password', true)}
-              {field('licenseNumber', 'License Number')}
-              {field('busRegNumber', 'Bus Registration')}
-              {field('busCapacity', 'Bus Capacity')}
-              {field('routeName', 'Route Name')}
-              {field('monthlyFee', 'Monthly Fee (LKR)')}
-              {field('startingPoint', 'Starting Point')}
-              {field('destination', 'Destination')}
+            <div className="hero-actions">
+              <Link href="/pricing" className="btn-cta">
+                See plans &amp; pay online
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </Link>
+              <Link href="/services" className="btn-ghost">Explore services</Link>
             </div>
 
-            <h3 style={{ margin: '20px 0 12px', fontSize: '15px', color: 'var(--text)' }}>Photos & Documents</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-              <PhotoField label="Profile Photo" value={form.profilePhotoUrl} onChange={url => setForm({ ...form, profilePhotoUrl: url })} />
-              <PhotoField label="NIC Copy" value={form.nicCopyUrl} onChange={url => setForm({ ...form, nicCopyUrl: url })} />
-              <PhotoField label="License Copy" value={form.licenseCopyUrl} onChange={url => setForm({ ...form, licenseCopyUrl: url })} />
-              <PhotoField label="Vehicle Registration" value={form.vehicleRegUrl} onChange={url => setForm({ ...form, vehicleRegUrl: url })} />
-              <PhotoField label="Bus Photo" value={form.busPhotoUrl} onChange={url => setForm({ ...form, busPhotoUrl: url })} />
+            <div className="hero-trust">
+              <div><b>1,200+</b><span>Seats booked</span></div>
+              <div><b>38</b><span>Verified operators</span></div>
+              <div><b>6</b><span>Campuses served</span></div>
+              <div><b>4.8★</b><span>Student rating</span></div>
             </div>
+          </div>
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn-outline" onClick={() => setShowAdd(false)}>Cancel</button>
-              <button type="submit" className="btn btn-success" disabled={saving}>
-                {saving ? 'Creating…' : 'Create Driver'}
-              </button>
+          {/* live route illustration */}
+          <div className="route-card" aria-label="Example live bus route">
+            <div className="route-card-head">
+              <span className="route-badge">ROUTE 04 · NA-4521</span>
+              <span className="live-dot"><i />LIVE</span>
             </div>
-          </form>
+            <ul className="stops">
+              <li className="stop">
+                <span className="stop-dot" />
+                <span>
+                  <span className="stop-name">Homagama Town</span><br />
+                  <span className="stop-time">Departed 6:45 AM</span>
+                </span>
+              </li>
+              <li className="stop is-bus">
+                <span className="stop-dot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="12" rx="2" /><path d="M4 11h16" /></svg>
+                </span>
+                <span>
+                  <span className="stop-name">Approaching Pannipitiya</span><br />
+                  <span className="stop-time">32 km/h · 1.4 km away</span>
+                </span>
+                <span className="stop-eta">4 MIN</span>
+              </li>
+              <li className="stop">
+                <span className="stop-dot" />
+                <span>
+                  <span className="stop-name">Maharagama</span><br />
+                  <span className="stop-time">Scheduled 7:12 AM</span>
+                </span>
+                <span className="stop-eta">11 MIN</span>
+              </li>
+              <li className="stop">
+                <span className="stop-dot" />
+                <span>
+                  <span className="stop-name">NSBM Green University</span><br />
+                  <span className="stop-time">Scheduled 7:40 AM</span>
+                </span>
+                <span className="stop-eta">38 MIN</span>
+              </li>
+            </ul>
+          </div>
         </div>
-      )}
+      </section>
 
-      {selectedDriver && (
-        <div style={overlayStyle}>
-          <div className="glass-panel" style={{ width: '650px', maxHeight: '85vh', overflowY: 'auto', padding: '30px', backgroundColor: '#1e212b', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Review Driver: {selectedDriver.fullName}</h2>
-              <button onClick={() => setSelectedDriver(null)} style={closeBtnStyle}>&times;</button>
-            </div>
+      {/* ---------------- services ---------------- */}
+      <section className="section">
+        <div className="wrap">
+          <div className="section-head">
+            <span className="eyebrow">What we offer</span>
+            <h2>One platform for the whole journey</h2>
+            <p>
+              Students get a reliable ride they can see coming. Operators get the
+              admin work handled — fares, passengers and payouts in one place.
+            </p>
+          </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <div><strong>NIC:</strong> {selectedDriver.nic || '-'}</div>
-              <div><strong>License:</strong> {selectedDriver.licenseNumber || '-'}</div>
-              <div><strong>Email:</strong> {selectedDriver.user?.email}</div>
-              <div><strong>Phone:</strong> {selectedDriver.user?.phone}</div>
-              <div><strong>Bus Reg:</strong> {selectedDriver.busRegNumber || '-'}</div>
-              <div><strong>Capacity:</strong> {selectedDriver.busCapacity || '-'}</div>
-              <div><strong>Route:</strong> {selectedDriver.routeName || '-'}</div>
-              <div><strong>Monthly Fee:</strong> {selectedDriver.monthlyFee || '-'}</div>
-              <div><strong>Start Point:</strong> {selectedDriver.startingPoint || '-'}</div>
-              <div><strong>Destination:</strong> {selectedDriver.destination || '-'}</div>
-              <div><strong>Schedule:</strong> {selectedDriver.scheduleType || '-'}</div>
-              <div><strong>Time:</strong> {selectedDriver.pickupTime || '-'} to {selectedDriver.dropTime || '-'}</div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <strong>Bank Details:</strong> {selectedDriver.bankName ? `${selectedDriver.bankName} - ${selectedDriver.accNumber} (${selectedDriver.accHolder})` : '-'}
-              </div>
-            </div>
-
-            <div style={{ marginTop: '25px', borderTop: '1px solid var(--surface-border)', paddingTop: '20px' }}>
-              <h3 style={{ marginBottom: '15px', fontSize: '16px', color: 'var(--text)' }}>Submitted Documents</h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                {(['profilePhotoUrl', 'nicCopyUrl', 'licenseCopyUrl', 'vehicleRegUrl', 'busPhotoUrl'] as const).map(key => (
-                  selectedDriver[key] && (
-                    <div key={key}>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>
-                        {{ profilePhotoUrl: 'Profile Photo', nicCopyUrl: 'NIC Copy', licenseCopyUrl: 'License', vehicleRegUrl: 'Vehicle Reg', busPhotoUrl: 'Bus Photo' }[key]}
-                      </div>
-                      <a href={`${API_BASE}${selectedDriver[key]}`} target="_blank" rel="noreferrer">
-                        <img src={`${API_BASE}${selectedDriver[key]}`} alt={key} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
-                      </a>
-                    </div>
-                  )
-                ))}
-                {!selectedDriver.profilePhotoUrl && !selectedDriver.nicCopyUrl && !selectedDriver.licenseCopyUrl && !selectedDriver.vehicleRegUrl && !selectedDriver.busPhotoUrl && (
-                  <div style={{ color: 'var(--text-muted)', fontSize: '14px', fontStyle: 'italic' }}>No documents submitted.</div>
-                )}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: '30px', justifyContent: 'space-between', borderTop: '1px solid var(--surface-border)', paddingTop: '20px' }}>
-              <button className="btn btn-danger" onClick={() => deleteDriver(selectedDriver)}>Delete Driver</button>
-              {selectedDriver.status === 'PENDING' ? (
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className="btn btn-danger" onClick={() => updateStatus(selectedDriver.id, 'REJECTED')}>Reject Driver</button>
-                  <button className="btn btn-success" onClick={() => updateStatus(selectedDriver.id, 'APPROVED')}>Approve Driver</button>
+          <div className="grid-3">
+            {services.slice(0, 6).map((s, i) => (
+              <article className="card" key={s.title}>
+                <div className={`card-icon${i % 2 ? ' amber' : ''}`}>
+                  <Icon d={
+                    i === 0 ? <><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M3 10.5h18M7 17v2M17 17v2" /></>
+                    : i === 1 ? <><path d="M12 21s7-5.6 7-11a7 7 0 10-14 0c0 5.4 7 11 7 11z" /><circle cx="12" cy="10" r="2.6" /></>
+                    : i === 2 ? <><path d="M9 11l3 3 7-7" /><path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" /></>
+                    : i === 3 ? <><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 14h3M8 17h6" /></>
+                    : i === 4 ? <><rect x="2.5" y="6" width="19" height="12" rx="2.5" /><path d="M2.5 10h19" /><path d="M6.5 14.5h3" /></>
+                    : <><path d="M12 3l8 3.5v5c0 4.6-3.2 8.6-8 9.5-4.8-.9-8-4.9-8-9.5v-5L12 3z" /><path d="M9.2 12l2 2 3.8-4" /></>
+                  } />
                 </div>
-              ) : (
-                <div style={{ color: 'var(--text-muted)', alignSelf: 'center' }}>
-                  This driver is currently <strong>{selectedDriver.status}</strong>.
-                </div>
-              )}
+                <span className="tag">{s.audience}</span>
+                <h3 style={{ marginTop: 12 }}>{s.title}</h3>
+                <p>{s.description}</p>
+              </article>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 34 }}>
+            <Link href="/services" className="btn-ghost">See all services in detail</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- how it works ---------------- */}
+      <section className="section section-tint">
+        <div className="wrap">
+          <div className="section-head">
+            <span className="eyebrow">How it works</span>
+            <h2>Booked in four steps</h2>
+            <p>From download to your first tracked ride — usually the same day.</p>
+          </div>
+
+          <div className="steps">
+            <div className="step done">
+              <h3>Create your profile</h3>
+              <p>Tell us your university and where you need to be picked up.</p>
+            </div>
+            <div className="step done">
+              <h3>Pick a verified bus</h3>
+              <p>Browse operators serving your campus, with routes, times and fares shown upfront.</p>
+            </div>
+            <div className="step done">
+              <h3>Pay online</h3>
+              <p>Pay your fixed fare securely by PayPal or card. Your receipt is stored in the app.</p>
+            </div>
+            <div className="step done">
+              <h3>Track and travel</h3>
+              <p>Follow your bus live each morning and get an arrival time for your stop.</p>
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </section>
+
+      {/* ---------------- operators ---------------- */}
+      <section className="section">
+        <div className="wrap">
+          <div className="grid-2" style={{ alignItems: 'center', gap: 52 }}>
+            <div>
+              <span className="eyebrow">For bus operators</span>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3.3vw, 2.4rem)', marginTop: 16 }}>
+                Stop chasing fares in a notebook
+              </h2>
+              <p style={{ color: 'var(--ink-soft)', marginTop: 15, fontSize: '1.04rem' }}>
+                Uni Shuttle gives you a live passenger list, a monthly fare ledger
+                that tracks every student, and automatic online collection. Cash
+                still works — record it in a tap and it lands in the same ledger.
+              </p>
+              <ul className="ticks" style={{ marginTop: 22 }}>
+                <li>Free to join — we take 10% only when you get paid</li>
+                <li>Paid, unpaid and not-travelling lists at a glance</li>
+                <li>Earnings wallet with payouts on request</li>
+                <li>Verified operator badge once your documents are approved</li>
+              </ul>
+              <div className="hero-actions" style={{ marginTop: 28 }}>
+                <Link href="/contact" className="btn-cta">Become a partner</Link>
+                <Link href="/pricing" className="btn-ghost">See operator plan</Link>
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong style={{ fontSize: 15 }}>July fare tracker</strong>
+                <span className="tag">32 seats</span>
+              </div>
+              {[
+                { n: 'Amaya Jayasuriya', s: 'Paid · Card', c: 'var(--signal)' },
+                { n: 'Dinuka Rathnayake', s: 'Unpaid · Overdue', c: '#c4453f' },
+                { n: 'Tharindu Bandara', s: 'Not travelling', c: 'var(--ink-faint)' },
+                { n: 'Senaya Wickramasinghe', s: 'Paid · Cash', c: 'var(--signal)' }
+              ].map(r => (
+                <div key={r.n} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 26px', borderBottom: '1px solid var(--line-soft, #eef1f6)' }}>
+                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: r.c, flex: 'none' }} />
+                  <span style={{ fontWeight: 600, fontSize: 14.5 }}>{r.n}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 12.5, color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>{r.s}</span>
+                </div>
+              ))}
+              <div style={{ padding: '18px 26px', background: 'var(--paper-2)', display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                <span style={{ color: 'var(--ink-soft)' }}>Collected this month</span>
+                <strong style={{ fontVariantNumeric: 'tabular-nums' }}>$117 / $156</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- CTA ---------------- */}
+      <section className="section section-tint" style={{ textAlign: 'center' }}>
+        <div className="wrap-narrow">
+          <span className="eyebrow" style={{ justifyContent: 'center' }}>Ready when you are</span>
+          <h2 style={{ fontSize: 'clamp(1.9rem, 3.6vw, 2.6rem)', marginTop: 16 }}>
+            Get your semester sorted today
+          </h2>
+          <p style={{ color: 'var(--ink-soft)', marginTop: 15, fontSize: '1.05rem' }}>
+            Choose a plan, pay securely online, and ride with a verified operator
+            from tomorrow morning.
+          </p>
+          <div className="hero-actions" style={{ justifyContent: 'center', marginTop: 28 }}>
+            <Link href="/pricing" className="btn-cta">View plans</Link>
+            <a href={`mailto:${business.email}`} className="btn-ghost">Email our team</a>
+          </div>
+        </div>
+      </section>
+    </SiteChrome>
   );
 }
-
-const overlayStyle: React.CSSProperties = {
-  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-  backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex',
-  justifyContent: 'center', alignItems: 'center', zIndex: 1000,
-  backdropFilter: 'blur(5px)'
-};
-
-const closeBtnStyle: React.CSSProperties = {
-  background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--text-muted)'
-};
