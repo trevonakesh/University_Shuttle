@@ -174,7 +174,7 @@ export const votePoll = async (req: AuthRequest, res: Response): Promise<void> =
       return;
     }
 
-    const poll = await prisma.poll.findUnique({ where: { id: parseInt(id) } });
+    const poll = await prisma.poll.findUnique({ where: { id: parseInt(id as string) } });
     if (!poll) {
       res.status(404).json({ error: 'Poll not found' });
       return;
@@ -220,7 +220,7 @@ export const deletePoll = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    const poll = await prisma.poll.findUnique({ where: { id: parseInt(id) } });
+    const poll = await prisma.poll.findUnique({ where: { id: parseInt(id as string) } });
     if (!poll) {
       res.status(404).json({ error: 'Poll not found' });
       return;
@@ -231,7 +231,7 @@ export const deletePoll = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    await prisma.poll.delete({ where: { id: parseInt(id) } });
+    await prisma.poll.delete({ where: { id: parseInt(id as string) } });
 
     res.status(200).json({ message: 'Poll deleted successfully' });
   } catch (error: any) {

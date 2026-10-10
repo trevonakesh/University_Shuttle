@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient, TripType, RequestStatus } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { TripType, RequestStatus } from '@prisma/client';
+import prisma from '../prismaClient';
 
 // Create a new daily ride request (Student)
 export const createDailyRideRequest = async (req: Request, res: Response) => {
@@ -158,6 +157,76 @@ export const updateDailyRideStatus = async (req: Request, res: Response) => {
     res.json(updatedRequest);
   } catch (error) {
     console.error('Error updating daily ride status:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+// Student pays for an approved daily ride
+export const payDailyRide = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.userId;
+    const requestId = Number(req.params.id);
+
+    const student = await prisma.student.findUnique({
+      where: { userId }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found.' });
+    }
+
+    const existingRequest = await prisma.dailyRideRequest.findUnique({
+      where: { id: requestId },
+      include: { driver: true }
+    });
+
+    if (!existingRequest || existingRequest.studentId !== student.id) {
+      return res.status(404).json({ message: 'Request not found.' });
+    }
+
+    if (existingRequest.status !== 'APPROVED') {
+      return res.status(400).json({ message: 'Only approved rides can be paid.' });
+    }
+
+    if (existingRequest.paymentId) {
+      return res.status(400).json({ message: 'This ride is already paid.' });
+    }
+
+    const amount = existingRequest.fareAmount || 0;
+    const adminCommission = amount * 0.10; // 10% commission
+
+    // Create payment and update wallet
+    const payment = await prisma.$transaction(async (tx) => {
+      const p = await tx.payment.create({
+        data: {
+          studentId: student.id,
+          driverId: existingRequest.driverId,
+          amount,
+          adminCommission,
+          paymentType: 'DAILY',
+          billingPeriod: existingRequest.date,
+          status: 'COMPLETED',
+          paymentMethod: 'IN_APP',
+          referenceNo: `APP-DAILY-${Date.now()}`
+        }
+      });
+
+      await tx.dailyRideRequest.update({
+        where: { id: existingRequest.id },
+        data: { paymentId: p.id }
+      });
+
+      await tx.driver.update({
+        where: { id: existingRequest.driverId },
+        data: { walletBalance: { increment: amount - adminCommission } }
+      });
+
+      return p;
+    });
+
+    res.json({ success: true, payment });
+  } catch (error) {
+    console.error('Error paying daily ride:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 };

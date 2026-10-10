@@ -5,7 +5,7 @@ import { RequestStatus, Role } from '@prisma/client';
 
 export const createRequest = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { driverId } = req.body;
+    const { driverId, paymentPlan } = req.body;
     const userId = req.user?.userId;
 
     if (!userId || req.user?.role !== Role.STUDENT) {
@@ -32,7 +32,7 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
       }
     });
 
-    if (existingForThisDriver && [RequestStatus.PENDING, RequestStatus.APPROVED].includes(existingForThisDriver.status)) {
+    if (existingForThisDriver && (existingForThisDriver.status === RequestStatus.PENDING || existingForThisDriver.status === RequestStatus.APPROVED)) {
       res.status(400).json({ error: 'You have already sent a request to this bus' });
       return;
     }
@@ -54,14 +54,15 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
     if (existingForThisDriver) {
       seatRequest = await prisma.seatRequest.update({
         where: { id: existingForThisDriver.id },
-        data: { status: RequestStatus.PENDING }
+        data: { status: RequestStatus.PENDING, paymentPlan: paymentPlan || 'MONTHLY' }
       });
     } else {
       seatRequest = await prisma.seatRequest.create({
         data: {
           studentId: student.id,
           driverId: driver.id,
-          status: RequestStatus.PENDING
+          status: RequestStatus.PENDING,
+          paymentPlan: paymentPlan || 'MONTHLY'
         }
       });
     }
@@ -180,7 +181,7 @@ export const updateRequestStatus = async (req: AuthRequest, res: Response): Prom
       return;
     }
 
-    const seatRequest = await prisma.seatRequest.findUnique({ where: { id: parseInt(id) } });
+    const seatRequest = await prisma.seatRequest.findUnique({ where: { id: parseInt(id as string) } });
     if (!seatRequest) {
       res.status(404).json({ error: 'Request not found' });
       return;
@@ -192,7 +193,7 @@ export const updateRequestStatus = async (req: AuthRequest, res: Response): Prom
     }
 
     const updatedRequest = await prisma.seatRequest.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       data: { status }
     });
 
@@ -218,7 +219,7 @@ export const deleteRequest = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const seatRequest = await prisma.seatRequest.findUnique({ where: { id: parseInt(id) } });
+    const seatRequest = await prisma.seatRequest.findUnique({ where: { id: parseInt(id as string) } });
     if (!seatRequest) {
       res.status(404).json({ error: 'Request not found' });
       return;
@@ -230,7 +231,7 @@ export const deleteRequest = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     await prisma.seatRequest.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id as string) }
     });
 
     res.status(200).json({ message: 'Request deleted and driver unassigned successfully' });

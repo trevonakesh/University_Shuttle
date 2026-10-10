@@ -39,6 +39,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   final _startCtrl = TextEditingController();
   String? _destination;
   final _feeCtrl = TextEditingController();
+  final _dailyRoundTripCtrl = TextEditingController();
+  final _dailyOneWayCtrl = TextEditingController();
 
   // Schedule
   String? _scheduleType;
@@ -94,6 +96,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           'startingPoint': _startCtrl.text,
           'destination': _destination,
           'monthlyFee': _feeCtrl.text,
+          'dailyFeeRoundTrip': _dailyRoundTripCtrl.text,
+          'dailyFeeOneWay': _dailyOneWayCtrl.text,
           'scheduleType': _scheduleType,
           'pickupTime': _pickupTime?.format(context),
           'dropTime': _dropTime?.format(context),
@@ -139,6 +143,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     _routeCtrl.dispose();
     _startCtrl.dispose();
     _feeCtrl.dispose();
+    _dailyRoundTripCtrl.dispose();
+    _dailyOneWayCtrl.dispose();
     super.dispose();
   }
 
@@ -282,6 +288,12 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                   _buildInputCol('STARTING POINT', 'ENTER STARTING POINT', _startCtrl),
                   _buildDropdownCol('DESTINATION (UNIVERSITY)', 'SELECT UNIVERSITY', ['NSBM', 'SLIIT'], _destination, (v) => setState(() => _destination = v)),
                   _buildInputCol('MONTHLY FEE (LKR)', 'ENTER MONTHLY FEE', _feeCtrl),
+                ]),
+                const SizedBox(height: 20),
+                _buildResponsiveRow(isDesktop, [
+                  _buildInputCol('DAILY FEE ROUND TRIP (LKR)', 'ENTER DAILY ROUND TRIP FEE', _dailyRoundTripCtrl),
+                  _buildInputCol('DAILY FEE ONE WAY (LKR)', 'ENTER DAILY ONE WAY FEE', _dailyOneWayCtrl),
+                  if (isDesktop) Expanded(child: const SizedBox()),
                 ]),
                 
                 const SizedBox(height: 30),

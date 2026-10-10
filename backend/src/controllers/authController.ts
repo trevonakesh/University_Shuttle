@@ -173,6 +173,7 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
     const { 
       email, password, phone, fullName, nic, licenseNumber, bankName, accNumber, accHolder,
       busRegNumber, busCapacity, routeName, startingPoint, destination, monthlyFee,
+      dailyFeeRoundTrip, dailyFeeOneWay,
       scheduleType, pickupTime, dropTime, profilePhotoUrl, nicCopyUrl, licenseCopyUrl,
       vehicleRegUrl, busPhotoUrl
     } = req.body;
@@ -209,6 +210,8 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
             startingPoint,
             destination,
             monthlyFee,
+            dailyFeeRoundTrip,
+            dailyFeeOneWay,
             scheduleType,
             pickupTime,
             dropTime,

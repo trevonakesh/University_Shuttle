@@ -28,7 +28,7 @@ async function main() {
           licenseNumber: 'B1234567',
           busRegNumber: 'ND-1234',
           routeName: 'NSBM - Kandy',
-          monthlyFee: 5000,
+          monthlyFee: '5000',
           status: 'APPROVED',
           walletBalance: 1000
         },

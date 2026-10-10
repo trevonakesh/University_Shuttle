@@ -108,8 +108,10 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
 
     // One payment row per student/driver/month: reuse an abandoned PENDING
     // or FAILED attempt instead of violating the unique constraint.
-    const paymentKey = { studentId_driverId_month: { studentId: student.id, driverId: driver.id, month } };
-    const existing = await prisma.payment.findUnique({ where: paymentKey });
+    const existing = await prisma.payment.findFirst({
+      where: { studentId: student.id, driverId: driver.id, month },
+      orderBy: { paymentDate: 'desc' }
+    });
     if (existing?.status === PaymentStatus.COMPLETED) {
       res.status(400).json({ error: `You have already paid for ${month}.` });
       return;
@@ -314,8 +316,10 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
     const { student, driver, month, amount } = resolved;
     const adminCommission = Math.round(amount * COMMISSION_RATE * 100) / 100;
 
-    const paymentKey = { studentId_driverId_month: { studentId: student.id, driverId: driver.id, month } };
-    const existing = await prisma.payment.findUnique({ where: paymentKey });
+    const existing = await prisma.payment.findFirst({
+      where: { studentId: student.id, driverId: driver.id, month },
+      orderBy: { paymentDate: 'desc' }
+    });
     if (existing?.status === PaymentStatus.COMPLETED) {
       res.status(400).json({ error: `You have already paid for ${month}.` });
       return;

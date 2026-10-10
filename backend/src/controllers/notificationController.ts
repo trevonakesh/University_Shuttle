@@ -32,7 +32,7 @@ export const markAsRead = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     const notification = await prisma.notification.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id as string) }
     });
 
     if (!notification) {
@@ -46,7 +46,7 @@ export const markAsRead = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     const updated = await prisma.notification.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       data: { isRead: true }
     });
 

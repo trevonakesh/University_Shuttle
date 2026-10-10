@@ -58,7 +58,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     // Show loading
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
     
-    final result = await ApiService.createSeatRequest(driverId);
+    final result = await ApiService.createSeatRequest(driverId, paymentPlan: 'MONTHLY');
     
     // Hide loading
     if (mounted) Navigator.pop(context);

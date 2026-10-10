@@ -1,6 +1,6 @@
 import prisma from '../prismaClient';
 import { FareStatus, RequestStatus } from '@prisma/client';
-import { FREEZE_DAY, currentDay, currentMonth, colomboMonthAndDay } from '../utils/time';
+import { FREEZE_DAY, currentDay, currentMonth, colomboMonthAndDay, currentColomboDateString } from '../utils/time';
 
 // monthlyFee is stored as a string on Driver; normalise to a number.
 export const parseFee = (monthlyFee: string | null | undefined): number => {
@@ -9,7 +9,7 @@ export const parseFee = (monthlyFee: string | null | undefined): number => {
   return Number.isFinite(fee) && fee > 0 ? fee : 0;
 };
 
-export const getActiveAssignment = (studentId: number) =>
+export const getActiveAssignment = async (studentId: number): Promise<any> =>
   prisma.seatRequest.findFirst({
     where: { studentId, status: RequestStatus.APPROVED },
     include: { driver: { include: { user: { select: { id: true } } } } }
@@ -68,6 +68,24 @@ export const checkFrozen = async (studentId: number): Promise<FrozenCheck> => {
     reason = 'UNPAID';
   }
 
+  // If frozen, but the student has a paid daily ride for *today*, unfreeze them for today.
+  if (frozen) {
+    const todayStr = currentColomboDateString();
+    const paidDailyRide = await prisma.dailyRideRequest.findFirst({
+      where: {
+        studentId,
+        driverId: assignment.driverId,
+        date: todayStr,
+        paymentId: { not: null }
+      }
+    });
+
+    if (paidDailyRide) {
+      frozen = false;
+      reason = null; // Unfrozen just for today
+    }
+  }
+
   return {
     frozen,
     reason,
@@ -81,5 +99,5 @@ export const checkFrozen = async (studentId: number): Promise<FrozenCheck> => {
   };
 };
 
-export const createNotification = (userId: number, title: string, message: string) =>
+export const createNotification = async (userId: number, title: string, message: string): Promise<any> =>
   prisma.notification.create({ data: { userId, title, message } });

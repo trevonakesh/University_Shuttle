@@ -125,7 +125,7 @@ export const deleteNotice = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    const notice = await prisma.notice.findUnique({ where: { id: parseInt(id) } });
+    const notice = await prisma.notice.findUnique({ where: { id: parseInt(id as string) } });
     if (!notice) {
       res.status(404).json({ error: 'Notice not found' });
       return;
@@ -136,7 +136,7 @@ export const deleteNotice = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    await prisma.notice.delete({ where: { id: parseInt(id) } });
+    await prisma.notice.delete({ where: { id: parseInt(id as string) } });
 
     res.status(200).json({ message: 'Notice deleted successfully' });
   } catch (error: any) {

@@ -23,7 +23,7 @@ export const getDrivers = async (req: Request, res: Response) => {
 
 export const updateDriverStatus = async (req: Request, res: Response) => {
   try {
-    const driverId = parseInt(req.params.id);
+    const driverId = parseInt(req.params.id as string);
     const { status } = req.body;
 
     if (!Object.values(DriverStatus).includes(status)) {
@@ -47,7 +47,7 @@ export const updateDriverStatus = async (req: Request, res: Response) => {
 
 export const getStudentsByDriver = async (req: Request, res: Response) => {
   try {
-    const driverId = parseInt(req.params.id);
+    const driverId = parseInt(req.params.id as string);
     
     // Find students whose seat requests are APPROVED for this driver
     const seatRequests = await prisma.seatRequest.findMany({

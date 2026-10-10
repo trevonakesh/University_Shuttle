@@ -57,6 +57,20 @@ export type Plan = {
 // Prices are what the PayPal order is created for.
 export const plans: Plan[] = [
   {
+    id: 'daily',
+    name: 'Student Daily Pass',
+    price: 3,
+    unit: 'per day',
+    currency: 'AUD',
+    blurb: 'One day of travel on your chosen bus for ad-hoc trips.',
+    features: [
+      'Reserved seat on one approved bus for the day',
+      'Live GPS tracking with arrival times',
+      'Digital receipts',
+      'Pay as you go'
+    ]
+  },
+  {
     id: 'monthly',
     name: 'Student Monthly Pass',
     price: 39,

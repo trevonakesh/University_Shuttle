@@ -13,6 +13,7 @@ class DriverDashboardScreen extends StatefulWidget {
 class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _requests = [];
+  List<dynamic> _dailyRequests = [];
   Map<String, dynamic>? _todayPoll;
   bool _isTodayPoll = false;
   int _totalStudents = 0;
@@ -30,6 +31,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final requests = await ApiService.getDriverRequests();
     final wallet = await ApiService.getWalletBalance();
     final polls = await ApiService.getDriverPolls();
+    final dailyRequests = await ApiService.getDriverDailyRequests();
     
     // Prefer the poll targeting today's date; otherwise fall back to the
     // most recently created one (and label it as such).
@@ -48,6 +50,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         _user = user;
         _totalStudents = requests.where((r) => r['status'] == 'APPROVED').length;
         _requests = requests.where((r) => r['status'] == 'PENDING').toList();
+        _dailyRequests = dailyRequests.where((r) => r['status'] == 'PENDING').toList();
         _walletBalance = wallet;
         _isTodayPoll = todayPoll != null;
         _todayPoll = todayPoll ?? (polls.isNotEmpty ? polls.first : null);
@@ -65,6 +68,21 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
     if (result['success']) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Request $status successfully!')));
+      _fetchData();
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+    }
+  }
+
+  Future<void> _updateDailyRequest(int id, String status) async {
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    
+    final result = await ApiService.updateDailyRideStatus(id, status);
+    
+    if (mounted) Navigator.pop(context);
+
+    if (result['success']) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Daily ride $status successfully!')));
       _fetchData();
     } else {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
@@ -177,7 +195,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             const SizedBox(height: 25),
             for (final card in statCards) ...[card, const SizedBox(height: 15)],
             const SizedBox(height: 15),
-            SizedBox(height: 420, child: _buildRequestsPanel()),
+            SizedBox(height: 300, child: _buildRequestsPanel()),
+            const SizedBox(height: 20),
+            SizedBox(height: 300, child: _buildDailyRequestsPanel()),
             const SizedBox(height: 20),
             SizedBox(height: 400, child: _buildPollPanel(coming, notComing, comingPct, notComingPct)),
           ],
@@ -208,7 +228,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(flex: 2, child: _buildRequestsPanel()),
+                  Expanded(flex: 2, child: Column(
+                    children: [
+                      Expanded(child: _buildRequestsPanel()),
+                      const SizedBox(height: 20),
+                      Expanded(child: _buildDailyRequestsPanel()),
+                    ],
+                  )),
                   const SizedBox(width: 20),
                   Expanded(child: _buildPollPanel(coming, notComing, comingPct, notComingPct)),
                 ],
@@ -481,6 +507,112 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             child: IconButton(
               icon: const Icon(Icons.close, color: Colors.redAccent),
               onPressed: () => _updateRequest(reqId, 'REJECTED'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyRequestsPanel() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Flexible(
+                  child: Text(
+                    'PENDING DAILY RIDES',
+                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                TextButton(
+                  onPressed: _fetchData,
+                  child: const Text('REFRESH', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+          const Divider(color: Colors.white24, height: 1),
+          Expanded(
+            child: _dailyRequests.isEmpty
+              ? const Center(child: Text('NO PENDING DAILY RIDES', style: TextStyle(color: Colors.white54)))
+              : ListView.separated(
+                  itemCount: _dailyRequests.length,
+                  separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
+                  itemBuilder: (context, index) {
+                    final req = _dailyRequests[index];
+                    return _buildDailyRequestItem(req);
+                  },
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyRequestItem(Map<String, dynamic> req) {
+    final reqId = req['id'];
+    final student = req['student'] ?? {};
+    final name = student['fullName'] ?? 'Unknown';
+    final tripType = req['tripType'] == 'ROUND_TRIP' ? 'Round Trip' : (req['tripType'] == 'TO_UNI_ONLY' ? 'To Uni' : 'From Uni');
+    final date = req['date'] ?? 'Unknown';
+    final fare = req['fareAmount'] != null ? 'LKR ${req['fareAmount']}' : 'TBD';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            backgroundColor: Colors.white,
+            radius: 25,
+            child: Icon(Icons.directions_car, color: Colors.black, size: 30),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 4),
+                Text('DATE: $date | TYPE: $tripType', style: const TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Text('FARE: $fare', style: const TextStyle(color: Colors.white54, fontSize: 10)),
+              ],
+            ),
+          ),
+          
+          // Action Buttons
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.green),
+              color: Colors.green.withValues(alpha: 0.2),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.check, color: Colors.green),
+              onPressed: () => _updateDailyRequest(reqId, 'APPROVED'),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.redAccent),
+              color: Colors.redAccent.withValues(alpha: 0.2),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.redAccent),
+              onPressed: () => _updateDailyRequest(reqId, 'REJECTED'),
             ),
           ),
         ],

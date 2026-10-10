@@ -46,7 +46,7 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
       _isRequesting = true;
     });
 
-    final result = await ApiService.createSeatRequest(driverId);
+    final result = await ApiService.createSeatRequest(driverId, paymentPlan: 'MONTHLY');
 
     if (mounted) {
       setState(() {

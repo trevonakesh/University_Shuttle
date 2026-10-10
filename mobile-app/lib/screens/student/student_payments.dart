@@ -16,7 +16,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _payments = [];
   List<dynamic> _myRequests = [];
+  List<dynamic> _dailyRequests = [];
   bool _isLoading = true;
+  bool _isDailyView = false;
 
   @override
   void initState() {
@@ -32,12 +34,14 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
     final payments = await ApiService.getStudentPayments();
     final requests = await ApiService.getStudentRequests();
     final fare = await ApiService.getMyFare();
+    final dailyRequests = await ApiService.getStudentDailyRequests();
 
     if (mounted) {
       setState(() {
         _user = user;
         _payments = payments;
         _myRequests = requests;
+        _dailyRequests = dailyRequests;
         _myFare = fare;
         _isLoading = false;
       });
@@ -249,7 +253,11 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
   Widget build(BuildContext context) {
     final profile = _user != null ? (_user!['profile'] ?? _user!['student'] ?? {}) : {};
     final hasApprovedDriver = _myRequests.any((r) => r['status'] == 'APPROVED');
+    final activeRequest = _myRequests.firstWhere((r) => r['status'] == 'APPROVED', orElse: () => null);
     final isNarrow = MediaQuery.of(context).size.width < 900;
+    
+    // Check if the current month is paid
+    final isMonthlyPaid = _myFare != null && _myFare!['status'] == 'PAID';
 
     return DashboardLayout(
       userName: profile['fullName'] ?? 'Student',
@@ -270,36 +278,85 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                 runSpacing: 20,
                 children: [
                   const Text(
-                    'PAYMENT HISTORY',
+                    'PAYMENTS',
                     style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
                   ),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.payment, size: 18),
-                    label: const Text('MAKE PAYMENT', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    ),
-                    onPressed: _showMakePaymentModal,
-                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: !_isDailyView ? Colors.blueAccent : Colors.white10,
+                          foregroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(left: Radius.circular(20))),
+                        ),
+                        onPressed: () => setState(() => _isDailyView = false),
+                        child: const Text('MONTHLY PLAN'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isDailyView ? Colors.greenAccent : Colors.white10,
+                          foregroundColor: _isDailyView ? Colors.black : Colors.white,
+                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(right: Radius.circular(20))),
+                        ),
+                        onPressed: () => setState(() => _isDailyView = true),
+                        child: const Text('DAILY PLAN'),
+                      ),
+                    ],
+                  )
                 ],
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "TRACK YOUR MONTHLY TRANSPORTATION FEES.",
-              style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+            Text(
+              _isDailyView ? "REQUEST AND PAY FOR SPECIFIC DAYS OF TRAVEL." : "TRACK YOUR MONTHLY TRANSPORTATION FEES.",
+              style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
             ),
+            const SizedBox(height: 20),
+
+            // Top actions
+            if (hasApprovedDriver)
+              Row(
+                children: [
+                  if (!_isDailyView)
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.payment, size: 18),
+                      label: const Text('MAKE MONTHLY PAYMENT', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      onPressed: _showMakePaymentModal,
+                    )
+                  else
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('REQUEST DAILY RIDE', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isMonthlyPaid ? Colors.grey : Colors.greenAccent,
+                        foregroundColor: isMonthlyPaid ? Colors.white54 : Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      onPressed: isMonthlyPaid 
+                        ? () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You have already paid for the full month.')))
+                        : () => _showRequestDailyRideModal(activeRequest['driverId']),
+                    ),
+                ],
+              ),
+
             const SizedBox(height: 25),
 
-            if (!_isLoading) _buildFareStatusCard(),
+            if (!_isLoading && !_isDailyView) _buildFareStatusCard(),
 
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
             else if (!hasApprovedDriver)
               const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
+            else if (_isDailyView)
+              Expanded(child: _buildDailyRidesList())
             else if (_payments.isEmpty)
               const Center(child: Text("No payments made yet.", style: TextStyle(color: Colors.white70)))
             else
@@ -423,6 +480,167 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
           ),
           Expanded(flex: 2, child: Text(method, style: const TextStyle(color: Colors.white54, fontSize: 12))),
         ],
+      ),
+    );
+  }
+
+  void _showRequestDailyRideModal(int driverId) {
+    String selectedTripType = 'ROUND_TRIP';
+    DateTime selectedDate = DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E2128),
+              title: const Text('Request Daily Ride', style: TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Date:', style: TextStyle(color: Colors.white70)),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 30)),
+                      );
+                      if (picked != null) {
+                        setStateModal(() => selectedDate = picked);
+                      }
+                    },
+                    child: Text('${selectedDate.toLocal()}'.split(' ')[0]),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Trip Type:', style: TextStyle(color: Colors.white70)),
+                  DropdownButton<String>(
+                    dropdownColor: const Color(0xFF2A2E38),
+                    value: selectedTripType,
+                    style: const TextStyle(color: Colors.white),
+                    items: const [
+                      DropdownMenuItem(value: 'ROUND_TRIP', child: Text('Round Trip')),
+                      DropdownMenuItem(value: 'TO_UNI_ONLY', child: Text('To Uni Only')),
+                      DropdownMenuItem(value: 'FROM_UNI_ONLY', child: Text('From Uni Only')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setStateModal(() => selectedTripType = val);
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+                    
+                    final result = await ApiService.createDailyRideRequest({
+                      'driverId': driverId,
+                      'date': '${selectedDate.toLocal()}'.split(' ')[0],
+                      'tripType': selectedTripType,
+                    });
+                    
+                    if (mounted) Navigator.pop(context);
+
+                    if (result['success']) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Daily ride requested!')));
+                      _fetchData();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+                    }
+                  },
+                  child: const Text('REQUEST'),
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
+  }
+
+  Widget _buildDailyRidesList() {
+    if (_dailyRequests.isEmpty) {
+      return const Center(child: Text("No daily rides found.", style: TextStyle(color: Colors.white70)));
+    }
+    
+    final isMonthlyPaid = _myFare != null && _myFare!['status'] == 'PAID';
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: ListView.separated(
+        itemCount: _dailyRequests.length,
+        separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
+        itemBuilder: (context, index) {
+          final req = _dailyRequests[index];
+          final date = req['date'];
+          final type = req['tripType'] == 'ROUND_TRIP' ? 'Round Trip' : (req['tripType'] == 'TO_UNI_ONLY' ? 'To Uni' : 'From Uni');
+          final status = req['status'];
+          final isPaid = req['paymentId'] != null;
+          final amount = req['fareAmount'] != null ? 'LKR ${req['fareAmount']}' : 'TBD';
+
+          Color statusColor = Colors.orange;
+          if (status == 'APPROVED') statusColor = Colors.green;
+          if (status == 'REJECTED') statusColor = Colors.redAccent;
+
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('$date • $type', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Text(status, style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 10)),
+                          const SizedBox(width: 10),
+                          if (isPaid || isMonthlyPaid)
+                            const Text('PAID', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 10))
+                          else if (status == 'APPROVED')
+                            const Text('UNPAID', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 10)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(amount, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                if (status == 'APPROVED' && !isPaid && !isMonthlyPaid)
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+                    onPressed: () async {
+                      showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+                      final result = await ApiService.payDailyRide(req['id']);
+                      if (mounted) Navigator.pop(context);
+
+                      if (result['success']) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Successful!')));
+                        _fetchData();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+                      }
+                    },
+                    child: const Text('PAY NOW', style: TextStyle(color: Colors.white)),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

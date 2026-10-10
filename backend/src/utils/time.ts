@@ -13,6 +13,11 @@ export const currentMonth = (): string => {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 };
 
+export const currentColomboDateString = (): string => {
+  const d = colomboNow();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+};
+
 export const currentDay = (): number => colomboNow().getUTCDate();
 
 // Month + day-of-month of an arbitrary timestamp, in Colombo time.

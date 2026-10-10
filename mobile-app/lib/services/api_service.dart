@@ -247,12 +247,12 @@ class ApiService {
 
 
   // --- Request APIs ---
-  static Future<Map<String, dynamic>> createSeatRequest(int driverId) async {
+  static Future<Map<String, dynamic>> createSeatRequest(int driverId, {String paymentPlan = 'MONTHLY'}) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/requests'),
         headers: await _getHeaders(),
-        body: jsonEncode({'driverId': driverId}),
+        body: jsonEncode({'driverId': driverId, 'paymentPlan': paymentPlan}),
       );
       final data = jsonDecode(response.body);
       if (response.statusCode == 201) return {'success': true, 'data': data};
@@ -285,6 +285,75 @@ class ApiService {
       return [];
     } catch (e) {
       return [];
+    }
+  }
+
+  // --- Daily Ride APIs ---
+  static Future<Map<String, dynamic>> createDailyRideRequest(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/daily-rides'),
+        headers: await _getHeaders(),
+        body: jsonEncode(data),
+      );
+      final resData = jsonDecode(response.body);
+      if (response.statusCode == 201) return {'success': true, 'data': resData};
+      return {'success': false, 'message': resData['error'] ?? resData['message'] ?? 'Failed to create daily ride'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<List<dynamic>> getDriverDailyRequests({String? date}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/daily-rides/driver${date != null ? '?date=$date' : ''}');
+      final response = await http.get(uri, headers: await _getHeaders());
+      if (response.statusCode == 200) return jsonDecode(response.body) ?? [];
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<List<dynamic>> getStudentDailyRequests() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/daily-rides/student'),
+        headers: await _getHeaders(),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body) ?? [];
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateDailyRideStatus(int requestId, String status) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/daily-rides/$requestId/status'),
+        headers: await _getHeaders(),
+        body: jsonEncode({'status': status}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true, 'data': data};
+      return {'success': false, 'message': data['error'] ?? data['message'] ?? 'Failed to update request'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> payDailyRide(int requestId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/daily-rides/$requestId/pay'),
+        headers: await _getHeaders(),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true, 'data': data};
+      return {'success': false, 'message': data['error'] ?? data['message'] ?? 'Failed to pay for daily ride'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
