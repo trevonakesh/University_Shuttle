@@ -135,11 +135,11 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
             ),
             const SizedBox(height: 40),
             if (_myBus == null)
-              Expanded(
+              const Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(Icons.directions_bus_filled_outlined, color: Colors.white24, size: 80),
                       SizedBox(height: 20),
                       Text('You don\'t have an assigned bus yet.', style: TextStyle(color: Colors.white54, fontSize: 18)),

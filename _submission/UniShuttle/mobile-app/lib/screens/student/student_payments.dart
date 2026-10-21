@@ -154,9 +154,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E2128),
           title: const Text('Waiting for payment…', style: TextStyle(color: Colors.white)),
-          content: Column(
+          content: const Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               CircularProgressIndicator(color: Colors.blueAccent),
               SizedBox(height: 20),
               Text(
@@ -222,9 +222,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
       margin: const EdgeInsets.only(bottom: 25),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -307,17 +307,17 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white24),
                   ),
                   child: Column(
                     children: [
                       if (!isNarrow)
-                        Padding(
-                          padding: const EdgeInsets.all(20.0),
+                        const Padding(
+                          padding: EdgeInsets.all(20.0),
                           child: Row(
-                            children: const [
+                            children: [
                               Expanded(flex: 2, child: Text('MONTH', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                               Expanded(flex: 3, child: Text('DRIVER/BUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                               Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),

@@ -86,11 +86,11 @@ class AboutUsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _InfoBaseScreen(
+    return const _InfoBaseScreen(
       title: 'ABOUT US',
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Text(
             'Campus Bus Service',
             style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),

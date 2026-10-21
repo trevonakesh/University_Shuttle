@@ -2,7 +2,8 @@ import { Router } from 'express';
 import {
   getDrivers, updateDriverStatus, getStudentsByDriver, getPayments,
   createDriver, deleteDriver, getStudents, createStudent, deleteStudent,
-  createPayout, getPayouts
+  createPayout, getPayouts,
+  getCommissionRateHandler, updateCommissionRateHandler
 } from '../controllers/adminController';
 import { getPayoutRequests, reviewPayoutRequest } from '../controllers/payoutRequestController';
 import { getContactMessages, markMessageRead, deleteContactMessage } from '../controllers/contactController';
@@ -36,5 +37,9 @@ router.patch('/payout-requests/:id', reviewPayoutRequest as any);
 router.get('/messages', getContactMessages as any);
 router.patch('/messages/:id/read', markMessageRead as any);
 router.delete('/messages/:id', deleteContactMessage as any);
+
+// Platform settings
+router.get('/settings/commission', getCommissionRateHandler as any);
+router.patch('/settings/commission', updateCommissionRateHandler as any);
 
 export default router;

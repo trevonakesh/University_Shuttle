@@ -10,9 +10,9 @@ class ApiService {
   // Use localhost for iOS simulator or web
   static String get baseUrl {
     if (kIsWeb || (!kIsWeb && Platform.isWindows)) {
-      return 'http://localhost:3000/api';
+      return 'http://localhost:5000/api';
     } else {
-      return 'http://10.0.2.2:3000/api';
+      return 'http://10.0.2.2:5000/api';
     }
   }
 

@@ -297,6 +297,13 @@ model PollResponse {
   @@unique([pollId, studentId])
 }
 
+// Platform-level key/value settings (e.g. commission_rate).
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 model DailyRideRequest {
   id         Int           @id @default(autoincrement())
   studentId  Int

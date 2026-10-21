@@ -7,6 +7,10 @@ import { API_BASE } from '../../lib/api';
 type Form = { name: string; email: string; phone: string; subject: string; message: string };
 const empty: Form = { name: '', email: '', phone: '', subject: 'General enquiry', message: '' };
 
+const label: React.CSSProperties = {
+  fontSize: 12, fontFamily: 'var(--mono)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-faint)'
+};
+
 export default function ContactPage() {
   const [form, setForm] = useState<Form>(empty);
   const [sending, setSending] = useState(false);
@@ -47,10 +51,10 @@ export default function ContactPage() {
       <section className="page-head">
         <div className="wrap">
           <span className="eyebrow">Contact us</span>
-          <h1>Talk to the Uni Shuttle team</h1>
+          <h1>Talk to the UniShuttle team</h1>
           <p>
-            Whether you are a student looking for a bus on your route or an
-            operator wanting to join the platform, we would like to hear from you.
+            Looking for a bus on your route, want to register your bus as a driver,
+            or have a question about a payment? Send us a message.
           </p>
         </div>
       </section>
@@ -65,8 +69,7 @@ export default function ContactPage() {
                   <div style={{ fontSize: 40, lineHeight: 1 }}>✓</div>
                   <h2 style={{ fontSize: '1.4rem', marginTop: 14 }}>Message sent</h2>
                   <p style={{ color: 'var(--ink-soft)', marginTop: 10 }}>
-                    Thanks for getting in touch. Our team replies within one
-                    business day, Monday to Friday.
+                    Thanks for getting in touch. Our team will reply by email.
                   </p>
                   <button className="btn-ghost" style={{ marginTop: 20 }} onClick={() => setSent(false)}>
                     Send another message
@@ -80,7 +83,7 @@ export default function ContactPage() {
 
                   <div className="field">
                     <label htmlFor="c-name">Your name</label>
-                    <input id="c-name" required value={form.name} onChange={set('name')} placeholder="Amaya Jayasuriya" />
+                    <input id="c-name" required value={form.name} onChange={set('name')} />
                   </div>
 
                   <div className="grid-2" style={{ gap: 16 }}>
@@ -90,7 +93,7 @@ export default function ContactPage() {
                     </div>
                     <div className="field">
                       <label htmlFor="c-phone">Phone (optional)</label>
-                      <input id="c-phone" value={form.phone} onChange={set('phone')} placeholder="+61 400 000 000" />
+                      <input id="c-phone" value={form.phone} onChange={set('phone')} placeholder="07X XXX XXXX" />
                     </div>
                   </div>
 
@@ -99,8 +102,8 @@ export default function ContactPage() {
                     <select id="c-subject" value={form.subject} onChange={set('subject')}>
                       <option>General enquiry</option>
                       <option>Finding a bus on my route</option>
-                      <option>Becoming a bus operator</option>
-                      <option>Billing or payments</option>
+                      <option>Registering as a driver</option>
+                      <option>Fares or payments</option>
                       <option>Report a problem</option>
                     </select>
                   </div>
@@ -126,30 +129,22 @@ export default function ContactPage() {
                 <h3 style={{ fontSize: '1.05rem' }}>Contact details</h3>
                 <div style={{ display: 'grid', gap: 16, marginTop: 16, fontSize: 14.8 }}>
                   <div>
-                    <div style={{ fontSize: 12, fontFamily: 'var(--mono)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Email</div>
+                    <div style={label}>Email</div>
                     <a href={`mailto:${business.email}`} style={{ color: 'var(--signal-dk)', fontWeight: 600 }}>{business.email}</a>
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, fontFamily: 'var(--mono)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Support</div>
-                    <a href={`mailto:${business.supportEmail}`} style={{ color: 'var(--signal-dk)', fontWeight: 600 }}>{business.supportEmail}</a>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontFamily: 'var(--mono)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Phone</div>
+                    <div style={label}>Phone</div>
                     <a href={`tel:${business.phoneHref}`} style={{ color: 'var(--signal-dk)', fontWeight: 600 }}>{business.phone}</a>
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, fontFamily: 'var(--mono)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Office</div>
-                    {a.line1}<br />{a.suburb} {a.state} {a.postcode}, {a.country}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontFamily: 'var(--mono)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>ABN</div>
-                    <span style={{ fontFamily: 'var(--mono)', fontWeight: 700 }}>{business.abn}</span>
+                    <div style={label}>Office</div>
+                    {a.line1}<br />{a.city}, {a.country}
                   </div>
                 </div>
               </div>
 
               <div className="card">
-                <h3 style={{ fontSize: '1.05rem' }}>Opening hours</h3>
+                <h3 style={{ fontSize: '1.05rem' }}>Office hours</h3>
                 <div style={{ display: 'grid', gap: 9, marginTop: 14, fontSize: 14.6 }}>
                   {business.hours.map(h => (
                     <div key={h.days} style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
@@ -159,40 +154,7 @@ export default function ContactPage() {
                   ))}
                 </div>
               </div>
-
-              <div className="card">
-                <h3 style={{ fontSize: '1.05rem' }}>Follow us</h3>
-                <div style={{ display: 'grid', gap: 10, marginTop: 14, fontSize: 14.6 }}>
-                  {business.socials.map(s => (
-                    <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer"
-                       style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--ink-soft)' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{s.name}</span>
-                      <span style={{ fontFamily: 'var(--mono)', fontSize: 13 }}>{s.handle}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
             </div>
-          </div>
-
-          {/* ---- map ---- */}
-          <div style={{ marginTop: 44 }}>
-            <div className="section-head" style={{ marginBottom: 22 }}>
-              <span className="eyebrow">Find us</span>
-              <h2 style={{ fontSize: 'clamp(1.5rem, 2.8vw, 2rem)' }}>Our office</h2>
-            </div>
-            <div className="map-frame">
-              <iframe
-                src={business.mapEmbed}
-                title={`Map showing ${business.name} at ${a.line1}, ${a.suburb}`}
-                loading="lazy"
-              />
-            </div>
-            <p style={{ marginTop: 12, fontSize: 14 }}>
-              <a href={business.mapLink} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--signal-dk)', fontWeight: 600 }}>
-                Open in a larger map →
-              </a>
-            </p>
           </div>
         </div>
       </section>

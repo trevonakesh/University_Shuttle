@@ -66,6 +66,13 @@ export default function EarningsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Commission rate state
+  const [commissionRate, setCommissionRate] = useState<number>(0.10);
+  const [commissionInput, setCommissionInput] = useState<string>('10');
+  const [commissionSaving, setCommissionSaving] = useState(false);
+  const [commissionError, setCommissionError] = useState<string | null>(null);
+  const [commissionSuccess, setCommissionSuccess] = useState(false);
+
   // Payout modal state
   const [payoutDriver, setPayoutDriver] = useState<Driver | null>(null);
   const [amount, setAmount] = useState('');
@@ -77,20 +84,26 @@ export default function EarningsPage() {
 
   const loadAll = async () => {
     try {
-      const [driversRes, paymentsRes, payoutsRes, requestsRes] = await Promise.all([
+      const [driversRes, paymentsRes, payoutsRes, requestsRes, commissionRes] = await Promise.all([
         authFetch('/api/admin/drivers'),
         authFetch('/api/admin/payments'),
         authFetch('/api/admin/payouts'),
-        authFetch('/api/admin/payout-requests')
+        authFetch('/api/admin/payout-requests'),
+        authFetch('/api/admin/settings/commission')
       ]);
       const requestsData = await requestsRes.json();
       if (Array.isArray(requestsData)) setRequests(requestsData);
       const driversData = await driversRes.json();
       const paymentsData = await paymentsRes.json();
       const payoutsData = await payoutsRes.json();
+      const commissionData = await commissionRes.json();
 
       if (Array.isArray(driversData)) setDrivers(driversData);
       if (Array.isArray(payoutsData)) setPayouts(payoutsData);
+      if (typeof commissionData?.commissionRate === 'number') {
+        setCommissionRate(commissionData.commissionRate);
+        setCommissionInput(String(+(commissionData.commissionRate * 100).toFixed(4)));
+      }
 
       if (Array.isArray(paymentsData)) {
         const map = new Map<string, EarningStats>();
@@ -118,6 +131,36 @@ export default function EarningsPage() {
   };
 
   useEffect(() => { loadAll(); }, []);
+
+  const saveCommissionRate = async () => {
+    const pct = parseFloat(commissionInput);
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+      setCommissionError('Enter a percentage between 0 and 100.');
+      return;
+    }
+    setCommissionError(null);
+    setCommissionSuccess(false);
+    setCommissionSaving(true);
+    try {
+      const rate = pct / 100;
+      const res = await authFetch('/api/admin/settings/commission', {
+        method: 'PATCH',
+        body: JSON.stringify({ commissionRate: rate })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCommissionRate(data.commissionRate);
+        setCommissionSuccess(true);
+        setTimeout(() => setCommissionSuccess(false), 3000);
+      } else {
+        setCommissionError(data.message ?? 'Failed to update commission rate.');
+      }
+    } catch {
+      setCommissionError('Could not reach the backend.');
+    } finally {
+      setCommissionSaving(false);
+    }
+  };
 
   const openPayout = (driver: Driver) => {
     setPayoutDriver(driver);
@@ -199,6 +242,7 @@ export default function EarningsPage() {
 
   const totalOwed = drivers.reduce((sum, d) => sum + (d.walletBalance || 0), 0);
   const totalPaidOut = payouts.reduce((sum, p) => sum + p.amount, 0);
+  const commissionPct = +(commissionRate * 100).toFixed(4);
 
   return (
     <div>
@@ -211,9 +255,56 @@ export default function EarningsPage() {
         </div>
       )}
 
+      {/* ── Commission Settings ── */}
+      <div className="glass-panel" style={{ marginBottom: '32px', padding: '24px' }}>
+        <h2 style={{ marginBottom: '6px', fontSize: '18px' }}>Platform Commission Rate</h2>
+        <p className="subtitle" style={{ marginBottom: '20px' }}>
+          Currently charging <strong style={{ color: 'var(--primary)' }}>{commissionPct}%</strong> of every fare.
+          Set to <strong>0%</strong> to disable the commission entirely.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
+            <input
+              id="commission-input"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={commissionInput}
+              onChange={e => { setCommissionInput(e.target.value); setCommissionError(null); setCommissionSuccess(false); }}
+              style={{
+                width: '90px', padding: '10px 12px',
+                background: 'rgba(255,255,255,0.06)', color: 'var(--text)',
+                border: 'none', outline: 'none', fontFamily: 'inherit', fontSize: '16px',
+                fontWeight: 600
+              }}
+            />
+            <span style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', fontSize: '16px', fontWeight: 600 }}>%</span>
+          </div>
+          <button
+            id="commission-save-btn"
+            className="btn btn-primary"
+            onClick={saveCommissionRate}
+            disabled={commissionSaving}
+            style={{ minWidth: '120px' }}
+          >
+            {commissionSaving ? 'Saving…' : 'Save Rate'}
+          </button>
+          {commissionSuccess && (
+            <span style={{ color: 'var(--success)', fontSize: '14px', fontWeight: 500 }}>✓ Commission rate updated!</span>
+          )}
+          {commissionError && (
+            <span style={{ color: 'var(--danger)', fontSize: '14px' }}>{commissionError}</span>
+          )}
+        </div>
+        <p style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
+          ⚠ Changing this rate affects <em>new payments only</em>. Past payments retain the rate at which they were charged.
+        </p>
+      </div>
+
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', marginBottom: '32px' }}>
         <div className="glass-panel" style={{ flex: 1, minWidth: '200px' }}>
-          <h3 style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '8px' }}>Total Admin Earnings (10%)</h3>
+          <h3 style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '8px' }}>Total Admin Earnings ({commissionPct}%)</h3>
           <div style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--primary)' }}>
             Rs. {totalAdminRevenue.toLocaleString()}
           </div>
@@ -366,8 +457,8 @@ export default function EarningsPage() {
               <th>Bus Registration</th>
               <th>Payments</th>
               <th>Total Collected</th>
-              <th>Platform Fee (10%)</th>
-              <th>Driver Net (90%)</th>
+              <th>Platform Fee ({commissionPct}%)</th>
+              <th>Driver Net ({+(100 - commissionPct).toFixed(4)}%)</th>
               <th>Wallet Balance</th>
               <th>Actions</th>
             </tr>

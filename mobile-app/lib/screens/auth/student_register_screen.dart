@@ -143,10 +143,10 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                               ),
                             ),
                             const SizedBox(width: 15),
-                            Expanded(
+                            const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
                                   Text('STUDENT REGISTRATION', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
                                   SizedBox(height: 4),
                                   Text('PLEASE FILL IN YOUR DETAILS TO CREATE YOUR STUDENT ACCOUNT', style: TextStyle(fontSize: 10, color: Colors.white70, letterSpacing: 1)),
@@ -177,9 +177,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         child: Container(
           padding: const EdgeInsets.all(30),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
           ),
           child: Form(
             key: _formKey,
@@ -202,8 +202,8 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
                   _buildPhotoUploadCol(),
-                  if (isDesktop) Expanded(child: const SizedBox()),
-                  if (isDesktop) Expanded(child: const SizedBox()),
+                  if (isDesktop) const Expanded(child: SizedBox()),
+                  if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
                 
                 const SizedBox(height: 30),
@@ -221,7 +221,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 _buildResponsiveRow(isDesktop, [
                   _buildDropdownCol('ACADEMIC YEAR', 'SELECT ACADEMIC YEAR', ['Year 1', 'Year 2', 'Year 3', 'Year 4'], _academicYear, (val) => setState(() => _academicYear = val)),
                   _buildInputCol('REGISTRATION NUMBER', 'ENTER REGISTRATION NUMBER', _regNoCtrl),
-                  if (isDesktop) Expanded(child: const SizedBox()),
+                  if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
                 
                 const SizedBox(height: 30),
@@ -233,13 +233,13 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 _buildResponsiveRow(isDesktop, [
                   _buildInputCol('HOME LOCATION', 'ENTER HOME LOCATION', _homeLocCtrl),
                   _buildInputCol('MAIN ROAD / PICKUP POINT', 'ENTER PICKUP POINT', _pickupCtrl),
-                  if (isDesktop) Expanded(child: const SizedBox()),
+                  if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
                   _buildDropdownCol('DESTINATION UNIVERSITY', 'SELECT DESTINATION UNIVERSITY', ['NSBM', 'SLIIT'], _destination, (val) => setState(() => _destination = val)),
-                  if (isDesktop) Expanded(child: const SizedBox()),
-                  if (isDesktop) Expanded(child: const SizedBox()),
+                  if (isDesktop) const Expanded(child: SizedBox()),
+                  if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
                 
                 const SizedBox(height: 30),
@@ -308,7 +308,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withValues(alpha: 0.2))),
           child: TextFormField(
             controller: controller,
             obscureText: obscureText,
@@ -329,7 +329,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withValues(alpha: 0.2))),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
@@ -358,9 +358,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
           child: Container(
             height: 100,
             decoration: BoxDecoration(
-              color: isSelected ? Colors.transparent : Colors.white.withOpacity(0.05),
+              color: isSelected ? Colors.transparent : Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.white.withOpacity(0.3), style: BorderStyle.solid),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3), style: BorderStyle.solid),
               image: isSelected 
                   ? DecorationImage(
                       image: kIsWeb
@@ -372,10 +372,10 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
             ),
             child: isSelected 
                 ? null 
-                : Center(
+                : const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 24),
                         SizedBox(height: 4),
                         Text('UPLOAD PHOTO', style: TextStyle(color: Colors.white, fontSize: 10)),

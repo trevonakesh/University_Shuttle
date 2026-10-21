@@ -218,7 +218,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
       ),
     );
 
-    final title = Column(
+    const title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
         Text(

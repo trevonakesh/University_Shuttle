@@ -15,34 +15,9 @@ const BusMark = () => (
   </svg>
 );
 
-const socialIcon = (name: string) => {
-  switch (name) {
-    case 'Facebook':
-      return <path d="M14 9h3V6h-3c-1.7 0-3 1.3-3 3v2H9v3h2v7h3v-7h2.5l.5-3H14V9.5c0-.3.2-.5.5-.5H14z" />;
-    case 'Instagram':
-      return (
-        <>
-          <rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-          <circle cx="12" cy="12" r="3.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
-          <circle cx="17" cy="7" r="1.2" />
-        </>
-      );
-    case 'LinkedIn':
-      return <path d="M5.5 8.5h2.7V19H5.5V8.5zM6.85 4a1.6 1.6 0 110 3.2 1.6 1.6 0 010-3.2zM10.6 8.5h2.6v1.4h.04c.36-.66 1.25-1.4 2.57-1.4 2.75 0 3.26 1.7 3.26 3.94V19h-2.72v-4.9c0-1.17-.02-2.68-1.7-2.68-1.7 0-1.96 1.28-1.96 2.6V19H10.6V8.5z" />;
-    default:
-      return (
-        <>
-          <rect x="2.5" y="5.5" width="19" height="13" rx="3.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M10.2 9.4l5 2.6-5 2.6V9.4z" />
-        </>
-      );
-  }
-};
-
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/services', label: 'Services' },
-  { href: '/pricing', label: 'Pricing' },
+  { href: '/how-it-works', label: 'How it works' },
   { href: '/contact', label: 'Contact' }
 ];
 
@@ -75,7 +50,8 @@ export function SiteHeader() {
               {l.label}
             </Link>
           ))}
-          <Link href="/pricing" className="btn-cta" style={{ marginLeft: 8 }}>Get started</Link>
+          <Link href="/portal/login" style={{ color: '#0e7c66', fontWeight: 600, marginLeft: 8 }}>Portal Login</Link>
+          <Link href="/contact" className="btn-cta" style={{ marginLeft: 8 }}>Get in touch</Link>
         </nav>
       </div>
     </header>
@@ -94,35 +70,27 @@ export function SiteFooter() {
               {business.name}
             </div>
             <p className="footer-about">
-              Prepaid university bus travel with live tracking, digital fares and
-              verified operators.
+              Seat requests, attendance polls, monthly fares and live bus tracking
+              for university students and private bus operators in Sri Lanka.
             </p>
-            <div className="socials">
-              {business.socials.map(s => (
-                <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.name} title={s.name}>
-                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{socialIcon(s.name)}</svg>
-                </a>
-              ))}
-            </div>
           </div>
 
           <div>
-            <h4>Company</h4>
+            <h4>Site</h4>
             <div className="footer-links">
               <Link href="/">Home</Link>
-              <Link href="/services">Services</Link>
-              <Link href="/pricing">Pricing</Link>
+              <Link href="/how-it-works">How it works</Link>
               <Link href="/contact">Contact us</Link>
             </div>
           </div>
 
           <div>
-            <h4>For operators</h4>
+            <h4>Platform</h4>
             <div className="footer-links">
-              <Link href="/services">What we offer</Link>
-              <Link href="/pricing">Partner plan</Link>
-              <Link href="/contact">Become a partner</Link>
-              <Link href="/admin">Operator admin</Link>
+              <Link href="/portal/login" style={{ fontWeight: 600, color: '#0e7c66' }}>Student & Driver Portal</Link>
+              <Link href="/how-it-works#students">For students</Link>
+              <Link href="/how-it-works#drivers">For drivers</Link>
+              <Link href="/admin">Admin login</Link>
             </div>
           </div>
 
@@ -133,16 +101,15 @@ export function SiteFooter() {
               <a href={`tel:${business.phoneHref}`}>{business.phone}</a>
               <span style={{ lineHeight: 1.6 }}>
                 {a.line1}<br />
-                {a.suburb} {a.state} {a.postcode}<br />
-                {a.country}
+                {a.city}, {a.country}
               </span>
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} {business.legalName}. All rights reserved.</span>
-          <span className="abn-badge">ABN <b>{business.abn}</b></span>
+          <span>© {new Date().getFullYear()} {business.name}. All rights reserved.</span>
+          <span>Payments processed securely by PayHere</span>
         </div>
       </div>
     </footer>

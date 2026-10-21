@@ -184,15 +184,15 @@ class DashboardLayout extends StatelessWidget {
 
   Widget _buildSidebar(BuildContext context, {bool inDrawer = false}) {
     return Container(
-      color: inDrawer ? Colors.transparent : Colors.black.withOpacity(0.4),
+      color: inDrawer ? Colors.transparent : Colors.black.withValues(alpha: 0.4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Logo Area
-          Padding(
-            padding: const EdgeInsets.all(30.0),
+          const Padding(
+            padding: EdgeInsets.all(30.0),
             child: Row(
-              children: const [
+              children: [
                 Icon(Icons.directions_bus, color: Colors.white, size: 28),
                 SizedBox(width: 12),
                 Text(
@@ -243,7 +243,7 @@ class DashboardLayout extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: isActive ? Colors.white.withOpacity(0.15) : Colors.transparent,
+        color: isActive ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
       child: ListTile(

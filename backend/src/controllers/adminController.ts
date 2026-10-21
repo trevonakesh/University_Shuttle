@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import prisma from '../prismaClient';
 import { DriverStatus, Role } from '@prisma/client';
 import { emitDriverStatusUpdated } from '../socketHandler';
+import { getCommissionRate, setCommissionRate } from '../services/settingsService';
 
 export const getDrivers = async (req: Request, res: Response) => {
   try {
@@ -315,6 +316,37 @@ export const getPayouts = async (req: Request, res: Response) => {
     res.status(200).json(payouts);
   } catch (error) {
     console.error('Error fetching payouts:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// GET /api/admin/settings/commission — returns the current commission rate.
+export const getCommissionRateHandler = async (_req: Request, res: Response) => {
+  try {
+    const rate = await getCommissionRate();
+    res.status(200).json({ commissionRate: rate });
+  } catch (error) {
+    console.error('Error fetching commission rate:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// PATCH /api/admin/settings/commission — updates the commission rate.
+// Body: { commissionRate: number }  — expects a value between 0 and 1.
+// Pass 0 to disable commissions entirely.
+export const updateCommissionRateHandler = async (req: Request, res: Response) => {
+  try {
+    const { commissionRate } = req.body;
+    const rate = parseFloat(commissionRate);
+
+    if (!Number.isFinite(rate) || rate < 0 || rate > 1) {
+      return res.status(400).json({ message: 'commissionRate must be a number between 0 and 1 (e.g. 0.10 for 10%).' });
+    }
+
+    await setCommissionRate(rate);
+    res.status(200).json({ message: 'Commission rate updated.', commissionRate: rate });
+  } catch (error) {
+    console.error('Error updating commission rate:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

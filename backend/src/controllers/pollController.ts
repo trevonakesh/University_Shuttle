@@ -80,7 +80,15 @@ export const getDriverPolls = async (req: AuthRequest, res: Response): Promise<v
           phone: (r.student as any).user?.phone
         }));
         
-      const option2Count = poll.responses.filter(r => !r.isComing).length;
+      const option2Students = poll.responses
+        .filter(r => !r.isComing)
+        .map(r => ({
+          name: r.student.fullName,
+          pickupPoint: r.student.pickupPoint,
+          phone: (r.student as any).user?.phone
+        }));
+        
+      const option2Count = option2Students.length;
 
       return {
         id: poll.id,
@@ -93,7 +101,8 @@ export const getDriverPolls = async (req: AuthRequest, res: Response): Promise<v
           option1Count: option1Students.length,
           option2Count
         },
-        option1Students // The detailed list requested by the user
+        option1Students,
+        option2Students
       };
     });
 

@@ -138,11 +138,11 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: hasVoted 
-              ? (isComing == true ? Colors.green.withOpacity(0.5) : Colors.redAccent.withOpacity(0.5)) 
+              ? (isComing == true ? Colors.green.withValues(alpha: 0.5) : Colors.redAccent.withValues(alpha: 0.5)) 
               : Colors.white24,
           width: hasVoted ? 2 : 1,
         ),

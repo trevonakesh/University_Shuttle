@@ -30,7 +30,7 @@ class AppBackground extends StatelessWidget {
               progress == null ? child : const SizedBox.shrink(),
         ),
         Container(
-          color: Colors.black.withOpacity(overlayOpacity),
+          color: Colors.black.withValues(alpha: overlayOpacity),
         ),
       ],
     );

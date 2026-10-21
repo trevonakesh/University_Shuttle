@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { TripType, RequestStatus } from '@prisma/client';
 import prisma from '../prismaClient';
+import { getCommissionRate } from '../services/settingsService';
 
 // Create a new daily ride request (Student)
 export const createDailyRideRequest = async (req: Request, res: Response) => {
@@ -193,7 +194,8 @@ export const payDailyRide = async (req: Request, res: Response) => {
     }
 
     const amount = existingRequest.fareAmount || 0;
-    const adminCommission = amount * 0.10; // 10% commission
+    const commissionRate = await getCommissionRate();
+    const adminCommission = amount * commissionRate; // dynamic platform commission
 
     // Create payment and update wallet
     const payment = await prisma.$transaction(async (tx) => {

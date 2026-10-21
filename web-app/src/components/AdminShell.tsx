@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
 import { getToken, clearToken } from '../lib/api';
 
-// Only /admin/* is gated. Public marketing pages and /login render bare.
+// Only /admin/* is gated. Public pages and /login render bare.
 export default function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin') ?? false;

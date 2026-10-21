@@ -144,10 +144,10 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         'ATTENDANCE POLLS',
                         style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
@@ -199,7 +199,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                     
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white24),
                       ),
@@ -245,10 +245,10 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                           const Divider(color: Colors.white24, height: 1),
                           
                           // Table Header
-                          Padding(
-                            padding: const EdgeInsets.all(20.0),
+                          const Padding(
+                            padding: EdgeInsets.all(20.0),
                             child: Row(
-                              children: const [
+                              children: [
                                 Expanded(flex: 3, child: Text('STUDENT NAME', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                                 Expanded(flex: 3, child: Text('PICKUP POINT', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
                                 Expanded(flex: 2, child: Text('PHONE NUMBER', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
@@ -282,15 +282,15 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
           Text(count, style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          Text(label, style: TextStyle(color: color.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          Text(label, style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
         ],
       ),
     );
@@ -342,9 +342,9 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.green.withOpacity(0.5)),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
                 ),
                 child: Text(
                   option1Text.toUpperCase(),

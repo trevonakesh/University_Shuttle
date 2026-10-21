@@ -138,10 +138,10 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         'NOTICE BOARD',
                         style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
@@ -225,9 +225,9 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isUrgent ? Colors.redAccent.withOpacity(0.5) : Colors.white24),
+        border: Border.all(color: isUrgent ? Colors.redAccent.withValues(alpha: 0.5) : Colors.white24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

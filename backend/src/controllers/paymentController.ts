@@ -7,8 +7,8 @@ import { currentMonth } from '../utils/time';
 import { parseFee, createNotification } from '../services/fareService';
 import { payhereConfig, payhereEnabled, checkoutUrl, generateCheckoutHash, verifyNotifySignature } from '../services/payhere';
 import { emitFareUpdated } from '../socketHandler';
+import { getCommissionRate } from '../services/settingsService';
 
-const COMMISSION_RATE = 0.10;
 const jwtSecret = () => process.env.JWT_SECRET || 'fallback_secret';
 
 // Marks a PENDING payment as COMPLETED: credits the driver's wallet with the
@@ -103,7 +103,8 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
       return;
     }
     const { student, driver, month, amount } = resolved;
-    const adminCommission = Math.round(amount * COMMISSION_RATE * 100) / 100;
+    const commissionRate = await getCommissionRate();
+    const adminCommission = Math.round(amount * commissionRate * 100) / 100;
     const usePayhere = payhereEnabled();
 
     // One payment row per student/driver/month: reuse an abandoned PENDING
@@ -314,7 +315,8 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
     const { student, driver, month, amount } = resolved;
-    const adminCommission = Math.round(amount * COMMISSION_RATE * 100) / 100;
+    const commissionRate = await getCommissionRate();
+    const adminCommission = Math.round(amount * commissionRate * 100) / 100;
 
     const existing = await prisma.payment.findFirst({
       where: { studentId: student.id, driverId: driver.id, month },
