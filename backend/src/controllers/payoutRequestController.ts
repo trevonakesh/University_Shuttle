@@ -3,6 +3,7 @@ import prisma from '../prismaClient';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { Role, PayoutRequestStatus } from '@prisma/client';
 import { createNotification } from '../services/fareService';
+import { sendEmail, emails } from '../services/email';
 
 // ---------- DRIVER SIDE ----------
 
@@ -16,7 +17,10 @@ export const createPayoutRequest = async (req: AuthRequest, res: Response): Prom
       return;
     }
 
-    const driver = await prisma.driver.findUnique({ where: { userId: req.user.userId } });
+    const driver = await prisma.driver.findUnique({
+      where: { userId: req.user.userId },
+      include: { user: { select: { email: true } } }
+    });
     if (!driver) {
       res.status(404).json({ error: 'Driver profile not found' });
       return;
@@ -54,12 +58,16 @@ export const createPayoutRequest = async (req: AuthRequest, res: Response): Prom
     });
 
     // Let every admin know there's something to review.
-    const admins = await prisma.user.findMany({ where: { role: Role.ADMIN }, select: { id: true } });
+    const admins = await prisma.user.findMany({ where: { role: Role.ADMIN }, select: { id: true, email: true } });
     await Promise.all(admins.map(a => createNotification(
       a.id,
       'Payout Requested',
       `${driver.fullName} requested a payout of LKR ${amount.toFixed(2)}.`
     )));
+    for (const a of admins) {
+      void sendEmail(emails.payoutRequestedAdmin(a.email, driver.fullName, driver.busRegNumber, amount));
+    }
+    void sendEmail(emails.payoutRequestedDriver(driver.user.email, driver.fullName, amount));
 
     res.status(201).json({ message: 'Payout request submitted', request });
   } catch (error: any) {
@@ -169,7 +177,7 @@ export const reviewPayoutRequest = async (req: AuthRequest, res: Response): Prom
 
     const request = await prisma.payoutRequest.findUnique({
       where: { id },
-      include: { driver: { include: { user: { select: { id: true } } } } }
+      include: { driver: { include: { user: { select: { id: true, email: true } } } } }
     });
     if (!request) {
       res.status(404).json({ error: 'Request not found' });
@@ -192,6 +200,7 @@ export const reviewPayoutRequest = async (req: AuthRequest, res: Response): Prom
         'Payout Request Rejected',
         `Your payout request for LKR ${request.amount.toFixed(2)} was rejected.${adminNote ? ` Reason: ${adminNote}` : ''}`
       );
+      void sendEmail(emails.payoutRejected(request.driver.user.email, request.driver.fullName, request.amount, adminNote));
       res.status(200).json({ message: 'Request rejected', request: updated });
       return;
     }
@@ -240,6 +249,10 @@ export const reviewPayoutRequest = async (req: AuthRequest, res: Response): Prom
       'Payout Approved',
       `Your payout of LKR ${request.amount.toFixed(2)} was approved and paid via ${method.replace('_', ' ').toLowerCase()}${referenceNo ? ` (ref: ${referenceNo})` : ''}. Remaining wallet balance: LKR ${result.driver.walletBalance.toFixed(2)}.`
     );
+
+    void sendEmail(emails.payoutSent(
+      request.driver.user.email, request.driver.fullName, request.amount, method, referenceNo, result.driver.walletBalance
+    ));
 
     res.status(200).json({
       message: 'Request approved and paid',

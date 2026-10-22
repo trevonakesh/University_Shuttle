@@ -1,18 +1,26 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import prisma from '../prismaClient';
 import { Role } from '@prisma/client';
+import { sendEmail, emails } from '../services/email';
 
 const generateToken = (userId: number, role: Role) => {
   const secret = process.env.JWT_SECRET || 'fallback_secret';
   return jwt.sign({ userId, role }, secret, { expiresIn: '7d' });
 };
 
-// True once a real email/SMS delivery provider is wired up. Until then the
-// reset code is returned in the API response (dev convenience) instead of
-// being delivered — clearly not for production.
-const deliveryConfigured = (): boolean => Boolean(process.env.SMTP_HOST || process.env.EMAIL_API_KEY);
+const RESET_CODE_MINUTES = 15;
+
+const displayName = (user: { student?: { fullName: string } | null; driver?: { fullName: string } | null }) =>
+  user.student?.fullName ?? user.driver?.fullName ?? '';
+
+// Readable IP for the sign-in alert ("::ffff:1.2.3.4" -> "1.2.3.4").
+const clientIp = (req: Request): string => {
+  const ip = (req.ip || '').replace(/^::ffff:/, '');
+  return ip === '::1' || ip === '127.0.0.1' ? `${ip} (this computer)` : ip;
+};
 
 // POST /api/auth/forgot-password  { email }
 // Generates a 6-digit code, stores it hashed with a 15-minute expiry.
@@ -26,7 +34,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email }, include: { student: true, driver: true } });
     const generic = { message: 'If an account exists for that email, a reset code has been sent.' };
 
     if (!user) {
@@ -34,19 +42,16 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const code = String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+    const code = String(crypto.randomInt(100000, 1000000)); // 6 digits, cryptographically random
     const codeHash = await bcrypt.hash(code, 10);
     await prisma.user.update({
       where: { id: user.id },
-      data: { resetCodeHash: codeHash, resetCodeExpiry: new Date(Date.now() + 15 * 60 * 1000) }
+      data: { resetCodeHash: codeHash, resetCodeExpiry: new Date(Date.now() + RESET_CODE_MINUTES * 60 * 1000) }
     });
 
-    // TODO: when SMTP/EMAIL_API_KEY is set, send `code` to user.email here.
-    if (!deliveryConfigured()) {
-      console.log(`[password-reset] code for ${email}: ${code}`);
-      res.status(200).json({ ...generic, devCode: code });
-      return;
-    }
+    // The code only ever travels by email — never in this response, or anyone
+    // who knows an address could reset that account's password.
+    void sendEmail(emails.passwordResetCode(user.email, displayName(user), code, RESET_CODE_MINUTES));
 
     res.status(200).json(generic);
   } catch (error: any) {
@@ -67,7 +72,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email }, include: { student: true, driver: true } });
     if (!user || !user.resetCodeHash || !user.resetCodeExpiry) {
       res.status(400).json({ error: 'No reset request found. Please request a new code.' });
       return;
@@ -88,6 +93,8 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       where: { id: user.id },
       data: { passwordHash, resetCodeHash: null, resetCodeExpiry: null }
     });
+
+    void sendEmail(emails.passwordChanged(user.email, displayName(user)));
 
     res.status(200).json({ message: 'Password reset successful. You can now log in.' });
   } catch (error: any) {
@@ -146,6 +153,8 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
     });
 
     const token = generateToken(user.id, user.role);
+
+    void sendEmail(emails.welcomeStudent(user.email, fullName));
 
     res.status(201).json({
       message: 'Student registered successfully',
@@ -228,6 +237,8 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
 
     const token = generateToken(user.id, user.role);
 
+    void sendEmail(emails.driverApplicationReceived(user.email, fullName));
+
     res.status(201).json({
       message: 'Driver registered successfully. Pending admin approval.',
       token,
@@ -284,6 +295,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = generateToken(user.id, user.role);
 
     const profile = user.role === Role.STUDENT ? user.student : user.driver;
+
+    void sendEmail(emails.signInAlert(
+      user.email,
+      displayName(user),
+      emails.describeDevice(req.get('user-agent')),
+      clientIp(req)
+    ));
 
     res.status(200).json({
       message: 'Login successful',

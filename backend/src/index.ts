@@ -36,7 +36,9 @@ import contactRoutes from './routes/contactRoutes';
 import fareRoutes from './routes/fareRoutes';
 import payoutRequestRoutes from './routes/payoutRequestRoutes';
 import dailyRideRoutes from './routes/dailyRideRoutes';
+import settingsRoutes from './routes/settingsRoutes';
 import { startFareReminderJob } from './fareReminders';
+import { logEmailMode } from './services/email';
 import path from 'path';
 
 // Middleware
@@ -59,6 +61,7 @@ app.use('/api/fares', fareRoutes);
 app.use('/api/payout-requests', payoutRequestRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/daily-rides', dailyRideRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -84,5 +87,6 @@ app.get('/', (req: Request, res: Response) => {
 
 server.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+  logEmailMode();
   startFareReminderJob();
 });

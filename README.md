@@ -98,7 +98,25 @@ Students can book a single day instead of a monthly seat. The fare comes from th
 | `joinStatusRoom` | Driver | Receives `driver_status_updated` (approval) and `fareUpdated` (a student paid) |
 
 ### Password reset
-Users request a 6-digit code, which is valid for 15 minutes and stored hashed. Email delivery is not implemented yet, so the code is printed to the backend console.
+Users request a 6-digit code, which is valid for 15 minutes and stored hashed. The code is only ever sent by email; the API response never contains it.
+
+### Emails
+The backend sends transactional emails over SMTP (`backend/src/services/email/`). They go out in the background, so a mail failure never fails the request.
+
+| When | Who gets it |
+|---|---|
+| Student signs up / admin creates an account | Welcome / "your account is ready" |
+| Any sign-in | "New sign-in" alert with time, device and IP |
+| Forgot password / password changed | Reset code / confirmation |
+| Driver applies, is approved or rejected | Driver |
+| Seat request or daily ride approved/rejected | Student |
+| Card payment, daily ride payment, cash recorded, marked not travelling | Student (receipt) |
+| Charged twice (card arrives after cash) | Student (refund due) |
+| Fare reminder (8th–10th), account frozen (after the 10th) | Student, once per month |
+| Payout requested / sent / rejected | Driver, and every admin for new requests |
+| Website contact form | Auto-reply to the sender, copy to the business inbox |
+
+If `SMTP_HOST` is not set, nothing is sent. Each email is saved as HTML in `backend/.emails/` (git-ignored) and logged to `outbox.jsonl`, so you can open it in a browser.
 
 ---
 
@@ -137,7 +155,7 @@ University_Shuttle/
 │   │   ├── controllers/          # Route handlers
 │   │   ├── routes/               # Express routers
 │   │   ├── middleware/           # JWT auth, role check, freeze guard
-│   │   ├── services/             # Fare/freeze logic, PayHere integration
+│   │   ├── services/             # Fare/freeze logic, PayHere integration, email/
 │   │   └── utils/time.ts         # Asia/Colombo date helpers
 │   ├── seedAdmin.ts, seedDemo.ts, seedDriver.ts, seedUsers.ts
 │   └── uploads/                  # Uploaded images (git-ignored)
@@ -191,6 +209,17 @@ PORT=3000
 # PAYHERE_MODE=sandbox
 # PUBLIC_URL=https://<your-tunnel>     # must be internet-reachable for PayHere notify
 # APP_PUBLIC_URL=http://<your-lan-ip>:3000
+
+# Optional — email (leave SMTP_HOST unset to save emails to backend/.emails/ instead)
+# SMTP_HOST=smtp.gmail.com            # or your provider: Brevo, SendGrid, Amazon SES, Mailgun...
+# SMTP_PORT=587                       # 465 uses TLS automatically
+# SMTP_SECURE=false
+# SMTP_USER=
+# SMTP_PASS=                          # for Gmail, an App Password, not your normal password
+# EMAIL_FROM="Uni Shuttle <no-reply@yourdomain.lk>"
+# EMAIL_REPLY_TO=support@yourdomain.lk
+# BUSINESS_INBOX_EMAIL=hello@yourdomain.lk   # contact-form copies; defaults to every admin
+# WEB_APP_URL=https://yourdomain.lk   # used for links inside emails
 ```
 
 Create the tables, seed an admin and start the server:

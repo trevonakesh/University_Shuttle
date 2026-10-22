@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import SiteChrome from '../../components/SiteChrome';
-import { rules } from '../../lib/business';
+import { rules, getCommissionPercent } from '../../lib/business';
 
 export const metadata = {
   title: 'How it works | UniShuttle',
@@ -8,7 +8,8 @@ export const metadata = {
     'How UniShuttle works for students and bus drivers: seat requests, daily rides, attendance polls, monthly fares, PayHere payments, live tracking and driver payouts.'
 };
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  const commissionPercent = await getCommissionPercent();
   return (
     <SiteChrome>
       <section className="page-head">
@@ -155,7 +156,7 @@ export default function HowItWorksPage() {
               <h3>Wallet &amp; payouts</h3>
               <ul className="ticks">
                 <li>In-app payments are credited to your wallet</li>
-                <li>The platform keeps a {rules.commissionPercent}% commission on in-app payments</li>
+                <li>The platform keeps a {commissionPercent}% commission on in-app payments</li>
                 <li>Request a payout; it is paid once an admin approves it</li>
               </ul>
             </div>

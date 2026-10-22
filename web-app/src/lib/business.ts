@@ -23,10 +23,31 @@ export const business = {
   ]
 };
 
+import { API_BASE } from './api';
+
 // Platform rules, mirrored from the backend so the site never drifts from
-// what the apps actually do (see backend/src/utils/time.ts and paymentController.ts).
+// what the apps actually do (see backend/src/utils/time.ts and fareReminders.ts).
 export const rules = {
   fareDueDay: 10,        // FREEZE_DAY
   reminderFromDay: 8,    // REMINDER_DAY
-  commissionPercent: 10  // COMMISSION_RATE
+  commissionPercent: 10  // fallback only — the live rate comes from getCommissionPercent()
 };
+
+// The admin can change the commission rate at any time, so pages show the
+// live value (refreshed at most once a minute) and fall back to
+// rules.commissionPercent when the API can't be reached.
+export async function getCommissionPercent(): Promise<number> {
+  try {
+    const res = await fetch(`${API_BASE}/api/settings/public`, {
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(2000)
+    });
+    if (!res.ok) return rules.commissionPercent;
+    const { commissionRate } = await res.json();
+    return typeof commissionRate === 'number'
+      ? +(commissionRate * 100).toFixed(2)
+      : rules.commissionPercent;
+  } catch {
+    return rules.commissionPercent;
+  }
+}

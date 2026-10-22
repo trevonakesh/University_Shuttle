@@ -293,7 +293,8 @@ export default function DriverFaresPage() {
                               </button>
                             )}
 
-                            {s.status !== 'EXEMPT' && (
+                            {/* A month the student paid online can't be reset or exempted; only cash can be undone. */}
+                            {s.status !== 'EXEMPT' && !(s.status === 'PAID' && s.paymentMethod !== 'CASH') && (
                               <button
                                 onClick={() => updateFare(s.studentId, 'EXEMPT')}
                                 disabled={updatingId === s.studentId}
@@ -304,7 +305,7 @@ export default function DriverFaresPage() {
                               </button>
                             )}
 
-                            {s.status !== 'UNPAID' && (
+                            {s.status !== 'UNPAID' && !(s.status === 'PAID' && s.paymentMethod !== 'CASH') && (
                               <button
                                 onClick={() => updateFare(s.studentId, 'UNPAID')}
                                 disabled={updatingId === s.studentId}

@@ -1,5 +1,5 @@
 import prisma from '../prismaClient';
-import { FareStatus, RequestStatus } from '@prisma/client';
+import { FareStatus, RequestStatus, Prisma } from '@prisma/client';
 import { FREEZE_DAY, currentDay, currentMonth, colomboMonthAndDay, currentColomboDateString } from '../utils/time';
 
 // monthlyFee is stored as a string on Driver; normalise to a number.
@@ -8,6 +8,13 @@ export const parseFee = (monthlyFee: string | null | undefined): number => {
   const fee = parseFloat(String(monthlyFee).replace(/[^\d.]/g, ''));
   return Number.isFinite(fee) && fee > 0 ? fee : 0;
 };
+
+// Serialises every fare and payment write for one student/driver pair.
+// Call first inside a transaction: the lock is held until it commits, so a
+// card confirmation, a cash marking and a daily payment can never interleave
+// and settle the same fare twice.
+export const lockStudentDriver = (tx: Prisma.TransactionClient, studentId: number, driverId: number) =>
+  tx.$executeRaw`SELECT pg_advisory_xact_lock(${studentId}::int, ${driverId}::int)`;
 
 export const getActiveAssignment = async (studentId: number): Promise<any> =>
   prisma.seatRequest.findFirst({

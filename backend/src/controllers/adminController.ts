@@ -4,6 +4,7 @@ import prisma from '../prismaClient';
 import { DriverStatus, Role } from '@prisma/client';
 import { emitDriverStatusUpdated } from '../socketHandler';
 import { getCommissionRate, setCommissionRate } from '../services/settingsService';
+import { sendEmail, emails } from '../services/email';
 
 export const getDrivers = async (req: Request, res: Response) => {
   try {
@@ -31,13 +32,22 @@ export const updateDriverStatus = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
+    const before = await prisma.driver.findUnique({ where: { id: driverId }, select: { status: true } });
+
     const driver = await prisma.driver.update({
       where: { id: driverId },
-      data: { status }
+      data: { status },
+      include: { user: { select: { email: true } } }
     });
 
     // Notify driver about status change
     emitDriverStatusUpdated(driverId, status);
+
+    // Email only on an actual decision change, not on a repeated click.
+    if (before?.status !== status) {
+      if (status === DriverStatus.APPROVED) void sendEmail(emails.driverApproved(driver.user.email, driver.fullName));
+      if (status === DriverStatus.REJECTED) void sendEmail(emails.driverRejected(driver.user.email, driver.fullName));
+    }
 
     res.status(200).json(driver);
   } catch (error) {
@@ -119,6 +129,8 @@ export const createDriver = async (req: Request, res: Response) => {
       },
       include: { driver: { include: { user: { select: { email: true, phone: true } } } } }
     });
+
+    void sendEmail(emails.accountCreatedByAdmin(user.email, fullName, 'DRIVER'));
 
     res.status(201).json(user.driver);
   } catch (error: any) {
@@ -217,6 +229,8 @@ export const createStudent = async (req: Request, res: Response) => {
       include: { student: { include: { user: { select: { email: true, phone: true } } } } }
     });
 
+    void sendEmail(emails.accountCreatedByAdmin(user.email, fullName, 'STUDENT'));
+
     res.status(201).json(user.student);
   } catch (error: any) {
     if (error.code === 'P2002') {
@@ -261,7 +275,7 @@ export const createPayout = async (req: Request, res: Response) => {
 
     const driver = await prisma.driver.findUnique({
       where: { id: Number(driverId) },
-      include: { user: { select: { id: true } } }
+      include: { user: { select: { id: true, email: true } } }
     });
     if (!driver) {
       return res.status(404).json({ message: 'Driver not found' });
@@ -296,6 +310,8 @@ export const createPayout = async (req: Request, res: Response) => {
         message: `LKR ${numAmount.toFixed(2)} was paid out to you via ${payoutMethod.replace('_', ' ').toLowerCase()}${referenceNo ? ` (ref: ${referenceNo})` : ''}. Remaining wallet balance: LKR ${updatedDriver.walletBalance.toFixed(2)}.`
       }
     });
+
+    void sendEmail(emails.payoutSent(driver.user.email, driver.fullName, numAmount, payoutMethod, referenceNo || null, updatedDriver.walletBalance));
 
     res.status(201).json({ payout, walletBalance: updatedDriver.walletBalance });
   } catch (error) {

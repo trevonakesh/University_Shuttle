@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import SiteChrome from '../components/SiteChrome';
-import { rules } from '../lib/business';
+import { getCommissionPercent } from '../lib/business';
 
 export const metadata = {
   title: 'UniShuttle: university bus travel in Sri Lanka',
@@ -53,7 +53,8 @@ const features = [
   }
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const commissionPercent = await getCommissionPercent();
   return (
     <SiteChrome>
       {/* ---------------- hero ---------------- */}
@@ -192,7 +193,7 @@ export default function HomePage() {
               </p>
               <ul className="ticks" style={{ marginTop: 22 }}>
                 <li>You set your own monthly and daily fees</li>
-                <li>The platform keeps {rules.commissionPercent}% of in-app payments; the rest goes to your wallet</li>
+                <li>The platform keeps {commissionPercent}% of in-app payments; the rest goes to your wallet</li>
                 <li>Paid, unpaid and not-travelling students at a glance</li>
                 <li>Post notices to all your passengers</li>
               </ul>

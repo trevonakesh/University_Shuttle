@@ -466,8 +466,11 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         switch (value) {
           case 'PAID':
             final amt = (s['amount'] as num?)?.toDouble() ?? 0;
-            final fee10 = (amt * 0.10).toStringAsFixed(2);
-            _setStatus(s, 'PAID', 'Record a CASH payment of LKR ${amt.toStringAsFixed(2)} from $name for $_monthLabel? A 10% platform fee (LKR $fee10) will be deducted from your wallet.');
+            // The rate is set by the admin; the fares response carries the current one.
+            final rate = (_fareData?['commissionRate'] as num?)?.toDouble() ?? 0.10;
+            final pct = (rate * 100).toStringAsFixed((rate * 100) % 1 == 0 ? 0 : 1);
+            final platformFee = (amt * rate).toStringAsFixed(2);
+            _setStatus(s, 'PAID', 'Record a CASH payment of LKR ${amt.toStringAsFixed(2)} from $name for $_monthLabel? A $pct% platform fee (LKR $platformFee) will be deducted from your wallet.');
             break;
           case 'EXEMPT':
             _setStatus(s, 'EXEMPT', "Mark $name as not travelling in $_monthLabel? Their account will be FROZEN for this month (unfreezes next month, or when they pay the fare).");

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../prismaClient';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { Role } from '@prisma/client';
+import { sendEmail, emails } from '../services/email';
 
 const MAX = { name: 120, email: 160, phone: 40, subject: 120, message: 4000 };
 const emailLooksValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -32,6 +33,16 @@ export const createContactMessage = async (req: Request, res: Response): Promise
     const saved = await prisma.contactMessage.create({
       data: { name, email, phone: phone || null, subject, message }
     });
+
+    // Confirm to the sender, and forward to the business inbox — or to every
+    // admin when BUSINESS_INBOX_EMAIL isn't set.
+    void sendEmail(emails.contactAutoReply(email, name, subject));
+    const inbox = process.env.BUSINESS_INBOX_EMAIL
+      ? [process.env.BUSINESS_INBOX_EMAIL]
+      : (await prisma.user.findMany({ where: { role: Role.ADMIN }, select: { email: true } })).map(a => a.email);
+    for (const to of inbox) {
+      void sendEmail(emails.contactToBusiness(to, { name, email, phone: phone || null, subject, message }));
+    }
 
     res.status(201).json({ message: 'Thanks — we will be in touch shortly.', id: saved.id });
   } catch (error: any) {

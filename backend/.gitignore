@@ -2,3 +2,6 @@ node_modules/
 .env
 dist/
 uploads/
+
+# Captured development emails (sent nowhere; see src/services/email/mailer.ts)
+.emails/

@@ -4,24 +4,57 @@ import prisma from '../prismaClient';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { Role, PaymentStatus, FareStatus, RequestStatus } from '@prisma/client';
 import { currentMonth } from '../utils/time';
-import { parseFee, createNotification } from '../services/fareService';
+import { parseFee, createNotification, lockStudentDriver } from '../services/fareService';
 import { payhereConfig, payhereEnabled, checkoutUrl, generateCheckoutHash, verifyNotifySignature } from '../services/payhere';
 import { emitFareUpdated } from '../socketHandler';
 import { getCommissionRate } from '../services/settingsService';
+import { sendEmail, emails } from '../services/email';
 
 const jwtSecret = () => process.env.JWT_SECRET || 'fallback_secret';
 
-// Marks a PENDING payment as COMPLETED: credits the driver's wallet with the
-// net amount, settles the month's fare, notifies the driver.
+// Marks a monthly payment COMPLETED: credits the driver's wallet with the net
+// amount, settles the month's fare, notifies the driver.
+//
+// Safe to call more than once for the same payment (PayHere retries its
+// callback): only the first call settles anything. If the month was already
+// settled by a different payment — e.g. the driver recorded cash while this
+// checkout was still open — the money is kept on record but nothing is
+// credited twice, and the student is told a refund is due.
 const completePayment = async (paymentId: number, referenceNo?: string) => {
+  // Cast, not annotation: assignments inside the transaction callback below
+  // would otherwise leave TypeScript narrowing this to 'noop'.
+  let outcome = 'noop' as 'settled' | 'duplicate' | 'noop';
+
   const payment = await prisma.$transaction(async (tx) => {
+    const found = await tx.payment.findUnique({ where: { id: paymentId } });
+    if (!found || found.status === PaymentStatus.COMPLETED || !found.month) return found;
+
+    await lockStudentDriver(tx, found.studentId, found.driverId);
+    // Re-read under the lock: a concurrent retry may have completed it.
     const p = await tx.payment.findUnique({ where: { id: paymentId } });
-    if (!p || p.status === PaymentStatus.COMPLETED) return p;
+    if (!p || p.status === PaymentStatus.COMPLETED || !p.month) return p;
+
+    const fareKey = { studentId_driverId_month: { studentId: p.studentId, driverId: p.driverId, month: p.month } };
+    const fare = await tx.monthlyFare.findUnique({ where: fareKey });
+
+    if (fare?.status === FareStatus.PAID && fare.paymentId !== p.id) {
+      outcome = 'duplicate';
+      return tx.payment.update({
+        where: { id: p.id },
+        data: {
+          status: PaymentStatus.COMPLETED,
+          adminCommission: 0,
+          paymentDate: new Date(),
+          referenceNo: `REFUND-DUE-${referenceNo ?? p.id}`
+        }
+      });
+    }
 
     const updated = await tx.payment.update({
       where: { id: p.id },
       data: {
         status: PaymentStatus.COMPLETED,
+        paymentDate: new Date(),
         ...(referenceNo ? { referenceNo } : {})
       }
     });
@@ -30,7 +63,7 @@ const completePayment = async (paymentId: number, referenceNo?: string) => {
       data: { walletBalance: { increment: p.amount - p.adminCommission } }
     });
     await tx.monthlyFare.upsert({
-      where: { studentId_driverId_month: { studentId: p.studentId, driverId: p.driverId, month: p.month } },
+      where: fareKey,
       create: {
         studentId: p.studentId,
         driverId: p.driverId,
@@ -42,13 +75,32 @@ const completePayment = async (paymentId: number, referenceNo?: string) => {
       },
       update: { status: FareStatus.PAID, amount: p.amount, markedBy: 'STUDENT_APP', paymentId: p.id }
     });
+    outcome = 'settled';
     return updated;
   });
 
-  if (payment) {
+  if (payment && outcome === 'duplicate') {
+    console.warn(`[payments] payment ${payment.id} arrived after ${payment.month} was already settled; refund due`);
+    const student = await prisma.student.findUnique({
+      where: { id: payment.studentId },
+      include: { user: { select: { email: true } } }
+    });
+    if (student) {
+      await createNotification(
+        student.userId,
+        'Duplicate Payment — Refund Due',
+        `Your card payment of LKR ${payment.amount.toFixed(2)} for ${payment.month} went through after the month had already been paid, so you were charged twice. Contact support to have the card payment refunded.`
+      );
+      void sendEmail(emails.duplicatePaymentRefund(
+        student.user.email, student.fullName, payment.month!, payment.amount, payment.referenceNo ?? String(payment.id)
+      ));
+    }
+  }
+
+  if (payment && outcome === 'settled') {
     const [driver, student] = await Promise.all([
       prisma.driver.findUnique({ where: { id: payment.driverId }, include: { user: { select: { id: true } } } }),
-      prisma.student.findUnique({ where: { id: payment.studentId } })
+      prisma.student.findUnique({ where: { id: payment.studentId }, include: { user: { select: { email: true } } } })
     ]);
     if (driver && student) {
       await createNotification(
@@ -57,6 +109,13 @@ const completePayment = async (paymentId: number, referenceNo?: string) => {
         `${student.fullName} paid the ${payment.month} fare (LKR ${payment.amount.toFixed(2)}) through the app.`
       );
       emitFareUpdated(driver.id, { studentId: payment.studentId, month: payment.month, status: FareStatus.PAID });
+      void sendEmail(emails.paymentReceipt(student.user.email, student.fullName, {
+        description: emails.monthlyFareLabel(payment.month!),
+        amount: payment.amount,
+        method: payment.paymentMethod,
+        reference: payment.referenceNo,
+        paidTo: driver.fullName
+      }));
     }
   }
   return payment;
@@ -123,7 +182,10 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
       adminCommission,
       status: PaymentStatus.PENDING,
       paymentMethod: usePayhere ? 'PAYHERE' : 'IN_APP',
-      referenceNo: null as string | null
+      referenceNo: null as string | null,
+      // Restamped on every attempt: the cash-marking guard uses it to tell a
+      // checkout in progress from an abandoned one.
+      paymentDate: new Date()
     };
     const payment = existing
       ? await prisma.payment.update({ where: { id: existing.id }, data })

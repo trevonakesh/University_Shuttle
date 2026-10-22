@@ -3,8 +3,16 @@ import prisma from '../prismaClient';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { FareStatus, RequestStatus, Role, PaymentStatus } from '@prisma/client';
 import { FREEZE_DAY, currentDay, currentMonth, isValidMonth } from '../utils/time';
-import { parseFee, isInGracePeriod, checkFrozen, createNotification } from '../services/fareService';
+import { parseFee, isInGracePeriod, checkFrozen, createNotification, lockStudentDriver } from '../services/fareService';
+import { getCommissionRate } from '../services/settingsService';
 import { emitFareUpdated } from '../socketHandler';
+import { HttpError } from '../utils/httpError';
+import { sendEmail, emails } from '../services/email';
+
+// A card checkout younger than this is treated as still in progress, so cash
+// can't be recorded on top of it. The checkout link itself expires after 20
+// minutes; the extra time covers a student still on PayHere's card page.
+const CARD_CHECKOUT_WINDOW_MS = 30 * 60 * 1000;
 
 // GET /api/fares/driver?month=YYYY-MM
 // The driver's fare ledger for a month: every approved student with their
@@ -84,7 +92,10 @@ export const getDriverFares = async (req: AuthRequest, res: Response): Promise<v
       collected: paid.reduce((sum, s) => sum + s.amount, 0)
     };
 
-    res.status(200).json({ month, fee, dueDay: FREEZE_DAY, summary, students });
+    // commissionRate lets the apps quote the real platform fee when the
+    // driver records a cash payment.
+    const commissionRate = await getCommissionRate();
+    res.status(200).json({ month, fee, dueDay: FREEZE_DAY, commissionRate, summary, students });
   } catch (error: any) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
@@ -126,7 +137,7 @@ export const setFareStatus = async (req: AuthRequest, res: Response): Promise<vo
 
     const assignment = await prisma.seatRequest.findUnique({
       where: { studentId_driverId: { studentId, driverId: driver.id } },
-      include: { student: { include: { user: { select: { id: true } } } } }
+      include: { student: { include: { user: { select: { id: true, email: true } } } } }
     });
     if (!assignment || assignment.status !== RequestStatus.APPROVED) {
       res.status(403).json({ error: 'This student is not assigned to your bus' });
@@ -140,24 +151,49 @@ export const setFareStatus = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     const fareKey = { studentId_driverId_month: { studentId, driverId: driver.id, month } };
-    const existing = await prisma.monthlyFare.findUnique({
-      where: fareKey,
-      include: { payment: true }
-    });
+    const commissionRate = await getCommissionRate();
 
-    if (existing?.status === status) {
-      res.status(400).json({ error: `Already marked as ${status}` });
-      return;
-    }
+    // Every branch runs under the student/driver lock and re-reads the fare
+    // inside it, so a card payment completing at the same moment can't be
+    // overwritten or settled twice.
+    const fare = await prisma.$transaction(async (tx) => {
+      await lockStudentDriver(tx, studentId, driver.id);
+      const existing = await tx.monthlyFare.findUnique({
+        where: fareKey,
+        include: { payment: true }
+      });
 
-    let fare;
+      if (existing?.status === status) {
+        throw new HttpError(400, `Already marked as ${status}`);
+      }
 
-    if (status === FareStatus.PAID) {
-      // Cash collected in person. The driver already holds the full amount,
-      // so the platform's 10% commission is deducted from their wallet
-      // (PickMe/Uber style — the balance may go negative until settled).
-      const commission = Math.round(fee * 0.10 * 100) / 100;
-      fare = await prisma.$transaction(async (tx) => {
+      if (status === FareStatus.PAID) {
+        // Cash collected in person. The driver already holds the full amount,
+        // so the platform's commission is deducted from their wallet
+        // (PickMe/Uber style — the balance may go negative until settled).
+        const open = await tx.payment.findMany({
+          where: {
+            studentId,
+            driverId: driver.id,
+            month,
+            status: { in: [PaymentStatus.COMPLETED, PaymentStatus.PENDING] }
+          }
+        });
+        if (open.some(p => p.status === PaymentStatus.COMPLETED)) {
+          throw new HttpError(409, `This student has already paid for ${month}.`);
+        }
+        const checkoutCutoff = Date.now() - CARD_CHECKOUT_WINDOW_MS;
+        if (open.some(p => p.status === PaymentStatus.PENDING && p.paymentDate.getTime() > checkoutCutoff)) {
+          throw new HttpError(409, `This student has a card payment in progress for ${month}. Try again in a few minutes.`);
+        }
+        // Older checkouts were abandoned. Closing them means a late gateway
+        // confirmation is recorded as a duplicate instead of settling the month again.
+        await tx.payment.updateMany({
+          where: { studentId, driverId: driver.id, month, status: PaymentStatus.PENDING },
+          data: { status: PaymentStatus.FAILED }
+        });
+
+        const commission = Math.round(fee * commissionRate * 100) / 100;
         const payment = await tx.payment.create({
           data: {
             studentId,
@@ -179,60 +215,68 @@ export const setFareStatus = async (req: AuthRequest, res: Response): Promise<vo
           create: { studentId, driverId: driver.id, month, status: FareStatus.PAID, amount: fee, markedBy: 'DRIVER', paymentId: payment.id },
           update: { status: FareStatus.PAID, amount: fee, markedBy: 'DRIVER', paymentId: payment.id }
         });
+      }
+
+      if (status === FareStatus.EXEMPT) {
+        if (existing?.status === FareStatus.PAID) {
+          throw new HttpError(400, 'Student already paid this month. Undo the payment first.');
+        }
+        return tx.monthlyFare.upsert({
+          where: fareKey,
+          create: { studentId, driverId: driver.id, month, status: FareStatus.EXEMPT, amount: fee, markedBy: 'DRIVER' },
+          update: { status: FareStatus.EXEMPT, markedBy: 'DRIVER', paymentId: null }
+        });
+      }
+
+      // Undo back to UNPAID. Only cash can be undone: app and card payments
+      // were made by the student and must stay on record.
+      if (existing?.payment && existing.payment.paymentMethod !== 'CASH') {
+        throw new HttpError(400, 'This month was paid through the app and cannot be undone.');
+      }
+      if (existing?.paymentId) {
+        // Undoing a cash payment also refunds the commission that was
+        // deducted from the wallet when it was recorded.
+        if ((existing.payment?.adminCommission ?? 0) > 0) {
+          await tx.driver.update({
+            where: { id: driver.id },
+            data: { walletBalance: { increment: existing.payment!.adminCommission } }
+          });
+        }
+        await tx.payment.delete({ where: { id: existing.paymentId } });
+      }
+      return tx.monthlyFare.upsert({
+        where: fareKey,
+        create: { studentId, driverId: driver.id, month, status: FareStatus.UNPAID, amount: fee, markedBy: 'DRIVER' },
+        update: { status: FareStatus.UNPAID, markedBy: 'DRIVER', paymentId: null }
       });
+    });
+
+    const studentEmail = assignment.student.user.email;
+    const studentName = assignment.student.fullName;
+    if (status === FareStatus.PAID) {
       await createNotification(
         assignment.student.user.id,
         'Payment Recorded',
         `Your driver marked your ${month} fare (LKR ${fee.toFixed(2)}) as paid in cash.`
       );
+      void sendEmail(emails.cashRecorded(studentEmail, studentName, month, fee, driver.fullName));
     } else if (status === FareStatus.EXEMPT) {
-      if (existing?.status === FareStatus.PAID) {
-        res.status(400).json({ error: 'Student already paid this month. Undo the payment first.' });
-        return;
-      }
-      fare = await prisma.monthlyFare.upsert({
-        where: fareKey,
-        create: { studentId, driverId: driver.id, month, status: FareStatus.EXEMPT, amount: fee, markedBy: 'DRIVER' },
-        update: { status: FareStatus.EXEMPT, markedBy: 'DRIVER', paymentId: null }
-      });
       await createNotification(
         assignment.student.user.id,
         'Marked As Not Travelling',
         `Your driver marked you as not travelling for ${month}. Your account is frozen for this month and unfreezes automatically next month — or pay the monthly fare if you plan to travel.`
       );
-    } else {
-      // Undo back to UNPAID. In-app payments cannot be undone by the driver.
-      if (existing?.payment?.paymentMethod === 'IN_APP') {
-        res.status(400).json({ error: 'This month was paid through the app and cannot be undone.' });
-        return;
-      }
-      const ops: any[] = [];
-      if (existing?.paymentId) {
-        // Undoing a cash payment also refunds the commission that was
-        // deducted from the wallet when it was recorded.
-        if ((existing.payment?.adminCommission ?? 0) > 0) {
-          ops.push(prisma.driver.update({
-            where: { id: driver.id },
-            data: { walletBalance: { increment: existing.payment!.adminCommission } }
-          }));
-        }
-        ops.push(prisma.payment.delete({ where: { id: existing.paymentId } }));
-      }
-      ops.push(
-        prisma.monthlyFare.upsert({
-          where: fareKey,
-          create: { studentId, driverId: driver.id, month, status: FareStatus.UNPAID, amount: fee, markedBy: 'DRIVER' },
-          update: { status: FareStatus.UNPAID, markedBy: 'DRIVER', paymentId: null }
-        })
-      );
-      const results = await prisma.$transaction(ops);
-      fare = results[results.length - 1];
+      void sendEmail(emails.markedNotTravelling(studentEmail, studentName, month, fee, driver.fullName));
     }
 
     emitFareUpdated(driver.id, { studentId, month, status });
 
     res.status(200).json({ message: `Marked as ${status}`, fare });
   } catch (error: any) {
+    if (error instanceof HttpError) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
     if (error.code === 'P2002') {
       res.status(400).json({ error: 'A payment for this month already exists' });
       return;
