@@ -64,10 +64,11 @@ export const createDailyRideRequest = async (req: Request, res: Response) => {
 
     // Fetch driver to get rates
     const driver = await prisma.driver.findUnique({
-      where: { id: Number(driverId) }
+      where: { id: Number(driverId) },
+      include: { user: { select: { deactivatedAt: true } } }
     });
 
-    if (!driver) {
+    if (!driver || driver.user.deactivatedAt) {
       return res.status(404).json({ message: 'Driver not found.' });
     }
     if (driver.status !== DriverStatus.APPROVED) {
@@ -124,7 +125,16 @@ export const getStudentDailyRequests = async (req: Request, res: Response) => {
 
     const requests = await prisma.dailyRideRequest.findMany({
       where: { studentId: student.id },
-      include: { driver: true },
+      // Only what a passenger needs: never the driver's NIC, bank details or wallet.
+      include: {
+        driver: {
+          select: {
+            id: true, fullName: true, busRegNumber: true, routeName: true,
+            pickupTime: true, dropTime: true, profilePhotoUrl: true,
+            user: { select: { phone: true } }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -156,7 +166,16 @@ export const getDriverDailyRequests = async (req: Request, res: Response) => {
 
     const requests = await prisma.dailyRideRequest.findMany({
       where: filter,
-      include: { student: true },
+      // Same passenger fields as seat requests: no NIC, home address or emergency contacts.
+      include: {
+        student: {
+          select: {
+            fullName: true, studentId: true, universityName: true, pickupPoint: true,
+            profilePhotoUrl: true,
+            user: { select: { phone: true } }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
 

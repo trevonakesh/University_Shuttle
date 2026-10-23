@@ -6,7 +6,7 @@ import { FREEZE_DAY, currentDay, currentMonth, isValidMonth } from '../utils/tim
 import { parseFee, isInGracePeriod, checkFrozen, createNotification, lockStudentDriver } from '../services/fareService';
 import { getCommissionRate } from '../services/settingsService';
 import { emitFareUpdated } from '../socketHandler';
-import { HttpError } from '../utils/httpError';
+import { HttpError, serverError } from '../utils/httpError';
 import { sendEmail, emails } from '../services/email';
 
 // A card checkout younger than this is treated as still in progress, so cash
@@ -97,7 +97,7 @@ export const getDriverFares = async (req: AuthRequest, res: Response): Promise<v
     const commissionRate = await getCommissionRate();
     res.status(200).json({ month, fee, dueDay: FREEZE_DAY, commissionRate, summary, students });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -281,7 +281,7 @@ export const setFareStatus = async (req: AuthRequest, res: Response): Promise<vo
       res.status(400).json({ error: 'A payment for this month already exists' });
       return;
     }
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -313,6 +313,6 @@ export const getMyFare = async (req: AuthRequest, res: Response): Promise<void> 
       freezeReason: check.reason
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };

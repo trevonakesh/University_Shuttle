@@ -1,14 +1,31 @@
+// Must stay the first import: modules below (e.g. the Prisma client) read
+// process.env as soon as they load.
+import 'dotenv/config';
 import express, { Express, Request, Response } from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 import { Pool } from 'pg';
 import { setupSockets } from './socketHandler';
+import { assertJwtSecret } from './utils/jwt';
 
-dotenv.config();
+// Refuse to start with a missing or weak JWT secret: anyone could forge logins.
+try {
+  assertJwtSecret();
+} catch (err) {
+  console.error(`\n[startup] ${(err as Error).message}\n`);
+  process.exit(1);
+}
 
 const app: Express = express();
+
+// Behind a reverse proxy / load balancer, set TRUST_PROXY (e.g. 1 = one hop)
+// so req.ip is the visitor's address. Rate limits are per IP and would
+// otherwise lump every visitor together as the proxy.
+if (process.env.TRUST_PROXY) {
+  const hops = Number(process.env.TRUST_PROXY);
+  app.set('trust proxy', Number.isInteger(hops) ? hops : process.env.TRUST_PROXY);
+}
 const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 
@@ -63,8 +80,22 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/daily-rides', dailyRideRoutes);
 app.use('/api/settings', settingsRoutes);
 
-// Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Serve uploaded images. Only image files are served, and the headers stop a
+// browser from sniffing them into something runnable (HTML, script) even if
+// a bad file ever reached the folder.
+const IMAGE_FILE = /^\/[\w.-]+\.(jpe?g|png|webp|gif)$/i;
+app.use(
+  '/uploads',
+  (req, res, next) => (IMAGE_FILE.test(req.path) ? next() : res.status(404).end()),
+  express.static(path.join(__dirname, '../uploads'), {
+    dotfiles: 'ignore',
+    index: false,
+    setHeaders: res => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    }
+  })
+);
 
 // PostgreSQL database configuration (to be updated with real credentials)
 const pool = new Pool({
@@ -76,9 +107,22 @@ const pool = new Pool({
 });
 
 // Error handling middleware
+// Full details go to the server log only; the client gets a plain message.
+// Client mistakes caught by middleware (bad JSON, body too large) keep their
+// 4xx status instead of being reported as a server crash.
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something broke!', error: err.message, stack: err.stack });
+  const status = Number(err?.status || err?.statusCode);
+  if (status >= 400 && status < 500) {
+    const message =
+      err.type === 'entity.parse.failed' ? 'The request body is not valid JSON.' :
+      err.type === 'entity.too.large' ? 'The request is too large.' :
+      'Bad request.';
+    res.status(status).json({ error: message });
+    return;
+  }
+  console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Something went wrong. Please try again.' });
 });
 
 app.get('/', (req: Request, res: Response) => {

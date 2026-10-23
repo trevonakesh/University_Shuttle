@@ -1,5 +1,7 @@
 import { Response } from 'express';
 import prisma from '../prismaClient';
+import { HttpError, serverError } from '../utils/httpError';
+import { debitWallet } from '../services/walletService';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { Role, PayoutRequestStatus } from '@prisma/client';
 import { createNotification } from '../services/fareService';
@@ -39,23 +41,33 @@ export const createPayoutRequest = async (req: AuthRequest, res: Response): Prom
     }
 
     // One open request at a time, so the same balance can't be claimed twice.
-    const pending = await prisma.payoutRequest.findFirst({
-      where: { driverId: driver.id, status: PayoutRequestStatus.PENDING }
-    });
-    if (pending) {
-      res.status(400).json({
-        error: `You already have a pending request for LKR ${pending.amount.toFixed(2)}. Wait for the admin to review it.`
+    // The per-driver lock makes a double-tap wait for the first request, which
+    // it then finds instead of creating a second one.
+    let request;
+    try {
+      request = await prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${driver.id}::bigint)`;
+        const pending = await tx.payoutRequest.findFirst({
+          where: { driverId: driver.id, status: PayoutRequestStatus.PENDING }
+        });
+        if (pending) {
+          throw new HttpError(400, `You already have a pending request for LKR ${pending.amount.toFixed(2)}. Wait for the admin to review it.`);
+        }
+        return tx.payoutRequest.create({
+          data: {
+            driverId: driver.id,
+            amount,
+            note: req.body?.note ? String(req.body.note) : null
+          }
+        });
       });
-      return;
-    }
-
-    const request = await prisma.payoutRequest.create({
-      data: {
-        driverId: driver.id,
-        amount,
-        note: req.body?.note ? String(req.body.note) : null
+    } catch (error) {
+      if (error instanceof HttpError) {
+        res.status(error.status).json({ error: error.message });
+        return;
       }
-    });
+      throw error;
+    }
 
     // Let every admin know there's something to review.
     const admins = await prisma.user.findMany({ where: { role: Role.ADMIN }, select: { id: true, email: true } });
@@ -71,7 +83,7 @@ export const createPayoutRequest = async (req: AuthRequest, res: Response): Prom
 
     res.status(201).json({ message: 'Payout request submitted', request });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -97,7 +109,7 @@ export const getMyPayoutRequests = async (req: AuthRequest, res: Response): Prom
 
     res.status(200).json({ walletBalance: driver.walletBalance, requests });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -128,7 +140,7 @@ export const cancelPayoutRequest = async (req: AuthRequest, res: Response): Prom
     await prisma.payoutRequest.delete({ where: { id: request.id } });
     res.status(200).json({ message: 'Request cancelled' });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -159,7 +171,7 @@ export const getPayoutRequests = async (req: AuthRequest, res: Response): Promis
 
     res.status(200).json(requests);
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -190,11 +202,29 @@ export const reviewPayoutRequest = async (req: AuthRequest, res: Response): Prom
 
     const adminNote = req.body?.adminNote ? String(req.body.adminNote) : null;
 
+    // Each review first "claims" the request with a conditional update that
+    // only matches while it is still PENDING. If two admins click at the same
+    // moment, exactly one claim succeeds; the other gets this message.
+    const alreadyReviewed = new HttpError(409, 'Another admin has just reviewed this request. Refresh to see the result.');
+
     if (action === 'REJECT') {
-      const updated = await prisma.payoutRequest.update({
-        where: { id },
-        data: { status: PayoutRequestStatus.REJECTED, adminNote, reviewedAt: new Date() }
-      });
+      let updated;
+      try {
+        updated = await prisma.$transaction(async (tx) => {
+          const { count } = await tx.payoutRequest.updateMany({
+            where: { id, status: PayoutRequestStatus.PENDING },
+            data: { status: PayoutRequestStatus.REJECTED, adminNote, reviewedAt: new Date() }
+          });
+          if (count === 0) throw alreadyReviewed;
+          return tx.payoutRequest.findUniqueOrThrow({ where: { id } });
+        });
+      } catch (error) {
+        if (error instanceof HttpError) {
+          res.status(error.status).json({ error: error.message });
+          return;
+        }
+        throw error;
+      }
       await createNotification(
         request.driver.user.id,
         'Payout Request Rejected',
@@ -205,44 +235,55 @@ export const reviewPayoutRequest = async (req: AuthRequest, res: Response): Prom
       return;
     }
 
-    // Re-check the balance at approval time — it may have changed since the
-    // request was made (e.g. cash commissions debited it).
-    if (request.amount > request.driver.walletBalance + 0.001) {
-      res.status(400).json({
-        error: `Driver's wallet balance is now LKR ${request.driver.walletBalance.toFixed(2)}, which is less than the requested LKR ${request.amount.toFixed(2)}. Ask them to submit a new request.`
-      });
-      return;
-    }
-
     const allowed = ['BANK_TRANSFER', 'CASH'];
     const method = allowed.includes(String(req.body?.method)) ? String(req.body.method) : 'BANK_TRANSFER';
     const referenceNo = req.body?.referenceNo ? String(req.body.referenceNo) : null;
 
-    const result = await prisma.$transaction(async (tx) => {
-      const payout = await tx.payout.create({
-        data: {
-          driverId: request.driverId,
-          amount: request.amount,
-          method,
-          referenceNo,
-          note: adminNote ?? request.note
+    // Claim, debit and record in one transaction: if any step fails (lost the
+    // race, or the balance no longer covers it) nothing is paid.
+    let result;
+    try {
+      result = await prisma.$transaction(async (tx) => {
+        const { count } = await tx.payoutRequest.updateMany({
+          where: { id, status: PayoutRequestStatus.PENDING },
+          data: { status: PayoutRequestStatus.APPROVED, adminNote, reviewedAt: new Date() }
+        });
+        if (count === 0) throw alreadyReviewed;
+
+        // The balance may have changed since the request was made (e.g. cash
+        // commissions debited it); debitWallet re-checks it atomically.
+        let walletBalance: number;
+        try {
+          walletBalance = await debitWallet(tx, request.driverId, request.amount);
+        } catch (error) {
+          if (error instanceof HttpError && error.status === 409) {
+            throw new HttpError(400, `${error.message} Ask the driver to submit a new request.`);
+          }
+          throw error;
         }
+
+        const payout = await tx.payout.create({
+          data: {
+            driverId: request.driverId,
+            amount: request.amount,
+            method,
+            referenceNo,
+            note: adminNote ?? request.note
+          }
+        });
+        const updated = await tx.payoutRequest.update({
+          where: { id },
+          data: { payoutId: payout.id }
+        });
+        return { payout, driver: { walletBalance }, updated };
       });
-      const driver = await tx.driver.update({
-        where: { id: request.driverId },
-        data: { walletBalance: { decrement: request.amount } }
-      });
-      const updated = await tx.payoutRequest.update({
-        where: { id },
-        data: {
-          status: PayoutRequestStatus.APPROVED,
-          adminNote,
-          payoutId: payout.id,
-          reviewedAt: new Date()
-        }
-      });
-      return { payout, driver, updated };
-    });
+    } catch (error) {
+      if (error instanceof HttpError) {
+        res.status(error.status).json({ error: error.message });
+        return;
+      }
+      throw error;
+    }
 
     await createNotification(
       request.driver.user.id,
@@ -261,6 +302,6 @@ export const reviewPayoutRequest = async (req: AuthRequest, res: Response): Prom
       walletBalance: result.driver.walletBalance
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };

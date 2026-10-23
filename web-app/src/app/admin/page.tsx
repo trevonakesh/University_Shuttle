@@ -86,7 +86,7 @@ export default function DriversPage() {
 
   const deleteDriver = async (driver: Driver) => {
     const sure = confirm(
-      `Delete driver ${driver.fullName} (${driver.user?.email})?\n\nThis permanently removes their account, bus, passengers' assignments, payment history and fare records. This cannot be undone.`
+      `Remove driver ${driver.fullName} (${driver.user?.email})?\n\nThey will no longer be able to sign in, their bus leaves the app and their passengers' seats are cancelled. Payments, payouts and fare records are kept for your accounts.`
     );
     if (!sure) return;
     try {
@@ -95,6 +95,7 @@ export default function DriversPage() {
       if (res.ok) {
         setDrivers(drivers.filter(d => d.id !== driver.id));
         if (selectedDriver?.id === driver.id) setSelectedDriver(null);
+        if (data.archived) alert(data.message);
       } else {
         alert(data.message ?? 'Failed to delete driver.');
       }

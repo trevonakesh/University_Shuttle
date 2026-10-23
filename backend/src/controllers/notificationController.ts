@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
+import { serverError } from '../utils/httpError';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 export const getNotifications = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -17,7 +18,7 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
 
     res.status(200).json({ notifications });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -52,6 +53,6 @@ export const markAsRead = async (req: AuthRequest, res: Response): Promise<void>
 
     res.status(200).json({ message: 'Marked as read', notification: updated });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };

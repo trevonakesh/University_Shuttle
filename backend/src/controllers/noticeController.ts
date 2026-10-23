@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
+import { serverError } from '../utils/httpError';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { Role } from '@prisma/client';
 
@@ -29,7 +30,7 @@ export const createNotice = async (req: AuthRequest, res: Response): Promise<voi
 
     res.status(201).json({ message: 'Notice created successfully', notice });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -55,7 +56,7 @@ export const getDriverNotices = async (req: AuthRequest, res: Response): Promise
 
     res.status(200).json({ notices });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -105,7 +106,7 @@ export const getStudentNotices = async (req: AuthRequest, res: Response): Promis
 
     res.status(200).json({ notices });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -140,6 +141,6 @@ export const deleteNotice = async (req: AuthRequest, res: Response): Promise<voi
 
     res.status(200).json({ message: 'Notice deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };

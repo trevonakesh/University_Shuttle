@@ -47,11 +47,11 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
     });
 
     // Connect to Socket.IO
-    final baseUrl = ApiService.baseUrl.replaceAll('/api', '');
-    _socket = IO.io(baseUrl, <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-    });
+    _socket = await ApiService.createSocket();
+    if (!mounted) {
+      _socket!.dispose();
+      return;
+    }
 
     _socket!.connect();
 

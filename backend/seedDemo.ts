@@ -22,6 +22,7 @@ const dateIn = (month: string, day: number) => new Date(`${month}-${String(day).
 
 async function wipe() {
   // Children first so foreign keys never block the delete.
+  await prisma.dailyRideRequest.deleteMany();
   await prisma.payoutRequest.deleteMany();
   await prisma.payout.deleteMany();
   await prisma.pollResponse.deleteMany();

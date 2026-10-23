@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
+import { serverError } from '../utils/httpError';
 import { AuthRequest } from '../middleware/authMiddleware';
-import { RequestStatus, Role } from '@prisma/client';
+import { DriverStatus, RequestStatus, Role } from '@prisma/client';
 import { parseFee } from '../services/fareService';
 import { sendEmail, emails } from '../services/email';
 
@@ -21,9 +22,16 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const driver = await prisma.driver.findUnique({ where: { id: driverId } });
-    if (!driver) {
+    const driver = await prisma.driver.findUnique({
+      where: { id: Number(driverId) },
+      include: { user: { select: { deactivatedAt: true } } }
+    });
+    if (!driver || driver.user.deactivatedAt) {
       res.status(404).json({ error: 'Driver/Bus not found' });
+      return;
+    }
+    if (driver.status !== DriverStatus.APPROVED) {
+      res.status(400).json({ error: 'This bus is not accepting passengers yet.' });
       return;
     }
 
@@ -71,7 +79,7 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
 
     res.status(201).json({ message: 'Seat request sent successfully', seatRequest });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -116,7 +124,7 @@ export const getStudentRequests = async (req: AuthRequest, res: Response): Promi
 
     res.status(200).json({ requests });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -157,7 +165,7 @@ export const getDriverRequests = async (req: AuthRequest, res: Response): Promis
 
     res.status(200).json({ requests });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -216,7 +224,7 @@ export const updateRequestStatus = async (req: AuthRequest, res: Response): Prom
 
     res.status(200).json({ message: `Request ${status.toLowerCase()} successfully`, request: updatedRequest });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -253,6 +261,6 @@ export const deleteRequest = async (req: AuthRequest, res: Response): Promise<vo
 
     res.status(200).json({ message: 'Request deleted and driver unassigned successfully' });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };

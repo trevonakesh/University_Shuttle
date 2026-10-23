@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
+import { serverError } from '../utils/httpError';
 import { AuthRequest } from '../middleware/authMiddleware';
-import { Role } from '@prisma/client';
+import { RequestStatus, Role } from '@prisma/client';
 
 export const createPoll = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -31,7 +32,7 @@ export const createPoll = async (req: AuthRequest, res: Response): Promise<void>
 
     res.status(201).json({ message: 'Poll created successfully', poll });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -108,7 +109,7 @@ export const getDriverPolls = async (req: AuthRequest, res: Response): Promise<v
 
     res.status(200).json({ polls: formattedPolls });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -162,7 +163,7 @@ export const getStudentPolls = async (req: AuthRequest, res: Response): Promise<
 
     res.status(200).json({ polls });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -177,14 +178,36 @@ export const votePoll = async (req: AuthRequest, res: Response): Promise<void> =
       return;
     }
 
+    if (typeof isComing !== 'boolean') {
+      res.status(400).json({ error: 'isComing must be true or false.' });
+      return;
+    }
+    const pollId = parseInt(String(id));
+    if (!Number.isInteger(pollId)) {
+      res.status(400).json({ error: 'Invalid poll id' });
+      return;
+    }
+
     const student = await prisma.student.findUnique({ where: { userId } });
     if (!student) {
       res.status(404).json({ error: 'Student profile not found' });
       return;
     }
 
-    const poll = await prisma.poll.findUnique({ where: { id: parseInt(id as string) } });
+    const poll = await prisma.poll.findUnique({ where: { id: pollId } });
     if (!poll) {
+      res.status(404).json({ error: 'Poll not found' });
+      return;
+    }
+
+    // Only passengers of the bus that posted the poll may answer it — the
+    // same rule that decides which polls a student sees. Other buses' polls
+    // get the same 404 as a missing one, so poll ids reveal nothing.
+    const seat = await prisma.seatRequest.findFirst({
+      where: { studentId: student.id, driverId: poll.driverId, status: RequestStatus.APPROVED },
+      select: { id: true }
+    });
+    if (!seat) {
       res.status(404).json({ error: 'Poll not found' });
       return;
     }
@@ -209,7 +232,7 @@ export const votePoll = async (req: AuthRequest, res: Response): Promise<void> =
 
     res.status(200).json({ message: 'Vote recorded successfully', vote });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -244,6 +267,6 @@ export const deletePoll = async (req: AuthRequest, res: Response): Promise<void>
 
     res.status(200).json({ message: 'Poll deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };

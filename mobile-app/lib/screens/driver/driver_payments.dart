@@ -66,17 +66,18 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
     if (mounted) setState(() => _fareData = fares);
   }
 
-  void _connectSocket() {
+  Future<void> _connectSocket() async {
     if (_socket != null) return;
     final profile = _user?['profile'] ?? _user?['driver'];
     final driverId = profile?['id'];
     if (driverId == null) return;
 
-    final baseUrl = ApiService.baseUrl.replaceAll('/api', '');
-    _socket = IO.io(baseUrl, <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-    });
+    final socket = await ApiService.createSocket();
+    if (!mounted || _socket != null) {
+      socket.dispose();
+      return;
+    }
+    _socket = socket;
     _socket!.connect();
     _socket!.onConnect((_) {
       _socket!.emit('joinStatusRoom', driverId.toString());

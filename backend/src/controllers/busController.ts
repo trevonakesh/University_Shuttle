@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
+import { serverError } from '../utils/httpError';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 export const getBuses = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { destination, startingPoint, universityName } = req.query;
 
-    const whereClause: any = {};
+    const whereClause: any = { user: { deactivatedAt: null } }; // never list removed drivers
 
     if (req.user?.role === 'STUDENT') {
       const student = await prisma.student.findUnique({
@@ -52,7 +53,7 @@ export const getBuses = async (req: AuthRequest, res: Response): Promise<void> =
 
     res.status(200).json({ buses });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -60,8 +61,8 @@ export const getBusById = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const { id } = req.params;
 
-    const bus = await prisma.driver.findUnique({
-      where: { id: parseInt(id as string) },
+    const bus = await prisma.driver.findFirst({
+      where: { id: parseInt(id as string), user: { deactivatedAt: null } },
       select: {
         id: true,
         fullName: true,
@@ -86,6 +87,6 @@ export const getBusById = async (req: AuthRequest, res: Response): Promise<void>
 
     res.status(200).json({ bus });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };

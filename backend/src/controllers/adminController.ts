@@ -5,10 +5,17 @@ import { DriverStatus, Role } from '@prisma/client';
 import { emitDriverStatusUpdated } from '../socketHandler';
 import { getCommissionRate, setCommissionRate } from '../services/settingsService';
 import { sendEmail, emails } from '../services/email';
+import { debitWallet } from '../services/walletService';
+import { removeDriver, removeStudent } from '../services/accountService';
+import { HttpError } from '../utils/httpError';
 
 export const getDrivers = async (req: Request, res: Response) => {
   try {
     const drivers = await prisma.driver.findMany({
+      // Removed (deactivated) drivers are hidden, unless money somehow landed
+      // in their wallet afterwards (e.g. a late card payment) and still needs
+      // paying out.
+      where: { OR: [{ user: { deactivatedAt: null } }, { walletBalance: { gt: 0.009 } }] },
       include: {
         user: {
           select: { email: true, phone: true }
@@ -148,14 +155,10 @@ export const createDriver = async (req: Request, res: Response) => {
 export const deleteDriver = async (req: Request, res: Response) => {
   try {
     const driverId = parseInt(String(req.params.id));
-    const driver = await prisma.driver.findUnique({ where: { id: driverId } });
-    if (!driver) {
-      return res.status(404).json({ message: 'Driver not found' });
-    }
-
-    await prisma.user.delete({ where: { id: driver.userId } });
-    res.status(200).json({ message: 'Driver deleted' });
+    if (!Number.isInteger(driverId)) return res.status(400).json({ message: 'Invalid id' });
+    res.status(200).json(await removeDriver(driverId));
   } catch (error) {
+    if (error instanceof HttpError) return res.status(error.status).json({ message: error.message });
     console.error('Error deleting driver:', error);
     res.status(500).json({ message: 'Server error' });
   }
@@ -165,6 +168,7 @@ export const deleteDriver = async (req: Request, res: Response) => {
 export const getStudents = async (req: Request, res: Response) => {
   try {
     const students = await prisma.student.findMany({
+      where: { user: { deactivatedAt: null } }, // removed students keep their records but leave the list
       include: {
         user: { select: { email: true, phone: true } },
         seatRequests: {
@@ -246,14 +250,10 @@ export const createStudent = async (req: Request, res: Response) => {
 export const deleteStudent = async (req: Request, res: Response) => {
   try {
     const studentId = parseInt(String(req.params.id));
-    const student = await prisma.student.findUnique({ where: { id: studentId } });
-    if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
-    }
-
-    await prisma.user.delete({ where: { id: student.userId } });
-    res.status(200).json({ message: 'Student deleted' });
+    if (!Number.isInteger(studentId)) return res.status(400).json({ message: 'Invalid id' });
+    res.status(200).json(await removeStudent(studentId));
   } catch (error) {
+    if (error instanceof HttpError) return res.status(error.status).json({ message: error.message });
     console.error('Error deleting student:', error);
     res.status(500).json({ message: 'Server error' });
   }
@@ -281,27 +281,31 @@ export const createPayout = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Driver not found' });
     }
 
-    if (numAmount > driver.walletBalance + 0.001) {
-      return res.status(400).json({
-        message: `Amount exceeds the driver's wallet balance (LKR ${driver.walletBalance.toFixed(2)})`
+    // The balance check and the debit happen in one conditional update, so
+    // two admins paying out at once can't take the wallet below zero.
+    let result: { payout: Awaited<ReturnType<typeof prisma.payout.create>>; walletBalance: number };
+    try {
+      result = await prisma.$transaction(async (tx) => {
+        const walletBalance = await debitWallet(tx, driver.id, numAmount);
+        const payout = await tx.payout.create({
+          data: {
+            driverId: driver.id,
+            amount: numAmount,
+            method: payoutMethod,
+            referenceNo: referenceNo || null,
+            note: note || null
+          }
+        });
+        return { payout, walletBalance };
       });
+    } catch (error) {
+      if (error instanceof HttpError) {
+        return res.status(error.status === 409 ? 400 : error.status).json({ message: error.message });
+      }
+      throw error;
     }
-
-    const [payout, updatedDriver] = await prisma.$transaction([
-      prisma.payout.create({
-        data: {
-          driverId: driver.id,
-          amount: numAmount,
-          method: payoutMethod,
-          referenceNo: referenceNo || null,
-          note: note || null
-        }
-      }),
-      prisma.driver.update({
-        where: { id: driver.id },
-        data: { walletBalance: { decrement: numAmount } }
-      })
-    ]);
+    const { payout } = result;
+    const updatedDriver = { walletBalance: result.walletBalance };
 
     await prisma.notification.create({
       data: {

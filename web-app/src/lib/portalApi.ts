@@ -29,7 +29,10 @@ export const portalFetch = async (path: string, init: RequestInit = {}): Promise
       Authorization: `Bearer ${token}`
     }
   });
-  if (res.status === 401 || res.status === 403) {
+  // Only 401 means the session itself is gone. A 403 is a refusal of this one
+  // action (e.g. ACCOUNT_FROZEN, "not your request") and is left for the page
+  // to show; logging out there would hide the reason from the user.
+  if (res.status === 401) {
     clearPortalToken();
     window.location.href = '/portal/login';
     throw new Error('Session expired');

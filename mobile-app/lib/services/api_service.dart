@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:io' show Platform, File;
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 class ApiService {
   // Use 10.0.2.2 for Android Emulator connecting to localhost
   // Use localhost for iOS simulator or web
@@ -33,6 +34,20 @@ class ApiService {
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('jwt_token');
+  }
+
+  // Socket.IO connection to the backend, signed in with the saved JWT (the
+  // server refuses sockets without one). Not connected yet: call connect()
+  // after registering handlers. forceNew stops a cached socket from an
+  // earlier login being reused.
+  static Future<IO.Socket> createSocket() async {
+    final token = await getToken();
+    return IO.io(baseUrl.replaceAll('/api', ''), <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+      'forceNew': true,
+      'auth': {'token': token ?? ''},
+    });
   }
 
   static Future<String?> getRole() async {

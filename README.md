@@ -88,12 +88,14 @@ A student requests a seat on a driver's bus. The driver approves or rejects it. 
 Students can book a single day instead of a monthly seat. The fare comes from the driver's `dailyFeeRoundTrip` or `dailyFeeOneWay`. The driver approves the request and the student pays for it.
 
 ### Live tracking (Socket.IO)
+Sockets must send the user's JWT when connecting (`auth: { token }`); connections without one are refused. The server takes the driver or student identity from the token, never from ids the client sends.
+
 | Event | Sent by | Purpose |
 |---|---|---|
-| `joinDriverRoom` | Driver | Join the room for their bus |
-| `updateLocation` | Driver | Broadcast GPS position (lat, lng, speed, heading) |
+| `joinDriverRoom` | Driver | Join the room for their own bus |
+| `updateLocation` | Approved driver | Broadcast GPS position (lat, lng, speed, heading); at most one per second |
 | `stopBroadcast` | Driver | Stop sharing; students receive `busOffline` |
-| `joinStudentRoom` | Student | Follow a bus; receives the last known position (if under 5 minutes old) immediately |
+| `joinStudentRoom` | Student | Follow a bus they have an approved seat on, or an approved daily ride with today, while not frozen. Otherwise the server replies `trackingDenied`. Receives the last known position (if under 5 minutes old) immediately |
 | `busLocationUpdate` | Server | Pushes position updates to students |
 | `joinStatusRoom` | Driver | Receives `driver_status_updated` (approval) and `fareUpdated` (a student paid) |
 
@@ -200,8 +202,10 @@ npm install
 Create `backend/.env`:
 ```env
 DATABASE_URL=postgresql://lankatrip_user:lankatrip_password@localhost:5432/lankatrip
-JWT_SECRET=change-me
+JWT_SECRET=<random, 32+ characters>  # the server won't start without one; generate with:
+                                     # node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 PORT=3000
+# TRUST_PROXY=1                      # set when running behind a reverse proxy/load balancer
 
 # Optional — PayHere (leave unset for instant dev payments)
 # PAYHERE_MERCHANT_ID=
@@ -256,12 +260,17 @@ The app calls `http://10.0.2.2:3000/api` on the Android emulator and `http://loc
 - Drivers are verified by an admin before they can operate
 - PayHere checkout and notify payloads are MD5-signed and verified server-side
 - Freeze guard blocks frozen students from protected actions
+- The server refuses to start without a `JWT_SECRET` of at least 32 characters (no fallback)
+- Brute-force limits, counted per account and per IP over 15 minutes:
+  - Sign-in: 5 wrong passwords lock that account for 15 minutes; 30 failures lock that IP address.
+  - Reset codes: 3 requests per email, 10 per IP. A code is destroyed after 5 wrong guesses.
+- Socket.IO connections require a JWT; tracking is limited to the student's own bus
+- Uploads accept only real images (checked by content), are rate-limited, and are served with `nosniff`
+- Errors are logged on the server; clients only ever get a generic message (no stack traces or error text)
+- Financial records are never deleted. Removing a driver or student who has payments, payouts or settled fares deactivates the account instead: they can't sign in and leave their bus or passengers, but the records stay. The database enforces this too: money tables use `onDelete: Restrict`. Accounts with no history are deleted outright. A driver can't be removed while their wallet still holds money.
+- Payout approvals claim the request and debit the wallet in a single conditional update, so simultaneous approvals pay once and payouts can't overdraw a wallet
 
-**Before production:**
-- Set a strong `JWT_SECRET`. The code falls back to a hard-coded default.
-- Stop returning stack traces from the error handler.
-- Authenticate Socket.IO connections.
-- Implement email delivery for password resets.
+The limits are kept in memory, so they reset when the server restarts and apply to each server process separately.
 
 ---
 

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { portalFetch } from '../../../../lib/portalApi';
 
 interface Notice {
@@ -35,7 +36,7 @@ export default function StudentNoticesPage() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [votingId, setVotingId] = useState<number | null>(null);
-  const [voteMsg, setVoteMsg] = useState<{ id: number; text: string } | null>(null);
+  const [voteMsg, setVoteMsg] = useState<{ id: number; text: string; tone: 'green' | 'red'; frozen?: boolean } | null>(null);
 
   const loadData = () => {
     Promise.all([
@@ -60,13 +61,13 @@ export default function StudentNoticesPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setVoteMsg({ id: pollId, text: data.error || 'Failed to submit vote' });
+        setVoteMsg({ id: pollId, text: data.error || 'Failed to submit vote', tone: 'red', frozen: data.code === 'ACCOUNT_FROZEN' });
       } else {
-        setVoteMsg({ id: pollId, text: 'Vote submitted successfully!' });
+        setVoteMsg({ id: pollId, text: 'Vote submitted successfully!', tone: 'green' });
         loadData();
       }
     } catch {
-      setVoteMsg({ id: pollId, text: 'Network error submitting vote.' });
+      setVoteMsg({ id: pollId, text: 'Network error submitting vote.', tone: 'red' });
     } finally {
       setVotingId(null);
     }
@@ -117,8 +118,11 @@ export default function StudentNoticesPage() {
                     </h3>
 
                     {voteMsg && voteMsg.id === poll.id && (
-                      <div className="p-alert green" style={{ padding: '8px 12px', fontSize: '13px', marginBottom: '12px' }}>
+                      <div className={`p-alert ${voteMsg.tone}`} style={{ padding: '8px 12px', fontSize: '13px', marginBottom: '12px' }}>
                         {voteMsg.text}
+                        {voteMsg.frozen && (
+                          <> <Link href="/portal/student/fare" style={{ fontWeight: 600, textDecoration: 'underline' }}>Pay now</Link></>
+                        )}
                       </div>
                     )}
 

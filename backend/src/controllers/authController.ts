@@ -1,17 +1,37 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
 import prisma from '../prismaClient';
 import { Role } from '@prisma/client';
 import { sendEmail, emails } from '../services/email';
+import { signToken } from '../utils/jwt';
+import { createAttemptTracker, minutesLabel } from '../utils/rateLimit';
+import { serverError } from '../utils/httpError';
 
-const generateToken = (userId: number, role: Role) => {
-  const secret = process.env.JWT_SECRET || 'fallback_secret';
-  return jwt.sign({ userId, role }, secret, { expiresIn: '7d' });
-};
+const generateToken = (userId: number, role: Role) => signToken({ userId, role }, '7d');
 
 const RESET_CODE_MINUTES = 15;
+const WINDOW_MS = 15 * 60 * 1000;
+
+// Brute-force protection. Failures are counted per account (the email or
+// phone typed, whether or not it exists, so a lock reveals nothing) and per
+// IP address (stops one machine spraying many accounts).
+const loginFailsByAccount = createAttemptTracker({ windowMs: WINDOW_MS, max: 5 });
+const loginFailsByIp = createAttemptTracker({ windowMs: WINDOW_MS, max: 30 });
+const resetRequestsByEmail = createAttemptTracker({ windowMs: WINDOW_MS, max: 3 }); // also stops email bombing
+const resetRequestsByIp = createAttemptTracker({ windowMs: WINDOW_MS, max: 10 });
+// After this many wrong guesses a reset code is destroyed, so guessing one
+// of the million codes has odds of at most 5 in 1,000,000 per code issued.
+const MAX_CODE_GUESSES = 5;
+const codeGuessesByEmail = createAttemptTracker({ windowMs: WINDOW_MS, max: MAX_CODE_GUESSES });
+const codeGuessesByIp = createAttemptTracker({ windowMs: WINDOW_MS, max: 20 });
+
+const accountKey = (v: unknown) => String(v ?? '').trim().toLowerCase();
+
+const tooMany = (res: Response, seconds: number, what: string): void => {
+  res.setHeader('Retry-After', seconds);
+  res.status(429).json({ error: `Too many ${what}. Please try again in ${minutesLabel(seconds)}.` });
+};
 
 const displayName = (user: { student?: { fullName: string } | null; driver?: { fullName: string } | null }) =>
   user.student?.fullName ?? user.driver?.fullName ?? '';
@@ -34,10 +54,16 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    const key = accountKey(email);
+    const wait = Math.max(resetRequestsByEmail.blockedFor(key), resetRequestsByIp.blockedFor(req.ip ?? ''));
+    if (wait) return tooMany(res, wait, 'reset requests');
+    resetRequestsByEmail.fail(key);
+    resetRequestsByIp.fail(req.ip ?? '');
+
     const user = await prisma.user.findUnique({ where: { email }, include: { student: true, driver: true } });
     const generic = { message: 'If an account exists for that email, a reset code has been sent.' };
 
-    if (!user) {
+    if (!user || user.deactivatedAt) {
       res.status(200).json(generic);
       return;
     }
@@ -48,6 +74,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       where: { id: user.id },
       data: { resetCodeHash: codeHash, resetCodeExpiry: new Date(Date.now() + RESET_CODE_MINUTES * 60 * 1000) }
     });
+    codeGuessesByEmail.reset(key); // a fresh code gets a fresh set of guesses
 
     // The code only ever travels by email — never in this response, or anyone
     // who knows an address could reset that account's password.
@@ -72,8 +99,14 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    const key = accountKey(email);
+    const ip = req.ip ?? '';
+    const wait = Math.max(codeGuessesByEmail.blockedFor(key), codeGuessesByIp.blockedFor(ip));
+    if (wait) return tooMany(res, wait, 'wrong codes');
+
     const user = await prisma.user.findUnique({ where: { email }, include: { student: true, driver: true } });
     if (!user || !user.resetCodeHash || !user.resetCodeExpiry) {
+      codeGuessesByIp.fail(ip);
       res.status(400).json({ error: 'No reset request found. Please request a new code.' });
       return;
     }
@@ -84,7 +117,16 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 
     const matches = await bcrypt.compare(String(code), user.resetCodeHash);
     if (!matches) {
-      res.status(400).json({ error: 'Invalid reset code.' });
+      codeGuessesByIp.fail(ip);
+      const guesses = codeGuessesByEmail.fail(key);
+      if (guesses >= MAX_CODE_GUESSES) {
+        // Burn the code: the owner has to request a new one from their inbox.
+        await prisma.user.update({ where: { id: user.id }, data: { resetCodeHash: null, resetCodeExpiry: null } });
+        res.status(400).json({ error: 'Too many wrong codes. That code no longer works. Please request a new one.' });
+        return;
+      }
+      const left = MAX_CODE_GUESSES - guesses;
+      res.status(400).json({ error: `Invalid reset code. ${left} attempt${left === 1 ? '' : 's'} left.` });
       return;
     }
 
@@ -93,6 +135,8 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       where: { id: user.id },
       data: { passwordHash, resetCodeHash: null, resetCodeExpiry: null }
     });
+    codeGuessesByEmail.reset(key);
+    loginFailsByAccount.reset(key); // the real owner just proved themselves
 
     void sendEmail(emails.passwordChanged(user.email, displayName(user)));
 
@@ -173,7 +217,7 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
       res.status(400).json({ error: `Student with this ${field} already exists` });
       return;
     }
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -257,7 +301,7 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
       res.status(400).json({ error: `Driver with this ${field} already exists` });
       return;
     }
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -269,21 +313,34 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ error: 'Please provide email or phone' });
       return;
     }
+    if (!password) {
+      res.status(400).json({ error: 'Please enter your password' });
+      return;
+    }
+
+    const key = accountKey(email || phone);
+    const ip = req.ip ?? '';
+    const wait = Math.max(loginFailsByAccount.blockedFor(key), loginFailsByIp.blockedFor(ip));
+    if (wait) return tooMany(res, wait, 'failed sign-in attempts');
 
     const user = await prisma.user.findFirst({
       where: email ? { email } : { phone },
       include: { student: true, driver: true }
     });
 
-    if (!user) {
+    const isMatch = user ? await bcrypt.compare(String(password), user.passwordHash) : false;
+
+    if (!user || !isMatch) {
+      loginFailsByAccount.fail(key);
+      loginFailsByIp.fail(ip);
       res.status(401).json({ error: 'Invalid credentials' });
       return;
     }
+    loginFailsByAccount.reset(key);
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-
-    if (!isMatch) {
-      res.status(401).json({ error: 'Invalid credentials' });
+    // Checked only after the password matches, so it reveals nothing to guessers.
+    if (user.deactivatedAt) {
+      res.status(403).json({ error: 'This account has been closed. Contact Uni Shuttle if you think this is a mistake.' });
       return;
     }
 
@@ -315,7 +372,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -349,6 +406,6 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };

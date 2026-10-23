@@ -71,6 +71,9 @@ model User {
   // Password reset (OTP): hashed 6-digit code + its expiry
   resetCodeHash   String?
   resetCodeExpiry DateTime?
+  // Set when an admin removes an account that has financial history: the
+  // person can no longer sign in, but their payments/payouts stay on record.
+  deactivatedAt   DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -173,7 +176,10 @@ model Payout {
   note        String?
   createdAt   DateTime @default(now())
 
-  driver  Driver         @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  // Restrict (here and on the other money tables): the database refuses to
+  // delete a driver/student who still has financial records. Such accounts
+  // are deactivated instead (User.deactivatedAt), keeping the books intact.
+  driver  Driver         @relation(fields: [driverId], references: [id], onDelete: Restrict)
   request PayoutRequest?
 }
 
@@ -190,7 +196,7 @@ model PayoutRequest {
   createdAt  DateTime            @default(now())
   reviewedAt DateTime?
 
-  driver Driver  @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  driver Driver  @relation(fields: [driverId], references: [id], onDelete: Restrict)
   payout Payout? @relation(fields: [payoutId], references: [id], onDelete: SetNull)
 }
 
@@ -223,8 +229,8 @@ model Payment {
   referenceNo     String?
   paymentDate     DateTime      @default(now())
 
-  student          Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  driver           Driver            @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  student          Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  driver           Driver            @relation(fields: [driverId], references: [id], onDelete: Restrict)
   monthlyFare      MonthlyFare?
   dailyRideRequest DailyRideRequest?
 }
@@ -243,8 +249,8 @@ model MonthlyFare {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  driver  Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  student Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  driver  Driver   @relation(fields: [driverId], references: [id], onDelete: Restrict)
   payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
   @@unique([studentId, driverId, month])
@@ -317,8 +323,8 @@ model DailyRideRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  driver  Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  student Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  driver  Driver   @relation(fields: [driverId], references: [id], onDelete: Restrict)
   payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
   @@unique([studentId, driverId, date])

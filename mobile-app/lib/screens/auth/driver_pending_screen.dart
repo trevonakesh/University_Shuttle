@@ -28,12 +28,11 @@ class _DriverPendingScreenState extends State<DriverPendingScreen> {
     if (user != null && user['profile'] != null) {
       _driverId = user['profile']['id'].toString();
       
-      final String baseUrl = ApiService.baseUrl.replaceAll('/api', '');
-      
-      _socket = IO.io(baseUrl, <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': false,
-      });
+      _socket = await ApiService.createSocket();
+      if (!mounted) {
+        _socket!.dispose();
+        return;
+      }
 
       _socket!.connect();
 

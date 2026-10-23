@@ -67,7 +67,7 @@ export default function StudentsPage() {
 
   const deleteStudent = async (student: Student) => {
     const sure = confirm(
-      `Delete student ${student.fullName} (${student.user?.email})?\n\nThis permanently removes their account, seat requests, payment history and fare records. This cannot be undone.`
+      `Remove student ${student.fullName} (${student.user?.email})?\n\nThey will no longer be able to sign in and their seat is cancelled. Payments and fare records are kept for your accounts.`
     );
     if (!sure) return;
     try {
@@ -75,6 +75,7 @@ export default function StudentsPage() {
       const data = await res.json();
       if (res.ok) {
         setStudents(students.filter(s => s.id !== student.id));
+        if (data.archived) alert(data.message);
       } else {
         alert(data.message ?? 'Failed to delete student.');
       }

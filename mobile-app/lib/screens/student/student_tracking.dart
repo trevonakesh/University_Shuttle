@@ -70,11 +70,11 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
 
     // Connect to Socket.IO only when there is a bus to track.
     if (_driverIdToTrack != null) {
-      final baseUrl = ApiService.baseUrl.replaceAll('/api', '');
-      _socket = IO.io(baseUrl, <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': false,
-      });
+      _socket = await ApiService.createSocket();
+      if (!mounted) {
+        _socket!.dispose();
+        return;
+      }
 
       _socket!.connect();
 

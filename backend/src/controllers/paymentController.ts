@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import prisma from '../prismaClient';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { Role, PaymentStatus, FareStatus, RequestStatus } from '@prisma/client';
@@ -9,8 +8,8 @@ import { payhereConfig, payhereEnabled, checkoutUrl, generateCheckoutHash, verif
 import { emitFareUpdated } from '../socketHandler';
 import { getCommissionRate } from '../services/settingsService';
 import { sendEmail, emails } from '../services/email';
-
-const jwtSecret = () => process.env.JWT_SECRET || 'fallback_secret';
+import { signToken, verifyToken } from '../utils/jwt';
+import { serverError } from '../utils/httpError';
 
 // Marks a monthly payment COMPLETED: credits the driver's wallet with the net
 // amount, settles the month's fare, notifies the driver.
@@ -200,7 +199,7 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    const token = jwt.sign({ paymentId: payment.id, purpose: 'ph_checkout' }, jwtSecret(), { expiresIn: '20m' });
+    const token = signToken({ paymentId: payment.id, purpose: 'ph_checkout' }, '20m');
     res.status(201).json({
       mode: 'PAYHERE',
       paymentId: payment.id,
@@ -210,7 +209,7 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
       checkoutUrl: `${payhereConfig().appUrl}/api/payments/checkout/${payment.id}?t=${token}`
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -227,7 +226,7 @@ export const payhereCheckout = async (req: Request, res: Response): Promise<void
     const paymentId = parseInt(String(req.params.id));
     let decoded: any;
     try {
-      decoded = jwt.verify(String(req.query.t || ''), jwtSecret());
+      decoded = verifyToken(String(req.query.t || ''));
     } catch {
       res.status(401).send('This checkout link is invalid or has expired. Start the payment again from the app.');
       return;
@@ -354,7 +353,7 @@ export const getPaymentStatus = async (req: AuthRequest, res: Response): Promise
     }
     res.status(200).json({ status: payment.status, month: payment.month });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -402,7 +401,7 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
     console.error('Error creating payment:', error);
-    res.status(500).json({ error: 'Server error', details: error.message || error.toString() });
+    serverError(res, error);
   }
 };
 
@@ -437,7 +436,7 @@ export const getStudentPayments = async (req: AuthRequest, res: Response): Promi
 
     res.status(200).json({ payments });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -470,7 +469,7 @@ export const getDriverPayments = async (req: AuthRequest, res: Response): Promis
 
     res.status(200).json({ payments });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
 
@@ -495,6 +494,6 @@ export const getWalletBalance = async (req: AuthRequest, res: Response): Promise
 
     res.status(200).json({ balance: driver.walletBalance });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    serverError(res, error);
   }
 };
