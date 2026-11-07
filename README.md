@@ -1,4 +1,4 @@
-# UniShuttle (LankaTrip) 🚍
+# UniShuttle🚍
 
 A transportation platform for university students and private bus operators in Sri Lanka.
 
