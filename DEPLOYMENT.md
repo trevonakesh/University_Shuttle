@@ -39,37 +39,47 @@ On your PC:
 ssh root@13.140.221.122
 ```
 
-On the server, create a normal user, and use it from now on:
+Logins use an SSH key (`C:\Users\Trevon\.ssh\id_ed25519` on your PC, added in Contabo under **Reset credentials → SSH-Key**). Two users:
+
+- `root`: admin work (installing packages, Nginx, certificates). `ssh root@13.140.221.122`
+- `deploy`: owns the code and runs the apps. It has no password and no sudo. `ssh deploy@13.140.221.122`
+
+Create the app user with the same key, and allow key logins only:
 
 ```bash
-adduser deploy
-usermod -aG sudo deploy
+adduser --disabled-password --gecos "" deploy
+install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+install -m 600 -o deploy -g deploy /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
+
+cat > /etc/ssh/sshd_config.d/00-hardening.conf <<'CONF'
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
+CONF
+sshd -t && systemctl reload ssh
 ```
 
-**SSH key (recommended).** On your PC, run `ssh-keygen` if you don't have a key yet, then `ssh-copy-id deploy@13.140.221.122`. Check that `ssh deploy@13.140.221.122` works without a password, then turn off password logins:
-
-```bash
-sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/; s/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
-sudo systemctl restart ssh
-```
+Before closing your session, check in a second window that `ssh deploy@13.140.221.122` works.
 
 Firewall: allow only SSH and web traffic. Ports 3000, 5000 and 5432 stay closed to the internet.
 
 ```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 'Nginx Full'   # run again after installing nginx if it says "profile not found"
-sudo ufw enable
+ufw allow OpenSSH
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw --force enable
 ```
 
 ## 3. Install the software
 
+As `root`:
+
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y git nginx postgresql build-essential
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt install -y nodejs
-sudo npm install -g pm2
-sudo ufw allow 'Nginx Full'
+apt update && apt upgrade -y
+apt install -y git nginx postgresql build-essential unattended-upgrades certbot python3-certbot-nginx
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+npm install -g pm2
 node -v   # should print v22.x
 ```
 
@@ -87,13 +97,21 @@ PostgreSQL installed this way only listens on the server itself, so it is not re
 
 ## 5. Get the code
 
+The repository is private, so the server reads it with its own **read-only deploy key**. As `deploy`:
+
 ```bash
-cd ~
-git clone https://github.com/trevonakesh/University_Shuttle.git
-cd University_Shuttle
+ssh-keygen -q -t ed25519 -N "" -C "unishuttle-server" -f ~/.ssh/github_deploy
+printf 'Host github.com\n  IdentityFile ~/.ssh/github_deploy\n  IdentitiesOnly yes\n' > ~/.ssh/config
+chmod 600 ~/.ssh/config
+cat ~/.ssh/github_deploy.pub
 ```
 
-If the repository is **private**, GitHub will ask for credentials. Use a [personal access token](https://github.com/settings/tokens) as the password, or add a deploy key.
+Add the printed key on GitHub under **Repo → Settings → Deploy keys → Add deploy key**, with "Allow write access" **unticked**. Then:
+
+```bash
+cd ~
+git clone git@github.com:trevonakesh/University_Shuttle.git
+```
 
 ## 6. Backend (API)
 
@@ -184,20 +202,29 @@ module.exports = {
 
 Start them, and make them come back after a reboot:
 
+As `deploy`:
+
 ```bash
 pm2 start ~/ecosystem.config.js
 pm2 save
-pm2 startup systemd    # it prints one sudo command: copy and run it
 pm2 status             # both should be "online"
 pm2 logs unishuttle-api --lines 30
+```
+
+Then once, as `root`, so pm2 starts the apps after a reboot:
+
+```bash
+pm2 startup systemd -u deploy --hp /home/deploy
 ```
 
 The API log should show `Server is running` and the email mode. If it says `JWT_SECRET must be set…`, fix `.env` and run `pm2 restart unishuttle-api`.
 
 ## 9. Nginx and HTTPS
 
+As `root`:
+
 ```bash
-sudo nano /etc/nginx/sites-available/unishuttle
+nano /etc/nginx/sites-available/unishuttle
 ```
 
 ```nginx
@@ -207,8 +234,17 @@ map $http_upgrade $connection_upgrade {
   ''      close;
 }
 
+# Requests by bare IP or an unknown name get no answer.
+server {
+  listen 80 default_server;
+  listen [::]:80 default_server;
+  server_name _;
+  return 444;
+}
+
 server {
   listen 80;
+  listen [::]:80;
   server_name api.unishuttle.lk;
   client_max_body_size 6m;   # uploads are capped at 5 MB
 
@@ -227,6 +263,7 @@ server {
 
 server {
   listen 80;
+  listen [::]:80;
   server_name unishuttle.lk www.unishuttle.lk;
 
   location / {
@@ -242,11 +279,12 @@ server {
 Enable it and get free HTTPS certificates. Certbot edits the config and renews the certificates automatically:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/unishuttle /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d unishuttle.lk -d www.unishuttle.lk -d api.unishuttle.lk
+ln -sf /etc/nginx/sites-available/unishuttle /etc/nginx/sites-enabled/unishuttle
+rm -f /etc/nginx/sites-enabled/default
+nginx -t && systemctl reload nginx
+# Only once all three DNS names point at the server:
+certbot --nginx -d unishuttle.lk -d www.unishuttle.lk -d api.unishuttle.lk \
+  -m info@unishuttle.lk --agree-tos --redirect
 ```
 
 Check:
@@ -287,26 +325,26 @@ flutter build apk --release         # for direct installs
 
 Back up the database (all payments and accounts) and the uploaded photos every night, and keep 14 days:
 
+As `root`:
+
 ```bash
-sudo mkdir -p /var/backups/unishuttle
-sudo crontab -e
+mkdir -p /var/backups/unishuttle && chmod 700 /var/backups/unishuttle
+nano /etc/cron.d/unishuttle-backup
 ```
 
-Add these lines:
-
 ```cron
-0 2 * * * sudo -u postgres pg_dump unishuttle | gzip > /var/backups/unishuttle/db-$(date +\%F).sql.gz
-15 2 * * * tar czf /var/backups/unishuttle/uploads-$(date +\%F).tar.gz -C /home/deploy/University_Shuttle/backend uploads
-30 2 * * * find /var/backups/unishuttle -mtime +14 -delete
+0 2 * * * root sudo -u postgres pg_dump unishuttle | gzip > /var/backups/unishuttle/db-$(date +\%F).sql.gz
+15 2 * * * root tar czf /var/backups/unishuttle/uploads-$(date +\%F).tar.gz -C /home/deploy/University_Shuttle/backend uploads 2>/dev/null
+30 2 * * * root find /var/backups/unishuttle -mtime +14 -delete
 ```
 
 Those backups live on the same server. Also keep copies elsewhere, for example by downloading them weekly or using Contabo's snapshot / auto-backup add-on, in case the VPS itself is lost. From your PC:
 
 ```bash
-scp -r deploy@13.140.221.122:/var/backups/unishuttle ./unishuttle-backups
+scp -r root@13.140.221.122:/var/backups/unishuttle ./unishuttle-backups
 ```
 
-Restore a database backup:
+Restore a database backup (as `root`):
 
 ```bash
 gunzip -c db-YYYY-MM-DD.sql.gz | sudo -u postgres psql unishuttle
@@ -314,7 +352,7 @@ gunzip -c db-YYYY-MM-DD.sql.gz | sudo -u postgres psql unishuttle
 
 ## 13. Deploying updates
 
-After pushing changes to GitHub:
+After pushing changes to GitHub, log in as `deploy` (`ssh deploy@13.140.221.122`):
 
 ```bash
 cd ~/University_Shuttle && git pull
