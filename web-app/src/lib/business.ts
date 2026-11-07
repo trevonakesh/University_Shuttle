@@ -6,7 +6,7 @@ export const business = {
   name: 'UniShuttle',
   tagline: 'University bus travel in Sri Lanka, organised in one app.',
 
-  email: 'hello@unishuttle.example',
+  email: 'info@unishuttle.lk',
   phone: '+94 11 000 0000',
   phoneHref: '+94110000000',
 

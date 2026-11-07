@@ -220,10 +220,10 @@ PORT=3000
 # SMTP_SECURE=false
 # SMTP_USER=
 # SMTP_PASS=                          # for Gmail, an App Password, not your normal password
-# EMAIL_FROM="Uni Shuttle <no-reply@yourdomain.lk>"
-# EMAIL_REPLY_TO=support@yourdomain.lk
-# BUSINESS_INBOX_EMAIL=hello@yourdomain.lk   # contact-form copies; defaults to every admin
-# WEB_APP_URL=https://yourdomain.lk   # used for links inside emails
+# EMAIL_FROM="Uni Shuttle <no-reply@unishuttle.lk>"
+# EMAIL_REPLY_TO=info@unishuttle.lk
+# BUSINESS_INBOX_EMAIL=info@unishuttle.lk   # contact-form copies; defaults to every admin
+# WEB_APP_URL=https://unishuttle.lk   # used for links inside emails
 ```
 
 Create the tables, seed an admin and start the server:
