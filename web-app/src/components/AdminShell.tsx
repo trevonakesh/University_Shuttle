@@ -2,16 +2,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
-import { getToken, clearToken } from '../lib/api';
+import { getToken, clearToken, ADMIN_LOGIN_PATH } from '../lib/api';
 
-// Only /admin/* is gated. Public pages and /login render bare.
+// Only /admin/* is gated. Public pages and the admin login page render bare.
 export default function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin') ?? false;
+  const isLoginPage = pathname === ADMIN_LOGIN_PATH;
+  const isAdmin = !isLoginPage && (pathname?.startsWith('/admin') ?? false);
 
   useEffect(() => {
     if (isAdmin && !getToken()) {
-      window.location.href = '/login';
+      window.location.href = ADMIN_LOGIN_PATH;
     }
   }, [isAdmin]);
 
@@ -19,7 +20,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
 
   const logout = () => {
     clearToken();
-    window.location.href = '/login';
+    window.location.href = ADMIN_LOGIN_PATH;
   };
 
   const navItems = [

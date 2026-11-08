@@ -26,7 +26,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   useEffect(() => {
     const u = getPortalUser();
     if (!u || u.role !== 'STUDENT') {
-      window.location.href = '/portal/login';
+      window.location.href = '/login';
     } else {
       setUser(u);
     }
@@ -34,7 +34,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   const logout = () => {
     clearPortalToken();
-    window.location.href = '/portal/login';
+    window.location.href = '/login';
   };
 
   if (!user) return null;

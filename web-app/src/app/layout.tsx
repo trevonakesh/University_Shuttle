@@ -3,8 +3,8 @@ import { ReactNode } from 'react';
 import AdminShell from '../components/AdminShell';
 
 export const metadata = {
-  title: 'Uni Shuttle Admin Panel',
-  description: 'Manage drivers, students, and payments',
+  title: 'UniShuttle',
+  description: 'University bus travel in Sri Lanka, organised in one app.',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

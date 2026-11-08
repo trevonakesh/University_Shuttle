@@ -294,7 +294,7 @@ curl https://api.unishuttle.lk/            # → LankaTrip API is running!
 curl https://api.unishuttle.lk/api/settings/public
 ```
 
-Then open `https://unishuttle.lk` and `https://unishuttle.lk/login` (admin) in a browser.
+Then open `https://unishuttle.lk` in a browser. Students and drivers sign in at `https://unishuttle.lk/login`; the admin signs in at `https://unishuttle.lk/admin/login`.
 
 ## 10. PayHere (live payments)
 

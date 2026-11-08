@@ -25,7 +25,7 @@ export default function DriverProfilePage() {
 
   const logout = () => {
     clearPortalToken();
-    window.location.href = '/portal/login';
+    window.location.href = '/login';
   };
 
   if (loading) return <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading profile…</div>;

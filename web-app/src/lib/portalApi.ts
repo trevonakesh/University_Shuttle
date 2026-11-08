@@ -18,7 +18,7 @@ export const setPortalUser = (user: any) => localStorage.setItem(USER_KEY, JSON.
 export const portalFetch = async (path: string, init: RequestInit = {}): Promise<Response> => {
   const token = getPortalToken();
   if (!token) {
-    window.location.href = '/portal/login';
+    window.location.href = '/login';
     throw new Error('Not logged in');
   }
   const res = await fetch(`${API_BASE}${path}`, {
@@ -34,7 +34,7 @@ export const portalFetch = async (path: string, init: RequestInit = {}): Promise
   // to show; logging out there would hide the reason from the user.
   if (res.status === 401) {
     clearPortalToken();
-    window.location.href = '/portal/login';
+    window.location.href = '/login';
     throw new Error('Session expired');
   }
   return res;

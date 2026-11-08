@@ -50,7 +50,7 @@ export function SiteHeader() {
               {l.label}
             </Link>
           ))}
-          <Link href="/portal/login" style={{ color: '#0e7c66', fontWeight: 600, marginLeft: 8 }}>Portal Login</Link>
+          <Link href="/login" style={{ color: '#0e7c66', fontWeight: 600, marginLeft: 8 }}>Portal Login</Link>
           <Link href="/contact" className="btn-cta" style={{ marginLeft: 8 }}>Get in touch</Link>
         </nav>
       </div>
@@ -87,10 +87,9 @@ export function SiteFooter() {
           <div>
             <h4>Platform</h4>
             <div className="footer-links">
-              <Link href="/portal/login" style={{ fontWeight: 600, color: '#0e7c66' }}>Student & Driver Portal</Link>
+              <Link href="/login" style={{ fontWeight: 600, color: '#0e7c66' }}>Student & Driver Portal</Link>
               <Link href="/how-it-works#students">For students</Link>
               <Link href="/how-it-works#drivers">For drivers</Link>
-              <Link href="/admin">Admin login</Link>
             </div>
           </div>
 

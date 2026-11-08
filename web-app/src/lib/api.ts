@@ -30,12 +30,14 @@ export const uploadImage = async (file: File): Promise<string> => {
   return data.url as string;
 };
 
-// fetch with the admin JWT attached; kicks back to /login when the session
-// is missing, expired, or not an admin.
+export const ADMIN_LOGIN_PATH = '/admin/login';
+
+// fetch with the admin JWT attached; kicks back to the admin login when the
+// session is missing, expired, or not an admin.
 export const authFetch = async (path: string, init: RequestInit = {}): Promise<Response> => {
   const token = getToken();
   if (!token) {
-    window.location.href = '/login';
+    window.location.href = ADMIN_LOGIN_PATH;
     throw new Error('Not logged in');
   }
 
@@ -50,7 +52,7 @@ export const authFetch = async (path: string, init: RequestInit = {}): Promise<R
 
   if (res.status === 401 || res.status === 403) {
     clearToken();
-    window.location.href = '/login';
+    window.location.href = ADMIN_LOGIN_PATH;
     throw new Error('Session expired');
   }
 

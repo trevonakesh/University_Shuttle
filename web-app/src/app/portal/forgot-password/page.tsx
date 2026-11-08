@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Reset failed.'); return; }
       setMsg(data.message);
-      setTimeout(() => { window.location.href = '/portal/login'; }, 2000);
+      setTimeout(() => { window.location.href = '/login'; }, 2000);
     } catch { setError('Could not reach the server.'); }
     finally { setLoading(false); }
   };
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
           )}
 
           <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '14px' }}>
-            <Link href="/portal/login" style={{ color: '#0e7c66', fontWeight: 600 }}>← Back to login</Link>
+            <Link href="/login" style={{ color: '#0e7c66', fontWeight: 600 }}>← Back to login</Link>
           </div>
         </div>
       </div>

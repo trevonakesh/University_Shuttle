@@ -5,7 +5,7 @@ import { EmailContent, renderEmail } from './layout';
 // call `void sendEmail(emails.xyz(...))` right after the event succeeds.
 
 const web = (p = ''): string => `${(process.env.WEB_APP_URL || 'http://localhost:3000').replace(/\/$/, '')}${p}`;
-const PORTAL = () => web('/portal/login');
+const PORTAL = () => web('/login');
 
 const build = (to: string, template: string, subject: string, content: EmailContent): EmailMessage => ({
   to,

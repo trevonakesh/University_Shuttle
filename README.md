@@ -171,8 +171,9 @@ University_Shuttle/
 ├── web-app/
 │   └── src/
 │       ├── app/                  # Public website: home, how-it-works, contact
-│       ├── app/login/            # Admin login
-│       ├── app/admin/            # Drivers, students, payments, earnings, enquiries
+│       ├── app/login/            # Student & driver login
+│       ├── app/portal/           # Student & driver web portals
+│       ├── app/admin/            # Admin login (/admin/login), drivers, students, payments, earnings, enquiries
 │       ├── components/           # Site header/footer, admin shell
 │       └── lib/                  # API client, business details (business.ts)
 └── docker-compose.yml            # PostgreSQL

@@ -75,7 +75,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
   useEffect(() => {
     const u = getPortalUser();
     if (!u || u.role !== 'DRIVER') {
-      window.location.href = '/portal/login';
+      window.location.href = '/login';
     } else {
       setUser(u);
     }
@@ -83,7 +83,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 
   const logout = () => {
     clearPortalToken();
-    window.location.href = '/portal/login';
+    window.location.href = '/login';
   };
 
   if (!user) return null;
