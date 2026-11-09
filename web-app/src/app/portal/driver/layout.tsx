@@ -3,13 +3,8 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { getPortalUser, setPortalUser, clearPortalToken, portalFetch } from '../../../lib/portalApi';
+import { BrandMark, BrandWordmark } from '../../../components/Brand';
 import '../portal.css';
-
-const SteeringIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="M12 12v9"/>
-  </svg>
-);
 
 const navItems = [
   {
@@ -107,10 +102,8 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
       <div className="portal-shell">
         <aside className="portal-sidebar">
           <Link href="/portal/driver" className="portal-brand">
-            <div className="portal-brand-mark" style={{ background: '#e8912f' }}>
-              <SteeringIcon />
-            </div>
-            Uni Shuttle
+            <BrandMark height={26} />
+            <BrandWordmark height={17} />
           </Link>
           <div className="portal-role-badge" style={{ color: '#e8912f' }}>
             Driver Operator

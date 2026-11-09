@@ -30,12 +30,9 @@
 .portal.auth::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: rgba(7, 11, 20, .62); }
 .auth-inner { position: relative; z-index: 1; width: 100%; }
 
-.auth-mark {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 56px; height: 56px; border-radius: 17px; margin-bottom: 16px;
-  background: #35f0bd; color: #04140f; box-shadow: 0 0 34px rgba(53, 240, 189, .5);
-}
+.auth-mark { display: flex; justify-content: center; margin-bottom: 18px; }
 .portal.auth h1.auth-title { font-family: var(--font-display), sans-serif; font-weight: 600; font-size: clamp(1.45rem, 4vw, 1.8rem); letter-spacing: -.025em; color: #eef6f4; margin: 0; }
+.portal.auth h1.auth-title svg { margin: 0 auto; }
 .auth-sub { color: #a9bbc4; margin-top: 8px; font-size: 14px; }
 
 .auth-card {

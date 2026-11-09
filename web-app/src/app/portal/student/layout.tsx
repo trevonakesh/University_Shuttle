@@ -3,13 +3,8 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { getPortalUser, clearPortalToken } from '../../../lib/portalApi';
+import { BrandMark, BrandWordmark } from '../../../components/Brand';
 import '../portal.css';
-
-const BusIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-  </svg>
-);
 
 const navItems = [
   { href: '/portal/student', label: 'Dashboard', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
@@ -47,8 +42,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       <div className="portal-shell">
         <aside className="portal-sidebar">
           <Link href="/portal/student" className="portal-brand">
-            <div className="portal-brand-mark"><BusIcon /></div>
-            Uni Shuttle
+            <BrandMark height={26} />
+            <BrandWordmark height={17} />
           </Link>
           <div className="portal-role-badge">Student Portal</div>
           <nav className="portal-nav">

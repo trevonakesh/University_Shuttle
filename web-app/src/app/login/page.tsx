@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { API_BASE, setPortalToken, setPortalUser } from '../../lib/portalApi';
 import { fontVariables } from '../../lib/fonts';
 import RouteNetwork from '../../components/RouteNetwork';
+import { BrandMark, BrandWordmark } from '../../components/Brand';
 import '../site.css';
 import '../portal/portal.css';
 import '../auth.css';
@@ -51,12 +52,8 @@ export default function PortalLoginPage() {
       <div className="auth-inner" style={{ maxWidth: '430px' }}>
         {/* Brand */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div className="auth-mark">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '30px', height: '30px' }}>
-              <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-          </div>
-          <h1 className="auth-title">Uni Shuttle</h1>
+          <div className="auth-mark"><BrandMark height={58} /></div>
+          <h1 className="auth-title"><BrandWordmark height={34} /></h1>
           <p className="auth-sub">Student &amp; Driver Portal</p>
         </div>
 

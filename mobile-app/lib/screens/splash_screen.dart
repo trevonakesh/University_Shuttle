@@ -70,11 +70,11 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.directions_bus, size: 100, color: Colors.white),
+            Image.asset('assets/images/logo_mark.png', height: 100),
             SizedBox(height: 20),
             Text(
               'Uni Shuttle',

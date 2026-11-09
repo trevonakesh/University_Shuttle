@@ -4,17 +4,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, ReactNode } from 'react';
 import { business } from '../lib/business';
 import { fontVariables } from '../lib/fonts';
+import { BrandMark, BrandWordmark } from './Brand';
 import '../app/site.css';
-
-const BusMark = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="4" width="18" height="13" rx="2.5" />
-    <path d="M3 10.5h18" />
-    <path d="M7 17v2.2M17 17v2.2" />
-    <circle cx="7.6" cy="13.8" r=".9" fill="currentColor" stroke="none" />
-    <circle cx="16.4" cy="13.8" r=".9" fill="currentColor" stroke="none" />
-  </svg>
-);
 
 const links = [
   { href: '/', label: 'Home' },
@@ -29,9 +20,9 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="wrap site-header-inner">
-        <Link href="/" className="brand">
-          <span className="brand-mark"><BusMark /></span>
-          {business.name}
+        <Link href="/" className="brand" aria-label={business.name}>
+          <BrandMark height={30} />
+          <BrandWordmark height={21} />
         </Link>
 
         <button
@@ -67,8 +58,8 @@ export function SiteFooter() {
         <div className="footer-grid">
           <div>
             <div className="footer-brand">
-              <span className="brand-mark"><BusMark /></span>
-              {business.name}
+              <BrandMark height={30} />
+              <BrandWordmark height={21} />
             </div>
             <p className="footer-about">
               Seat requests, attendance polls, monthly fares and live bus tracking

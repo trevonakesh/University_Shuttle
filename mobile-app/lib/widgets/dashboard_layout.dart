@@ -189,11 +189,11 @@ class DashboardLayout extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Logo Area
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(30.0),
             child: Row(
               children: [
-                Icon(Icons.directions_bus, color: Colors.white, size: 28),
+                Image.asset('assets/images/logo_mark.png', height: 26),
                 SizedBox(width: 12),
                 Text(
                   'UNI SHUTTLE',
