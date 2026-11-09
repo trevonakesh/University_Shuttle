@@ -50,6 +50,7 @@ export default function DriverNoticesPage() {
   const [pollOpt1, setPollOpt1] = useState('COMING');
   const [pollOpt2, setPollOpt2] = useState('NOT COMING');
   const [submittingPoll, setSubmittingPoll] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -134,6 +135,28 @@ export default function DriverNoticesPage() {
       setMsg({ ok: false, text: 'Could not connect to the server.' });
     } finally {
       setSubmittingPoll(false);
+    }
+  };
+
+  const handleDownloadList = async (poll: PollItem) => {
+    setDownloadingId(poll.id);
+    setMsg(null);
+    try {
+      const res = await portalFetch(`/api/polls/${poll.id}/passengers/pdf`);
+      if (!res.ok) {
+        setMsg({ ok: false, text: 'Could not create the passenger list. Please try again.' });
+        return;
+      }
+      const url = URL.createObjectURL(await res.blob());
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `passenger-list-${poll.id}.pdf`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setMsg({ ok: false, text: 'Could not connect to the server.' });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -330,6 +353,14 @@ export default function DriverNoticesPage() {
                           </div>
                         ))}
                       </div>
+                      <button
+                        onClick={() => handleDownloadList(p)}
+                        disabled={downloadingId === p.id}
+                        className="p-btn outline sm"
+                        style={{ marginTop: '12px', width: '100%' }}
+                      >
+                        {downloadingId === p.id ? 'Preparing PDF…' : 'Download Passenger List (PDF)'}
+                      </button>
                     </div>
                   )}
                 </div>

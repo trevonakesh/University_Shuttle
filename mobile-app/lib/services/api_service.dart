@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
@@ -418,6 +419,16 @@ class ApiService {
       return [];
     } catch (e) {
       return [];
+    }
+  }
+
+  // The PDF of students coming on a poll, or null if it could not be fetched.
+  static Future<Uint8List?> getPassengerListPdf(int pollId) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/polls/$pollId/passengers/pdf'), headers: await _getHeaders());
+      return response.statusCode == 200 ? response.bodyBytes : null;
+    } catch (e) {
+      return null;
     }
   }
 

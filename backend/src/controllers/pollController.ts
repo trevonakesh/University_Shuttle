@@ -3,6 +3,7 @@ import prisma from '../prismaClient';
 import { serverError } from '../utils/httpError';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { RequestStatus, Role } from '@prisma/client';
+import { buildPassengerListPdf } from '../services/passengerListPdf';
 
 export const createPoll = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -108,6 +109,63 @@ export const getDriverPolls = async (req: AuthRequest, res: Response): Promise<v
     });
 
     res.status(200).json({ polls: formattedPolls });
+  } catch (error: any) {
+    serverError(res, error);
+  }
+};
+
+export const downloadPassengerList = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (req.user?.role !== Role.DRIVER) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    const pollId = parseInt(String(req.params.id));
+    if (!Number.isInteger(pollId)) {
+      res.status(400).json({ error: 'Invalid poll id' });
+      return;
+    }
+
+    const driver = await prisma.driver.findUnique({ where: { userId: req.user.userId } });
+    if (!driver) {
+      res.status(404).json({ error: 'Driver profile not found' });
+      return;
+    }
+
+    const poll = await prisma.poll.findUnique({
+      where: { id: pollId },
+      include: {
+        responses: {
+          where: { isComing: true },
+          include: { student: { select: { fullName: true, pickupPoint: true, user: { select: { phone: true } } } } }
+        }
+      }
+    });
+    // Another driver's poll gets the same 404 as a missing one: this list holds phone numbers.
+    if (!poll || poll.driverId !== driver.id) {
+      res.status(404).json({ error: 'Poll not found' });
+      return;
+    }
+
+    const pdf = await buildPassengerListPdf({
+      date: poll.date,
+      question: poll.question,
+      optionLabel: poll.option1,
+      driverName: driver.fullName,
+      routeName: driver.routeName,
+      busRegNumber: driver.busRegNumber,
+      passengers: poll.responses.map(r => ({
+        name: r.student.fullName,
+        pickupPoint: r.student.pickupPoint,
+        phone: r.student.user?.phone ?? null
+      }))
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="passenger-list-${poll.id}.pdf"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(200).send(pdf);
   } catch (error: any) {
     serverError(res, error);
   }

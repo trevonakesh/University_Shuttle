@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
@@ -14,6 +15,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
   Map<String, dynamic>? _user;
   List<dynamic> _polls = [];
   bool _isLoading = true;
+  int? _downloadingPollId;
 
   @override
   void initState() {
@@ -116,6 +118,20 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
         ],
       ),
     );
+  }
+
+  // Opens the phone's share sheet, so the driver can save, print or send the list.
+  Future<void> _downloadPassengerList(int pollId) async {
+    setState(() => _downloadingPollId = pollId);
+    final messenger = ScaffoldMessenger.of(context);
+    final bytes = await ApiService.getPassengerListPdf(pollId);
+    if (!mounted) return;
+    setState(() => _downloadingPollId = null);
+    if (bytes == null) {
+      messenger.showSnackBar(const SnackBar(content: Text('Could not create the passenger list. Please try again.')));
+      return;
+    }
+    await Printing.sharePdf(bytes: bytes, filename: 'passenger-list-$pollId.pdf');
   }
 
   Future<void> _deletePoll(int pollId) async {
@@ -266,6 +282,29 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                             )
                           else
                             ...option1Students.map((s) => _buildComingPassengerRow(s['name'] ?? '', s['pickupPoint'] ?? '', s['phone'] ?? '', poll['option1'] ?? 'COMING')).toList(),
+
+                          if (option1Students.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  icon: const Icon(Icons.picture_as_pdf, size: 18),
+                                  label: Text(_downloadingPollId == poll['id'] ? 'PREPARING PDF...' : 'DOWNLOAD PASSENGER LIST (PDF)'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(color: Colors.white54),
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                  ),
+                                  onPressed: _downloadingPollId != null
+                                      ? null
+                                      : () {
+                                          final int pId = (poll['id'] as num?)?.toInt() ?? 0;
+                                          if (pId != 0) _downloadPassengerList(pId);
+                                        },
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     );
