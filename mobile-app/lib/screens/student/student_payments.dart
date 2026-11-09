@@ -28,6 +28,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
 
   Map<String, dynamic>? _myFare;
 
+  bool get _onlinePayments => _myFare?['onlinePayments'] == true;
+  bool get _dailyRidePayments => _myFare?['dailyRidePayments'] == true;
+
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
     final user = await ApiService.getUser();
@@ -204,12 +207,12 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
       color = Colors.redAccent;
       icon = Icons.event_busy;
       title = 'FROZEN — NOT TRAVELLING IN $month';
-      message = 'Your driver marked you as not travelling this month, so your account is frozen for $month. It unfreezes automatically next month — or pay LKR ${amount.toStringAsFixed(2)} if you plan to travel.';
+      message = 'Your driver marked you as not travelling this month, so your account is frozen for $month. It unfreezes automatically next month — or ${_onlinePayments ? 'pay' : 'hand your driver'} LKR ${amount.toStringAsFixed(2)} if you plan to travel.';
     } else if (frozen) {
       color = Colors.redAccent;
       icon = Icons.lock;
       title = 'ACCOUNT FROZEN';
-      message = 'Your $month fare (LKR ${amount.toStringAsFixed(2)}) was not paid by the ${dueDay}th. Pay now to unfreeze your account.';
+      message = 'Your $month fare (LKR ${amount.toStringAsFixed(2)}) was not paid by the ${dueDay}th. ${_onlinePayments ? 'Pay now to unfreeze your account.' : 'Hand it to your driver and ask them to mark it as paid to unfreeze your account.'}';
     } else if (status == 'PAID') {
       color = Colors.green;
       icon = Icons.check_circle;
@@ -219,7 +222,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
       color = Colors.orange;
       icon = Icons.schedule;
       title = '$month FARE DUE';
-      message = 'Pay LKR ${amount.toStringAsFixed(2)} before the ${dueDay}th of the month to avoid your account being frozen.';
+      message = _onlinePayments
+          ? 'Pay LKR ${amount.toStringAsFixed(2)} before the ${dueDay}th of the month to avoid your account being frozen.'
+          : 'Hand LKR ${amount.toStringAsFixed(2)} to your driver before the ${dueDay}th of the month. Online payments are coming soon.';
     }
 
     return Container(
@@ -309,7 +314,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              _isDailyView ? "REQUEST AND PAY FOR SPECIFIC DAYS OF TRAVEL." : "TRACK YOUR MONTHLY TRANSPORTATION FEES.",
+              _isDailyView
+                  ? (_dailyRidePayments ? "REQUEST AND PAY FOR SPECIFIC DAYS OF TRAVEL." : "REQUEST SPECIFIC DAYS OF TRAVEL. PAY YOUR DRIVER IN CASH.")
+                  : "TRACK YOUR MONTHLY TRANSPORTATION FEES.",
               style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 20),
@@ -321,14 +328,16 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                   if (!_isDailyView)
                     ElevatedButton.icon(
                       icon: const Icon(Icons.payment, size: 18),
-                      label: const Text('MAKE MONTHLY PAYMENT', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: Text(_onlinePayments ? 'MAKE MONTHLY PAYMENT' : 'ONLINE PAYMENTS COMING SOON', style: const TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
+                        disabledBackgroundColor: Colors.white12,
+                        disabledForegroundColor: Colors.white54,
                         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
-                      onPressed: _showMakePaymentModal,
+                      onPressed: _onlinePayments ? _showMakePaymentModal : null,
                     )
                   else
                     ElevatedButton.icon(
@@ -612,7 +621,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                           if (isPaid || isMonthlyPaid)
                             const Text('PAID', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 10))
                           else if (status == 'APPROVED')
-                            const Text('UNPAID', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 10)),
+                            Text(_dailyRidePayments ? 'UNPAID' : 'PAY DRIVER IN CASH', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -620,7 +629,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                     ],
                   ),
                 ),
-                if (status == 'APPROVED' && !isPaid && !isMonthlyPaid)
+                if (_dailyRidePayments && status == 'APPROVED' && !isPaid && !isMonthlyPaid)
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
                     onPressed: () async {

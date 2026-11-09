@@ -1,27 +1,23 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
-import 'dart:io' show Platform, File;
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 class ApiService {
-  // Use 10.0.2.2 for Android Emulator connecting to localhost
-  // Use localhost for iOS simulator or web
-  static String get baseUrl {
-    if (kIsWeb || (!kIsWeb && Platform.isWindows)) {
-      return 'http://localhost:5000/api';
-    } else {
-      return 'http://10.0.2.2:5000/api';
-    }
-  }
+  // The live server by default. For a local backend, run with
+  // --dart-define=API_ORIGIN=http://localhost:5000 (10.0.2.2 on an Android emulator).
+  static const String origin = String.fromEnvironment('API_ORIGIN', defaultValue: 'https://api.unishuttle.lk');
+  static String get baseUrl => '$origin/api';
+
+  // Whether online payments are open. Refreshed from every getMyFare().
+  static bool onlinePayments = false;
 
   // Converts a backend-relative path (e.g. /uploads/x.jpg) to an absolute URL.
   static String? resolveUrl(String? path) {
     if (path == null || path.isEmpty) return null;
     if (path.startsWith('http')) return path;
-    return '${baseUrl.replaceAll('/api', '')}$path';
+    return '$origin$path';
   }
 
   static Future<void> saveToken(String token, String role, Map<String, dynamic> user) async {
@@ -42,7 +38,7 @@ class ApiService {
   // earlier login being reused.
   static Future<IO.Socket> createSocket() async {
     final token = await getToken();
-    return IO.io(baseUrl.replaceAll('/api', ''), <String, dynamic>{
+    return IO.io(origin, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
       'forceNew': true,
@@ -602,7 +598,11 @@ class ApiService {
   static Future<Map<String, dynamic>?> getMyFare() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/fares/me'), headers: await _getHeaders());
-      if (response.statusCode == 200) return jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        onlinePayments = data['onlinePayments'] == true;
+        return data;
+      }
       return null;
     } catch (e) {
       return null;

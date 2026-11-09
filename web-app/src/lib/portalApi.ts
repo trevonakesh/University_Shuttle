@@ -15,6 +15,20 @@ export const getPortalUser = (): any => {
 };
 export const setPortalUser = (user: any) => localStorage.setItem(USER_KEY, JSON.stringify(user));
 
+// Today in Sri Lanka as YYYY-MM-DD, matching how the server dates rides.
+export const colomboToday = (): string =>
+  new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
+
+// Plain-language reason for a frozen account, from GET /api/fares/me.
+export const freezeMessage = (fare: any): string => {
+  const settle = fare?.onlinePayments
+    ? 'Pay the fare to unfreeze it.'
+    : 'Hand the fare to your driver and ask them to mark it as paid to unfreeze it.';
+  return fare?.freezeReason === 'EXEMPT'
+    ? `Your driver marked you as not travelling in ${fare.month}, so your account is frozen this month. Planning to travel? ${settle}`
+    : `Your ${fare?.month} fare wasn't paid by the ${fare?.dueDay}th, so your account is frozen. ${settle}`;
+};
+
 export const portalFetch = async (path: string, init: RequestInit = {}): Promise<Response> => {
   const token = getPortalToken();
   if (!token) {

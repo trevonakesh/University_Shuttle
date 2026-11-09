@@ -121,7 +121,7 @@ export default function StudentNoticesPage() {
                       <div className={`p-alert ${voteMsg.tone}`} style={{ padding: '8px 12px', fontSize: '13px', marginBottom: '12px' }}>
                         {voteMsg.text}
                         {voteMsg.frozen && (
-                          <> <Link href="/portal/student/fare" style={{ fontWeight: 600, textDecoration: 'underline' }}>Pay now</Link></>
+                          <> <Link href="/portal/student/fare" style={{ fontWeight: 600, textDecoration: 'underline' }}>View fare</Link></>
                         )}
                       </div>
                     )}

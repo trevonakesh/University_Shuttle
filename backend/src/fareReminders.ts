@@ -1,7 +1,8 @@
 import prisma from './prismaClient';
 import { FareStatus, RequestStatus } from '@prisma/client';
 import { FREEZE_DAY, currentDay, currentMonth } from './utils/time';
-import { parseFee, isInGracePeriod } from './services/fareService';
+import { parseFee, isInGracePeriod, payFareHint } from './services/fareService';
+import { onlinePaymentsEnabled } from './services/payhere';
 import { sendEmail, emails } from './services/email';
 
 const REMINDER_DAY = 8; // "pay before the 10th" reminders start on the 8th
@@ -50,14 +51,14 @@ export const runFareReminderSweep = async (): Promise<void> => {
       const created = await notifyOnce(
         userId,
         `Fare Reminder ${month}`,
-        `Your ${month} bus fare (LKR ${fee.toFixed(2)}) to ${a.driver.fullName} is due by the ${FREEZE_DAY}th. Pay in the app or hand it to your driver to avoid your account being frozen.`
+        `Your ${month} bus fare (LKR ${fee.toFixed(2)}) to ${a.driver.fullName} is due by the ${FREEZE_DAY}th. ${onlinePaymentsEnabled() ? 'Pay in the app or hand it' : 'Hand it'} to your driver to avoid your account being frozen.`
       );
       if (created) void sendEmail(emails.fareReminder(email, a.student.fullName, month, fee, FREEZE_DAY, a.driver.fullName));
     } else {
       const created = await notifyOnce(
         userId,
         `Account Frozen ${month}`,
-        `Your account is frozen because the ${month} fare (LKR ${fee.toFixed(2)}) was not paid by the ${FREEZE_DAY}th. Pay your monthly fare to unfreeze it.`
+        `Your account is frozen because the ${month} fare (LKR ${fee.toFixed(2)}) was not paid by the ${FREEZE_DAY}th. ${payFareHint()}`
       );
       if (created) void sendEmail(emails.accountFrozen(email, a.student.fullName, month, fee, FREEZE_DAY));
     }

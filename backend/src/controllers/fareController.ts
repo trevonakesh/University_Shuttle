@@ -3,7 +3,8 @@ import prisma from '../prismaClient';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { FareStatus, RequestStatus, Role, PaymentStatus } from '@prisma/client';
 import { FREEZE_DAY, currentDay, currentMonth, isValidMonth } from '../utils/time';
-import { parseFee, isInGracePeriod, checkFrozen, createNotification, lockStudentDriver } from '../services/fareService';
+import { parseFee, isInGracePeriod, checkFrozen, createNotification, lockStudentDriver, payFareHint } from '../services/fareService';
+import { onlinePaymentsEnabled, dailyRidePaymentsEnabled } from '../services/payhere';
 import { getCommissionRate } from '../services/settingsService';
 import { emitFareUpdated } from '../socketHandler';
 import { HttpError, serverError } from '../utils/httpError';
@@ -264,7 +265,7 @@ export const setFareStatus = async (req: AuthRequest, res: Response): Promise<vo
       await createNotification(
         assignment.student.user.id,
         'Marked As Not Travelling',
-        `Your driver marked you as not travelling for ${month}. Your account is frozen for this month and unfreezes automatically next month — or pay the monthly fare if you plan to travel.`
+        `Your driver marked you as not travelling for ${month}. Your account is frozen for this month and unfreezes automatically next month. Planning to travel? ${payFareHint()}`
       );
       void sendEmail(emails.markedNotTravelling(studentEmail, studentName, month, fee, driver.fullName));
     }
@@ -310,7 +311,9 @@ export const getMyFare = async (req: AuthRequest, res: Response): Promise<void> 
       amountDue: check.amountDue,
       dueDay: FREEZE_DAY,
       frozen: check.frozen,
-      freezeReason: check.reason
+      freezeReason: check.reason,
+      onlinePayments: onlinePaymentsEnabled(),
+      dailyRidePayments: dailyRidePaymentsEnabled()
     });
   } catch (error: any) {
     serverError(res, error);

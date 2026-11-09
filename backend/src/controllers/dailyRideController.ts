@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { TripType, RequestStatus, DriverStatus, FareStatus } from '@prisma/client';
 import prisma from '../prismaClient';
 import { getCommissionRate } from '../services/settingsService';
-import { parseFee, lockStudentDriver } from '../services/fareService';
+import { parseFee, lockStudentDriver, createNotification } from '../services/fareService';
+import { dailyRidePaymentsEnabled, PAYMENTS_COMING_SOON } from '../services/payhere';
 import { currentColomboDateString } from '../utils/time';
 import { HttpError } from '../utils/httpError';
 import { sendEmail, emails } from '../services/email';
@@ -225,7 +226,7 @@ export const updateDailyRideStatus = async (req: Request, res: Response) => {
       const updated = await tx.dailyRideRequest.update({
         where: { id: requestId },
         data: { status: status as RequestStatus },
-        include: { student: { select: { fullName: true, user: { select: { email: true } } } } }
+        include: { student: { select: { fullName: true, user: { select: { id: true, email: true } } } } }
       });
       return { updated, previousStatus: current?.status };
     });
@@ -241,9 +242,12 @@ export const updateDailyRideStatus = async (req: Request, res: Response) => {
       void sendEmail(status === RequestStatus.APPROVED
         ? emails.dailyRideApproved(student.user.email, student.fullName, ride)
         : emails.dailyRideRejected(student.user.email, student.fullName, ride));
+      await createNotification(
+        student.user.id,
+        status === RequestStatus.APPROVED ? 'Daily Ride Approved' : 'Daily Ride Declined',
+        `${driver.fullName} ${status === RequestStatus.APPROVED ? 'approved' : 'declined'} your ride on ${updatedRequest.date}.`
+      );
     }
-
-    // TODO: Create an in-app Notification for the student
 
     res.json(updatedRequest);
   } catch (error) {
@@ -258,6 +262,10 @@ export const updateDailyRideStatus = async (req: Request, res: Response) => {
 // Student pays for an approved daily ride
 export const payDailyRide = async (req: Request, res: Response) => {
   try {
+    if (!dailyRidePaymentsEnabled()) {
+      return res.status(503).json({ message: PAYMENTS_COMING_SOON, code: 'PAYMENTS_COMING_SOON' });
+    }
+
     const userId = (req as any).user.userId;
     const requestId = Number(req.params.id);
 

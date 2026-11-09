@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import '../screens/student/student_payments.dart';
+import '../services/api_service.dart';
 
 String _freezeMessage(String? reason, String month, double amountDue) {
+  final fare = 'LKR ${amountDue.toStringAsFixed(2)}';
   if (reason == 'EXEMPT') {
-    return 'Your driver marked you as not travelling in $month, so your account is frozen for this month. It unfreezes automatically next month — or pay the fare (LKR ${amountDue.toStringAsFixed(2)}) if you plan to travel.';
+    final settle = ApiService.onlinePayments
+        ? 'or pay the fare ($fare) if you plan to travel'
+        : 'or hand your driver the fare ($fare) and ask them to mark it as paid';
+    return 'Your driver marked you as not travelling in $month, so your account is frozen for this month. It unfreezes automatically next month, $settle.';
   }
-  return 'Your $month fare (LKR ${amountDue.toStringAsFixed(2)}) was not paid by the 10th. Pay it to unfreeze your account.';
+  final settle = ApiService.onlinePayments
+      ? 'Pay it to unfreeze your account.'
+      : 'Hand it to your driver and ask them to mark it as paid to unfreeze your account.';
+  return 'Your $month fare ($fare) was not paid by the 10th. $settle';
 }
 
 /// Red banner shown on the student dashboard when the account is frozen.
@@ -53,7 +61,7 @@ class FrozenBanner extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (_) => const StudentPaymentsScreen()),
             ),
-            child: const Text('PAY NOW', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+            child: Text(ApiService.onlinePayments ? 'PAY NOW' : 'VIEW FARE', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
           ),
         ],
       ),
@@ -93,7 +101,7 @@ class FrozenLock extends StatelessWidget {
           const SizedBox(height: 25),
           ElevatedButton.icon(
             icon: const Icon(Icons.payment, size: 18),
-            label: const Text('PAY MONTHLY FARE', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(ApiService.onlinePayments ? 'PAY MONTHLY FARE' : 'VIEW MY FARE', style: const TextStyle(fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,

@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { Role, PaymentStatus, FareStatus, RequestStatus } from '@prisma/client';
 import { currentMonth } from '../utils/time';
 import { parseFee, createNotification, lockStudentDriver } from '../services/fareService';
-import { payhereConfig, payhereEnabled, checkoutUrl, generateCheckoutHash, verifyNotifySignature } from '../services/payhere';
+import { payhereConfig, payhereEnabled, onlinePaymentsEnabled, PAYMENTS_COMING_SOON, checkoutUrl, generateCheckoutHash, verifyNotifySignature } from '../services/payhere';
 import { emitFareUpdated } from '../socketHandler';
 import { getCommissionRate } from '../services/settingsService';
 import { sendEmail, emails } from '../services/email';
@@ -152,6 +152,10 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
   try {
     if (req.user?.role !== Role.STUDENT) {
       res.status(403).json({ error: 'Only students can make a payment' });
+      return;
+    }
+    if (!onlinePaymentsEnabled()) {
+      res.status(503).json({ error: PAYMENTS_COMING_SOON, code: 'PAYMENTS_COMING_SOON' });
       return;
     }
 
@@ -363,6 +367,10 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
   try {
     if (req.user?.role !== Role.STUDENT) {
       res.status(403).json({ error: 'Only students can make a payment' });
+      return;
+    }
+    if (!onlinePaymentsEnabled()) {
+      res.status(503).json({ error: PAYMENTS_COMING_SOON, code: 'PAYMENTS_COMING_SOON' });
       return;
     }
     if (payhereEnabled()) {

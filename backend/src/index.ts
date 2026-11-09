@@ -5,7 +5,6 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
-import { Pool } from 'pg';
 import { setupSockets } from './socketHandler';
 import { assertJwtSecret } from './utils/jwt';
 
@@ -97,15 +96,6 @@ app.use(
   })
 );
 
-// PostgreSQL database configuration (to be updated with real credentials)
-const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'lankatrip',
-  password: process.env.DB_PASSWORD || 'password',
-  port: parseInt(process.env.DB_PORT || '5432'),
-});
-
 // Error handling middleware
 // Full details go to the server log only; the client gets a plain message.
 // Client mistakes caught by middleware (bad JSON, body too large) keep their
@@ -126,7 +116,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('LankaTrip API is running!');
+  res.send('UniShuttle API is running!');
 });
 
 server.listen(port, () => {

@@ -77,7 +77,7 @@ export default function StudentProfilePage() {
 
           <hr className="p-divider" />
           <div style={{ fontSize: '13px', color: '#7a8699' }}>
-            Need to change your pickup point or registered phone number? You can update it in the mobile app or request your bus driver.
+            Need to change your pickup point or registered phone number? Please contact your bus driver or our support team.
           </div>
         </div>
 
@@ -124,7 +124,7 @@ export default function StudentProfilePage() {
           ) : (
             <div style={{ textAlign: 'center', padding: '30px 10px', color: '#7a8699' }}>
               <p style={{ fontSize: '14px', marginBottom: '12px' }}>You have not been assigned to a shuttle bus yet.</p>
-              <div style={{ fontSize: '13px' }}>Use the mobile app to browse verified buses and send a seat request to your desired route driver.</div>
+              <div style={{ fontSize: '13px' }}>Open Find a Bus to browse verified buses and send a seat request to your driver.</div>
             </div>
           )}
         </div>

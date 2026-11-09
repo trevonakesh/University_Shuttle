@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { getPortalUser, clearPortalToken } from '../../../lib/portalApi';
+import { getPortalUser, setPortalUser, clearPortalToken, portalFetch } from '../../../lib/portalApi';
 import '../portal.css';
 
 const SteeringIcon = () => (
@@ -38,6 +38,11 @@ const navItems = [
         <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
       </svg>
     )
+  },
+  {
+    href: '/portal/driver/tracking',
+    label: 'Live Location',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
   },
   {
     href: '/portal/driver/wallet',
@@ -78,6 +83,13 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
       window.location.href = '/login';
     } else {
       setUser(u);
+      // The saved copy can be out of date, e.g. after the admin approves the bus.
+      portalFetch('/api/auth/me').then(r => r.json()).then(d => {
+        if (d.user) {
+          setPortalUser(d.user);
+          setUser(d.user);
+        }
+      }).catch(() => {});
     }
   }, []);
 
@@ -134,7 +146,16 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
             Sign Out
           </button>
         </aside>
-        <main className="portal-main">{children}</main>
+        <main className="portal-main">
+          {profile.status && profile.status !== 'APPROVED' && (
+            <div className="p-alert amber" style={{ marginBottom: '20px' }}>
+              {profile.status === 'PENDING'
+                ? 'Your driver application is being reviewed. Students can see your bus once an administrator approves it.'
+                : 'Your driver application was not approved. Please contact support for help.'}
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

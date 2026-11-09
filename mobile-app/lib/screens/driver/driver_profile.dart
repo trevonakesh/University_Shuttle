@@ -107,7 +107,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                               ? DecorationImage(
                                   image: NetworkImage(profile['profilePhotoUrl'].startsWith('http') 
                                       ? profile['profilePhotoUrl']
-                                      : '${ApiService.baseUrl.replaceAll('/api', '')}${profile['profilePhotoUrl']}'),
+                                      : '${ApiService.origin}${profile['profilePhotoUrl']}'),
                                   fit: BoxFit.cover,
                                 )
                               : null,

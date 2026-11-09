@@ -1,5 +1,6 @@
 import { EmailMessage } from './mailer';
 import { EmailContent, renderEmail } from './layout';
+import { onlinePaymentsEnabled } from '../payhere';
 
 // One builder per event. Each returns a ready-to-send message; controllers
 // call `void sendEmail(emails.xyz(...))` right after the event succeeds.
@@ -209,15 +210,15 @@ export const dailyRideApproved = (to: string, studentName: string, ride: RideInf
   build(to, 'daily-ride-approved', `Daily ride approved: ${dayLabel(ride.date)}`, {
     label: 'Ride approved',
     tone: 'success',
-    preheader: 'Pay for the ride in the app before you travel.',
+    preheader: 'Pay your driver in cash when you travel.',
     heading: 'Your daily ride is approved',
-    paragraphs: [`Hi ${firstName(studentName)}, ${ride.driverName} approved your ride. Pay for it in the app before you travel.`],
+    paragraphs: [`Hi ${firstName(studentName)}, ${ride.driverName} approved your ride. Please pay your driver in cash when you travel.`],
     details: [
       ['Date', dayLabel(ride.date)],
       ['Trip', tripLabel(ride.tripType)],
       ['Fare', ride.fareAmount ? lkr(ride.fareAmount) : '-']
     ],
-    button: { label: 'Pay for the ride', url: PORTAL() }
+    button: { label: 'View my rides', url: PORTAL() }
   });
 
 export const dailyRideRejected = (to: string, studentName: string, ride: RideInfo) =>
@@ -276,9 +277,11 @@ export const markedNotTravelling = (to: string, studentName: string, month: stri
     heading: 'Marked as not travelling this month',
     paragraphs: [
       `Hi ${firstName(studentName)}, ${driverName} marked you as not travelling in ${monthLabel(month)}, so your account is frozen for the rest of the month. It unfreezes automatically next month.`,
-      `Planning to travel after all? Pay the ${monthLabel(month)} fare (${lkr(amount)}) and your account is reactivated straight away.`
+      onlinePaymentsEnabled()
+        ? `Planning to travel after all? Pay the ${monthLabel(month)} fare (${lkr(amount)}) and your account is reactivated straight away.`
+        : `Planning to travel after all? Hand ${driverName} the ${monthLabel(month)} fare (${lkr(amount)}). Once it's marked as paid, your account is reactivated straight away.`
     ],
-    button: { label: 'Pay the fare', url: PORTAL() }
+    button: { label: onlinePaymentsEnabled() ? 'Pay the fare' : 'Open my account', url: PORTAL() }
   });
 
 export const duplicatePaymentRefund = (to: string, studentName: string, month: string, amount: number, reference: string) =>
@@ -303,23 +306,27 @@ export const fareReminder = (to: string, studentName: string, month: string, amo
     heading: 'Your monthly fare is due soon',
     paragraphs: [
       `Hi ${firstName(studentName)}, please pay your ${monthLabel(month)} fare before the ${ordinal(dueDay)} to keep your account active.`,
-      'You can pay by card in the app, or hand the fare to your driver.'
+      onlinePaymentsEnabled()
+        ? 'You can pay by card in the app, or hand the fare to your driver.'
+        : 'Please hand the fare to your driver, who will mark it as paid. Online payments are coming soon.'
     ],
     details: [['Month', monthLabel(month)], ['Amount', lkr(amount)], ['Due by', `${ordinal(dueDay)} of the month`], ['Driver', driverName]],
-    button: { label: 'Pay now', url: PORTAL() }
+    button: { label: onlinePaymentsEnabled() ? 'Pay now' : 'Open my account', url: PORTAL() }
   });
 
 export const accountFrozen = (to: string, studentName: string, month: string, amount: number, dueDay: number) =>
   build(to, 'account-frozen', `Your account is frozen: ${monthLabel(month)} fare unpaid`, {
     label: 'Account frozen',
     tone: 'danger',
-    preheader: 'Pay the fare and your account unfreezes straight away.',
+    preheader: 'Settle the fare and your account unfreezes straight away.',
     heading: 'Your account is frozen',
     paragraphs: [
       `Hi ${firstName(studentName)}, your ${monthLabel(month)} fare (${lkr(amount)}) wasn't paid by the ${ordinal(dueDay)}, so seat requests and attendance polls are paused.`,
-      'Pay the fare and your account unfreezes straight away.'
+      onlinePaymentsEnabled()
+        ? 'Pay the fare and your account unfreezes straight away.'
+        : "Hand the fare to your driver. Once it's marked as paid, your account unfreezes straight away."
     ],
-    button: { label: 'Pay now', url: PORTAL() }
+    button: { label: onlinePaymentsEnabled() ? 'Pay now' : 'Open my account', url: PORTAL() }
   });
 
 // ---------- driver payouts ----------

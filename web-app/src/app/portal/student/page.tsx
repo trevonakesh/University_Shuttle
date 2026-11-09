@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { portalFetch, getPortalUser } from '../../../lib/portalApi';
+import { portalFetch, getPortalUser, freezeMessage } from '../../../lib/portalApi';
 
 export default function StudentDashboard() {
   const [fare, setFare] = useState<any>(null);
@@ -42,11 +42,11 @@ export default function StudentDashboard() {
         fare.status === 'PAID'
           ? <div className="p-alert green" style={{ marginBottom: '24px' }}>✓ This month&apos;s fare is <strong>paid</strong>. Enjoy your rides!</div>
           : fare.frozen
-            ? <div className="p-alert amber" style={{ marginBottom: '24px' }}>⚠ Your account is <strong>frozen</strong> this month. {fare.freezeReason} <Link href="/portal/student/fare">Pay now →</Link></div>
-            : <div className="p-alert blue" style={{ marginBottom: '24px' }}>Your <strong>{fare.month}</strong> fare of <strong>LKR {fare.amountDue?.toLocaleString()}</strong> is due. <Link href="/portal/student/fare">Pay now →</Link></div>
+            ? <div className="p-alert amber" style={{ marginBottom: '24px' }}>⚠ Your account is <strong>frozen</strong> this month. {freezeMessage(fare)} <Link href="/portal/student/fare">View fare →</Link></div>
+            : <div className="p-alert blue" style={{ marginBottom: '24px' }}>Your <strong>{fare.month}</strong> fare of <strong>LKR {fare.amountDue?.toLocaleString()}</strong> is due. <Link href="/portal/student/fare">View fare →</Link></div>
       )}
       {!fare?.assigned && (
-        <div className="p-alert amber" style={{ marginBottom: '24px' }}>You&apos;re not assigned to a bus yet. Contact the admin or request a seat through the mobile app.</div>
+        <div className="p-alert amber" style={{ marginBottom: '24px' }}>You&apos;re not assigned to a bus yet. <Link href="/portal/student/buses">Find a bus →</Link></div>
       )}
 
       {/* Stats */}

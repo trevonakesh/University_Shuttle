@@ -123,6 +123,7 @@ export default function DriverWalletPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
         <div>
           <h1 style={{ fontSize: '26px', color: '#10203a' }}>Earnings & Wallet</h1>
+          <p className="p-badge blue" style={{ marginTop: '8px' }}>Online payments and payouts are coming soon</p>
           <p style={{ color: '#7a8699', marginTop: '6px' }}>
             Track in-app payments, platform commissions, and request payouts to your bank account.
           </p>

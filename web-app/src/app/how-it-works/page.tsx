@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import SiteChrome from '../../components/SiteChrome';
+import RouteNetwork from '../../components/RouteNetwork';
 import { rules, getCommissionPercent } from '../../lib/business';
 
 export const metadata = {
   title: 'How it works | UniShuttle',
   description:
-    'How UniShuttle works for students and bus drivers: seat requests, daily rides, attendance polls, monthly fares, PayHere payments, live tracking and driver payouts.'
+    'How UniShuttle works for students and bus drivers: seat requests, daily rides, attendance polls, monthly fares, live tracking and more.'
 };
 
 export default async function HowItWorksPage() {
@@ -13,19 +14,20 @@ export default async function HowItWorksPage() {
   return (
     <SiteChrome>
       <section className="page-head">
+        <RouteNetwork />
         <div className="wrap">
           <span className="eyebrow">How it works</span>
           <h1>How UniShuttle works</h1>
           <p>
-            Students and drivers both use the UniShuttle mobile app. Here is what
-            each of them can do, and how fares and payments work.
+            Students and drivers can use the UniShuttle app or this website. Here is
+            what each of them can do, and how fares work.
           </p>
         </div>
       </section>
 
       {/* ---------------- students ---------------- */}
       <section className="section" id="students">
-        <div className="wrap">
+        <div className="wrap reveal">
           <div className="section-head">
             <span className="eyebrow">For students</span>
             <h2>Getting a seat and travelling</h2>
@@ -33,19 +35,19 @@ export default async function HowItWorksPage() {
 
           <div className="steps">
             <div className="step done">
-              <h3>1. Register</h3>
+              <h3>Register</h3>
               <p>Sign up with your name, university, faculty, pickup point, destination and an emergency contact.</p>
             </div>
             <div className="step done">
-              <h3>2. Choose a bus</h3>
+              <h3>Choose a bus</h3>
               <p>Browse admin-approved buses. Each shows its route, pickup time, number of seats and monthly fee.</p>
             </div>
             <div className="step done">
-              <h3>3. Request a seat</h3>
-              <p>Request a seat on a monthly or daily plan. The app shows when the driver accepts or rejects it.</p>
+              <h3>Request a seat</h3>
+              <p>Send a seat request. You will see when the driver accepts or rejects it.</p>
             </div>
             <div className="step done">
-              <h3>4. Travel</h3>
+              <h3>Travel</h3>
               <p>Answer the driver’s attendance polls, read their notices, and track the bus live on a map.</p>
             </div>
           </div>
@@ -56,7 +58,7 @@ export default async function HowItWorksPage() {
               <p>
                 Need the bus for just one day? Book a daily ride for a specific date:
                 round trip, to university only, or from university only. The fare is
-                the driver’s daily rate, and you pay once the driver accepts.
+                the driver’s daily rate, and you pay the driver in cash when you travel.
               </p>
             </div>
             <div className="card">
@@ -73,13 +75,13 @@ export default async function HowItWorksPage() {
 
       {/* ---------------- fares ---------------- */}
       <section className="section section-tint" id="fares">
-        <div className="wrap">
+        <div className="wrap reveal">
           <div className="section-head">
             <span className="eyebrow">Fares &amp; payments</span>
             <h2>Monthly fares are due by the {rules.fareDueDay}th</h2>
             <p>
-              Each driver sets their own monthly and daily fees. You can pay in the
-              app with PayHere, or pay your driver in cash and they record it.
+              Each driver sets their own monthly and daily fees. Pay your driver in
+              cash and they record it. Online card payments are coming soon.
             </p>
           </div>
 
@@ -94,7 +96,7 @@ export default async function HowItWorksPage() {
               <h3 style={{ marginTop: 12 }}>Account frozen</h3>
               <p>
                 An unpaid account is frozen: you can’t request seats or answer polls.
-                You can still pay, and paying unfreezes your account straight away.
+                Hand the fare to your driver and it unfreezes as soon as they mark it paid.
               </p>
             </div>
             <div className="card">
@@ -110,15 +112,15 @@ export default async function HowItWorksPage() {
           <div className="notice-box" style={{ marginTop: 26 }}>
             <strong>Not travelling this month?</strong> Your driver can mark you as
             “not travelling”. Your account is then frozen for that month only and
-            unfreezes automatically next month, or as soon as you pay. A paid daily
-            ride also unlocks your account for that day.
+            unfreezes automatically next month, or as soon as your driver marks the
+            fare paid. An approved daily ride also unlocks your account for that day.
           </div>
         </div>
       </section>
 
       {/* ---------------- drivers ---------------- */}
       <section className="section" id="drivers">
-        <div className="wrap">
+        <div className="wrap reveal">
           <div className="section-head">
             <span className="eyebrow">For drivers</span>
             <h2>Running your bus service</h2>
@@ -126,19 +128,19 @@ export default async function HowItWorksPage() {
 
           <div className="steps">
             <div className="step done">
-              <h3>1. Register your bus</h3>
+              <h3>Register your bus</h3>
               <p>Provide your NIC, driving licence, vehicle registration, bus photo, bank details, route, schedule and fees.</p>
             </div>
             <div className="step done">
-              <h3>2. Get verified</h3>
+              <h3>Get verified</h3>
               <p>An admin checks your documents. Your app updates the moment you are approved.</p>
             </div>
             <div className="step done">
-              <h3>3. Accept students</h3>
+              <h3>Accept students</h3>
               <p>Accept or reject seat and daily ride requests, and manage your passenger list.</p>
             </div>
             <div className="step done">
-              <h3>4. Run your route</h3>
+              <h3>Run your route</h3>
               <p>Send attendance polls, post notices, and share your live location while driving.</p>
             </div>
           </div>
@@ -149,14 +151,15 @@ export default async function HowItWorksPage() {
               <ul className="ticks">
                 <li>See every passenger as paid, unpaid or not travelling for each month</li>
                 <li>Mark cash payments yourself</li>
-                <li>In-app payments update your list live</li>
+                <li>Your passenger list stays up to date for every month</li>
               </ul>
             </div>
             <div className="card">
-              <h3>Wallet &amp; payouts</h3>
+              <span className="tag soon">Coming soon</span>
+              <h3 style={{ marginTop: 12 }}>Wallet &amp; payouts</h3>
               <ul className="ticks">
-                <li>In-app payments are credited to your wallet</li>
-                <li>The platform keeps a {commissionPercent}% commission on in-app payments</li>
+                <li>Online fare payments credited to your wallet</li>
+                <li>The platform keeps a {commissionPercent}% commission</li>
                 <li>Request a payout; it is paid once an admin approves it</li>
               </ul>
             </div>
@@ -166,13 +169,13 @@ export default async function HowItWorksPage() {
 
       {/* ---------------- admin ---------------- */}
       <section className="section section-tint">
-        <div className="wrap">
+        <div className="wrap reveal">
           <div className="section-head" style={{ marginBottom: 0 }}>
             <span className="eyebrow">Behind the scenes</span>
             <h2>The UniShuttle admin team</h2>
             <p>
               Our admins verify driver registrations, manage student and driver
-              accounts, monitor payments, approve driver payouts and answer
+              accounts, keep an eye on fares and answer
               messages sent through this website.
             </p>
           </div>

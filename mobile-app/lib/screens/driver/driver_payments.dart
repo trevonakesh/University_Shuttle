@@ -213,6 +213,8 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
               const Text('WALLET BALANCE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
               const SizedBox(height: 3),
               Text('LKR ${_walletBalance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 3),
+              const Text('ONLINE PAYMENTS & PAYOUTS COMING SOON', style: TextStyle(color: Colors.white54, fontSize: 9, letterSpacing: 1)),
             ],
           ),
         ],

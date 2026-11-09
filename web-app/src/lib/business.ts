@@ -7,8 +7,8 @@ export const business = {
   tagline: 'University bus travel in Sri Lanka, organised in one app.',
 
   email: 'info@unishuttle.lk',
-  phone: '+94 11 000 0000',
-  phoneHref: '+94110000000',
+  phone: '+94 7436762686',
+  phoneHref: '+947436762686',
 
   address: {
     line1: 'No. 00, Example Road',

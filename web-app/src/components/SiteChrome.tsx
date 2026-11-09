@@ -1,8 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, ReactNode } from 'react';
+import { useEffect, useRef, useState, ReactNode } from 'react';
 import { business } from '../lib/business';
+import { fontVariables } from '../lib/fonts';
 import '../app/site.css';
 
 const BusMark = () => (
@@ -50,8 +51,8 @@ export function SiteHeader() {
               {l.label}
             </Link>
           ))}
-          <Link href="/login" style={{ color: '#0e7c66', fontWeight: 600, marginLeft: 8 }}>Portal Login</Link>
-          <Link href="/contact" className="btn-cta" style={{ marginLeft: 8 }}>Get in touch</Link>
+          <Link href="/login">Sign in</Link>
+          <Link href="/signup" className="btn-cta">Get started</Link>
         </nav>
       </div>
     </header>
@@ -87,7 +88,8 @@ export function SiteFooter() {
           <div>
             <h4>Platform</h4>
             <div className="footer-links">
-              <Link href="/login" style={{ fontWeight: 600, color: '#0e7c66' }}>Student & Driver Portal</Link>
+              <Link href="/login">Sign in</Link>
+              <Link href="/signup">Create an account</Link>
               <Link href="/how-it-works#students">For students</Link>
               <Link href="/how-it-works#drivers">For drivers</Link>
             </div>
@@ -108,7 +110,6 @@ export function SiteFooter() {
 
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {business.name}. All rights reserved.</span>
-          <span>Payments processed securely by PayHere</span>
         </div>
       </div>
     </footer>
@@ -116,8 +117,40 @@ export function SiteFooter() {
 }
 
 export default function SiteChrome({ children }: { children: ReactNode }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Reveals sections as they scroll in, and moves the light on cards with the pointer.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    root.classList.add('js');
+
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('in');
+        observer.unobserve(entry.target);
+      }
+    }, { rootMargin: '0px 0px -8% 0px' });
+    root.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    const onMove = (e: PointerEvent) => {
+      const card = (e.target as Element).closest<HTMLElement>('.card');
+      if (!card) return;
+      const box = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - box.left}px`);
+      card.style.setProperty('--my', `${e.clientY - box.top}px`);
+    };
+    root.addEventListener('pointermove', onMove);
+
+    return () => {
+      observer.disconnect();
+      root.removeEventListener('pointermove', onMove);
+    };
+  }, []);
+
   return (
-    <div className="site">
+    <div className={`site ${fontVariables}`} ref={rootRef}>
       <SiteHeader />
       {children}
       <SiteFooter />

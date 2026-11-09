@@ -146,14 +146,41 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+// Returns what's wrong with a sign-up, or null when it's fine. Registration is
+// public, so bad input gets a clear 400 instead of a database error.
+const registrationError = (body: any, requiredFields: Record<string, string>): string | null => {
+  for (const [field, label] of Object.entries(requiredFields)) {
+    if (typeof body?.[field] !== 'string' || !body[field].trim()) return `${label} is required.`;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())) return 'Please enter a valid email address.';
+  if (body.password.length < 6) return 'Password must be at least 6 characters.';
+  return null;
+};
+
+// Optional unique columns: a blank must be stored as null, or the second
+// person who leaves the field empty is rejected as a duplicate.
+const blankToNull = (v: unknown): string | null =>
+  typeof v === 'string' && v.trim() ? v.trim() : null;
+
 export const registerStudent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { 
-      email, password, phone, fullName, nic, universityName, studentId, 
-      pickupPoint, destination, faculty, degreeProgram, academicYear, 
-      registrationNo, homeLocation, emerContactName, emerContactPhone, 
+    const invalid = registrationError(req.body, {
+      email: 'Email', password: 'Password', phone: 'Phone number',
+      fullName: 'Full name', universityName: 'University'
+    });
+    if (invalid) {
+      res.status(400).json({ error: invalid });
+      return;
+    }
+
+    const {
+      email, password, phone, fullName, universityName,
+      pickupPoint, destination, faculty, degreeProgram, academicYear,
+      registrationNo, homeLocation, emerContactName, emerContactPhone,
       emerRelationship, profilePhotoUrl
     } = req.body;
+    const nic = blankToNull(req.body.nic);
+    const studentId = blankToNull(req.body.studentId);
 
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone }] }
@@ -223,13 +250,24 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
 
 export const registerDriver = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { 
-      email, password, phone, fullName, nic, licenseNumber, bankName, accNumber, accHolder,
-      busRegNumber, busCapacity, routeName, startingPoint, destination, monthlyFee,
+    const invalid = registrationError(req.body, {
+      email: 'Email', password: 'Password', phone: 'Phone number',
+      fullName: 'Full name', nic: 'NIC number'
+    });
+    if (invalid) {
+      res.status(400).json({ error: invalid });
+      return;
+    }
+
+    const {
+      email, password, phone, fullName, nic, bankName, accNumber, accHolder,
+      busCapacity, routeName, startingPoint, destination, monthlyFee,
       dailyFeeRoundTrip, dailyFeeOneWay,
       scheduleType, pickupTime, dropTime, profilePhotoUrl, nicCopyUrl, licenseCopyUrl,
       vehicleRegUrl, busPhotoUrl
     } = req.body;
+    const licenseNumber = blankToNull(req.body.licenseNumber);
+    const busRegNumber = blankToNull(req.body.busRegNumber);
 
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone }] }

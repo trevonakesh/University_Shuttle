@@ -1,6 +1,13 @@
 import prisma from '../prismaClient';
 import { FareStatus, RequestStatus, Prisma } from '@prisma/client';
 import { FREEZE_DAY, currentDay, currentMonth, colomboMonthAndDay, currentColomboDateString } from '../utils/time';
+import { dailyRidePaymentsEnabled, onlinePaymentsEnabled } from './payhere';
+
+// How a student settles a fare right now, for freeze and reminder messages.
+export const payFareHint = (): string =>
+  onlinePaymentsEnabled()
+    ? 'Pay your monthly fare to unfreeze it.'
+    : 'Hand the fare to your driver and ask them to mark it as paid to unfreeze it.';
 
 // monthlyFee is stored as a string on Driver; normalise to a number.
 export const parseFee = (monthlyFee: string | null | undefined): number => {
@@ -75,19 +82,21 @@ export const checkFrozen = async (studentId: number): Promise<FrozenCheck> => {
     reason = 'UNPAID';
   }
 
-  // If frozen, but the student has a paid daily ride for *today*, unfreeze them for today.
+  // If frozen, but the student has a paid daily ride for *today*, unfreeze them
+  // for today. While daily rides are cash-only there is no payment record, so
+  // the driver's approval is what counts.
   if (frozen) {
     const todayStr = currentColomboDateString();
-    const paidDailyRide = await prisma.dailyRideRequest.findFirst({
+    const todaysRide = await prisma.dailyRideRequest.findFirst({
       where: {
         studentId,
         driverId: assignment.driverId,
         date: todayStr,
-        paymentId: { not: null }
+        ...(dailyRidePaymentsEnabled() ? { paymentId: { not: null } } : { status: RequestStatus.APPROVED })
       }
     });
 
-    if (paidDailyRide) {
+    if (todaysRide) {
       frozen = false;
       reason = null; // Unfrozen just for today
     }

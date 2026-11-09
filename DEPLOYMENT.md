@@ -290,7 +290,7 @@ certbot --nginx -d unishuttle.lk -d www.unishuttle.lk -d api.unishuttle.lk \
 Check:
 
 ```bash
-curl https://api.unishuttle.lk/            # → LankaTrip API is running!
+curl https://api.unishuttle.lk/            # → UniShuttle API is running!
 curl https://api.unishuttle.lk/api/settings/public
 ```
 
@@ -299,7 +299,7 @@ Then open `https://unishuttle.lk` in a browser. Students and drivers sign in at 
 ## 10. PayHere (live payments)
 
 1. In your **live** PayHere merchant account, go to **Settings → Domains & Credentials** and add `api.unishuttle.lk`. Students open the checkout page on that domain.
-2. Copy the merchant ID and the merchant secret PayHere generates for that domain into `backend/.env`. Set `PAYHERE_MODE=live`.
+2. Copy the merchant ID and the merchant secret PayHere generates for that domain into `backend/.env`. Set `PAYHERE_MODE=live` and add `ONLINE_PAYMENTS_ENABLED=true`. Monthly card payments stay switched off, and the app shows "coming soon", until both are done. Daily-ride payments stay off in production until they have a real card checkout.
 3. Run `pm2 restart unishuttle-api`.
 4. Make one small real payment end to end: the student pays, the fare shows PAID, and the driver's wallet goes up.
 

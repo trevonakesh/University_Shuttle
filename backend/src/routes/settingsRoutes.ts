@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { getCommissionRate } from '../services/settingsService';
+import { onlinePaymentsEnabled } from '../services/payhere';
 
 const router = Router();
 
@@ -8,7 +9,7 @@ const router = Router();
 router.get('/public', async (_req: Request, res: Response) => {
   try {
     const commissionRate = await getCommissionRate();
-    res.status(200).json({ commissionRate });
+    res.status(200).json({ commissionRate, onlinePayments: onlinePaymentsEnabled() });
   } catch (error) {
     console.error('Error fetching public settings:', error);
     res.status(500).json({ message: 'Server error' });

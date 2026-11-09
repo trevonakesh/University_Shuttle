@@ -2,7 +2,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { API_BASE, setPortalToken, setPortalUser } from '../../lib/portalApi';
+import { fontVariables } from '../../lib/fonts';
+import RouteNetwork from '../../components/RouteNetwork';
+import '../site.css';
 import '../portal/portal.css';
+import '../auth.css';
 
 export default function PortalLoginPage() {
   const [email, setEmail] = useState('');
@@ -42,28 +46,29 @@ export default function PortalLoginPage() {
   };
 
   return (
-    <div className="portal" style={{ background: 'linear-gradient(135deg, #0e7c66 0%, #10203a 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ width: '100%', maxWidth: '420px' }}>
+    <div className={`portal auth ${fontVariables}`}>
+      <RouteNetwork />
+      <div className="auth-inner" style={{ maxWidth: '430px' }}>
         {/* Brand */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', background: '#fff', borderRadius: '16px', marginBottom: '16px', boxShadow: '0 4px 20px rgba(0,0,0,.25)' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#0e7c66" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '30px', height: '30px' }}>
+          <div className="auth-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '30px', height: '30px' }}>
               <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
             </svg>
           </div>
-          <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: 800, margin: 0 }}>Uni Shuttle</h1>
-          <p style={{ color: 'rgba(255,255,255,.7)', marginTop: '6px', fontSize: '14px' }}>Student & Driver Portal</p>
+          <h1 className="auth-title">Uni Shuttle</h1>
+          <p className="auth-sub">Student &amp; Driver Portal</p>
         </div>
 
         {/* Card */}
-        <div style={{ background: '#fff', borderRadius: '20px', padding: '36px', boxShadow: '0 24px 60px rgba(0,0,0,.3)' }}>
-          <h2 style={{ fontSize: '20px', marginBottom: '6px', color: '#10203a' }}>Sign in to your account</h2>
-          <p style={{ fontSize: '14px', color: '#7a8699', marginBottom: '28px' }}>
+        <div className="auth-card">
+          <h2 className="auth-card-title">Sign in to your account</h2>
+          <p className="auth-muted" style={{ marginBottom: '28px' }}>
             Students and drivers sign in here.
           </p>
 
           {error && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '12px 16px', color: '#991b1b', fontSize: '14px', marginBottom: '20px' }}>
+            <div className="p-alert red" style={{ marginBottom: '20px' }}>
               {error}
             </div>
           )}
@@ -94,16 +99,16 @@ export default function PortalLoginPage() {
               />
             </div>
             <div style={{ textAlign: 'right', marginTop: '-8px' }}>
-              <Link href="/portal/forgot-password" style={{ fontSize: '13px', color: '#0e7c66', fontWeight: 500 }}>Forgot password?</Link>
+              <Link href="/portal/forgot-password" className="auth-link" style={{ fontSize: '13px' }}>Forgot password?</Link>
             </div>
             <button type="submit" className="p-btn primary" disabled={loading} style={{ width: '100%', padding: '13px', marginTop: '4px', fontSize: '15px' }}>
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
 
-          <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #dde3ec', textAlign: 'center', fontSize: '14px', color: '#7a8699' }}>
+          <div className="auth-foot">
             Don&apos;t have an account?{' '}
-            <Link href="/#download" style={{ color: '#0e7c66', fontWeight: 600 }}>Download the app</Link>
+            <Link href="/signup" className="auth-link">Create one</Link>
           </div>
         </div>
       </div>

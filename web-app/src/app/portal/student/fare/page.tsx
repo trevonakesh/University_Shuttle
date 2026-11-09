@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { portalFetch, API_BASE, getPortalToken } from '../../../../lib/portalApi';
+import Link from 'next/link';
+import { portalFetch, freezeMessage } from '../../../../lib/portalApi';
 
 export default function StudentFarePage() {
   const [fare, setFare] = useState<any>(null);
@@ -47,7 +48,7 @@ export default function StudentFarePage() {
 
       {!fare?.assigned ? (
         <div className="p-card">
-          <div className="p-alert amber">You are not assigned to a bus yet. Please request a seat via the mobile app or contact the admin.</div>
+          <div className="p-alert amber">You are not assigned to a bus yet. <Link href="/portal/student/buses" style={{ fontWeight: 600, textDecoration: 'underline' }}>Find a bus</Link></div>
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '20px' }}>
@@ -67,15 +68,21 @@ export default function StudentFarePage() {
                   <span style={{ fontSize: '13px', color: '#7a8699' }}>Due by {fare.dueDay}{fare.dueDay === 1 ? 'st' : fare.dueDay === 2 ? 'nd' : fare.dueDay === 3 ? 'rd' : 'th'} of the month</span>
                 </div>
               </div>
-              {fare.status !== 'PAID' && (
+              {fare.status !== 'PAID' && fare.onlinePayments && (
                 <button className="p-btn primary" onClick={pay} disabled={paying} style={{ fontSize: '16px', padding: '14px 28px' }}>
                   {paying ? 'Processing…' : 'Pay Now'}
                 </button>
               )}
             </div>
 
-            {fare.freezeReason && (
-              <div className="p-alert amber" style={{ marginTop: '16px' }}>{fare.freezeReason}</div>
+            {fare.frozen && (
+              <div className="p-alert amber" style={{ marginTop: '16px' }}>{freezeMessage(fare)}</div>
+            )}
+
+            {fare.status !== 'PAID' && !fare.frozen && !fare.onlinePayments && (
+              <div className="p-alert blue" style={{ marginTop: '16px' }}>
+                Online payments are coming soon. For now, hand your fare to your driver and they will mark it as paid.
+              </div>
             )}
 
             {fare.status === 'PAID' && (
@@ -95,7 +102,7 @@ export default function StudentFarePage() {
               </div>
               <div className="p-info-item">
                 <span>Payment Method</span>
-                <span>Online (Credit/Debit card via PayHere)</span>
+                <span>{fare.onlinePayments ? 'Online (Credit/Debit card via PayHere)' : 'Cash to your driver'}</span>
               </div>
             </div>
           </div>

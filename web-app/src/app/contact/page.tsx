@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import SiteChrome from '../../components/SiteChrome';
+import RouteNetwork from '../../components/RouteNetwork';
 import { business } from '../../lib/business';
 import { API_BASE } from '../../lib/api';
 
@@ -49,6 +50,7 @@ export default function ContactPage() {
   return (
     <SiteChrome>
       <section className="page-head">
+        <RouteNetwork />
         <div className="wrap">
           <span className="eyebrow">Contact us</span>
           <h1>Talk to the UniShuttle team</h1>

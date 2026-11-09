@@ -27,6 +27,22 @@ export const payhereEnabled = (): boolean => {
   return Boolean(c.merchantId && c.merchantSecret);
 };
 
+const isProduction = (): boolean => process.env.NODE_ENV === 'production';
+
+// Online payments are switched off until ONLINE_PAYMENTS_ENABLED=true. In
+// production they also need real PayHere credentials, so the local-dev
+// instant-completion fallback can never settle a fare on the live server.
+export const onlinePaymentsEnabled = (): boolean =>
+  process.env.ONLINE_PAYMENTS_ENABLED === 'true' && (payhereEnabled() || !isProduction());
+
+// Daily rides have no card checkout yet: paying one only records it. Allowed
+// for local development, never in production.
+export const dailyRidePaymentsEnabled = (): boolean =>
+  process.env.ONLINE_PAYMENTS_ENABLED === 'true' && !isProduction();
+
+export const PAYMENTS_COMING_SOON =
+  'Online payments are coming soon. For now, please pay your driver in cash and they will mark it as paid.';
+
 export const checkoutUrl = (): string =>
   payhereConfig().mode === 'live'
     ? 'https://www.payhere.lk/pay/checkout'
