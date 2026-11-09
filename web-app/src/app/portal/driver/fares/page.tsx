@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState, useMemo } from 'react';
 import { portalFetch } from '../../../../lib/portalApi';
 
@@ -153,7 +154,7 @@ export default function DriverFaresPage() {
       )}
 
       {loading ? (
-        <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading ledger for {month}…</div>
+        <BrandLoader label={`Loading ledger for ${month}…`} />
       ) : data ? (
         <>
           {/* Summary Row */}

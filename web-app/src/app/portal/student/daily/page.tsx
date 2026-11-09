@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import { colomboToday, portalFetch } from '../../../../lib/portalApi';
 
@@ -56,7 +57,7 @@ export default function DailyRidesPage() {
     }
   };
 
-  if (loading) return <div style={{ color: '#7a8699' }}>Loading daily rides…</div>;
+  if (loading) return <BrandLoader label="Loading daily rides…" />;
 
   return (
     <div>

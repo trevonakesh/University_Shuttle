@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Socket } from 'socket.io-client';
@@ -75,7 +76,7 @@ export default function StudentTrackingPage() {
     );
   }, [driverId]);
 
-  if (loading) return <div style={{ color: '#7a8699' }}>Loading tracking…</div>;
+  if (loading) return <BrandLoader label="Loading tracking…" />;
 
   const isLive = !offline && lastUpdate !== null && now - lastUpdate < STALE_AFTER_MS;
   const km = isLive && bus && me ? distanceKm(me, bus) : null;

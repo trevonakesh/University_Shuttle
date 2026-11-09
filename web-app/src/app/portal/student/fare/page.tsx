@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { portalFetch, freezeMessage } from '../../../../lib/portalApi';
@@ -35,7 +36,7 @@ export default function StudentFarePage() {
     finally { setPaying(false); }
   };
 
-  if (loading) return <div style={{ color: '#7a8699' }}>Loading fare details…</div>;
+  if (loading) return <BrandLoader label="Loading fare details…" />;
 
   return (
     <div>

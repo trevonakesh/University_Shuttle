@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import { API_BASE, portalFetch } from '../../../../lib/portalApi';
 
@@ -55,7 +56,7 @@ export default function FindABusPage() {
     }
   };
 
-  if (loading) return <div style={{ color: '#7a8699' }}>Loading buses…</div>;
+  if (loading) return <BrandLoader label="Loading buses…" />;
 
   return (
     <div>

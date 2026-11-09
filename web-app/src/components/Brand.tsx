@@ -30,3 +30,50 @@ export function BrandWordmark({ height = 20, color = '#eef6f4' }: { height?: num
     </svg>
   );
 }
+
+// The logo animation as a loading indicator: the bus drives the route and hops
+// onto its stop, on a short loop. Drawn in SVG so it needs no extra download.
+const LOOP = '1.7s';
+const WAVE_LENGTH = 150.25;
+const EASE = '.65 0 .35 1';
+
+export function BrandLoader({ label, size = 54, tone = 'light' }: { label?: string; size?: number; tone?: 'light' | 'dark' }) {
+  const line = tone === 'dark' ? '#35f0bd' : '#0e7c66';
+  const dot = tone === 'dark' ? '#ffb347' : '#e8912f';
+  return (
+    <div className="brand-loader" role="status" aria-label={label ?? 'Loading'}>
+      <svg viewBox="12 16 76 67" height={size} width={(size * 76) / 67} aria-hidden="true">
+        <g className="bl-anim">
+          <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;.86;.97;1" dur={LOOP} repeatCount="indefinite" />
+          <path d="M80 72V46a15 15 0 0 0 -30 0V60a15 15 0 0 1 -30 0V44" fill="none" stroke={line} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${WAVE_LENGTH} 190`} strokeDashoffset={WAVE_LENGTH}>
+            <animate attributeName="stroke-dashoffset" values={`${WAVE_LENGTH};0;0`} keyTimes="0;.6;1" calcMode="spline" keySplines={`${EASE};0 0 1 1`} dur={LOOP} repeatCount="indefinite" />
+          </path>
+          <circle r="8.5" fill={dot}>
+            <animateMotion path="M80 72V46a15 15 0 0 0 -30 0V60a15 15 0 0 1 -30 0V44V26" keyPoints="0;.893;1;1" keyTimes="0;.6;.74;1" calcMode="spline" keySplines={`${EASE};.3 0 .2 1;0 0 1 1`} dur={LOOP} repeatCount="indefinite" />
+          </circle>
+        </g>
+        <g className="bl-still">
+          <path d="M20 44V60a15 15 0 0 0 30 0V46a15 15 0 0 1 30 0V72" fill="none" stroke={line} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="20" cy="26" r="8.5" fill={dot} />
+        </g>
+      </svg>
+      {label && <span>{label}</span>}
+    </div>
+  );
+}
+
+// Full-screen logo on the first page of a visit. Runs from an inline script so
+// it appears before React starts, and only hides the element (never removes
+// it) so React can still take over the page.
+const PAGE_LOADER_SCRIPT = `(function(){var e=document.getElementById('page-loader');if(!e)return;try{if(sessionStorage.getItem('us-seen')){e.style.display='none';return}sessionStorage.setItem('us-seen','1')}catch(_){}var s=Date.now(),hidden=false,hide=function(){if(hidden)return;hidden=true;setTimeout(function(){e.classList.add('done');setTimeout(function(){e.style.display='none'},450)},Math.max(0,1300-(Date.now()-s)))};if(document.readyState==='complete')hide();else{addEventListener('load',hide,{once:true});setTimeout(hide,3500)}})()`;
+
+export function PageLoader() {
+  return (
+    <>
+      <div id="page-loader" className="page-loader" suppressHydrationWarning>
+        <BrandLoader tone="dark" size={104} />
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: PAGE_LOADER_SCRIPT }} />
+    </>
+  );
+}

@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { portalFetch } from '../../../../lib/portalApi';
@@ -35,7 +36,7 @@ export default function StudentPaymentsPage() {
     }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading your payments…</div>;
+  if (loading) return <BrandLoader label="Loading your payments…" />;
 
   const totalPaid = payments
     .filter(p => p.status === 'COMPLETED')

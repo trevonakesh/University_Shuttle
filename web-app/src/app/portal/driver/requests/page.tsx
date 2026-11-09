@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import { portalFetch } from '../../../../lib/portalApi';
 
@@ -70,7 +71,7 @@ export default function DriverRequestsPage() {
     }
   };
 
-  if (loading) return <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading requests…</div>;
+  if (loading) return <BrandLoader label="Loading requests…" />;
 
   const pendingSeats = seatRequests.filter(s => s.status === 'PENDING');
   const pendingDailies = dailyRides.filter(d => d.status === 'PENDING');

@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import { portalFetch, getPortalUser, clearPortalToken } from '../../../../lib/portalApi';
 
@@ -30,7 +31,7 @@ export default function StudentProfilePage() {
     window.location.href = '/login';
   };
 
-  if (loading) return <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading profile…</div>;
+  if (loading) return <BrandLoader label="Loading profile…" />;
 
   const profile = user?.profile || {};
 

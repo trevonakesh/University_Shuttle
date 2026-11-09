@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import { portalFetch } from '../../../../lib/portalApi';
 
@@ -109,7 +110,7 @@ export default function DriverWalletPage() {
     }
   };
 
-  if (loading) return <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading wallet & payouts…</div>;
+  if (loading) return <BrandLoader label="Loading wallet & payouts…" />;
 
   const totalWithdrawn = requests
     .filter(r => r.status === 'APPROVED')

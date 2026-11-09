@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import { portalFetch } from '../../../../lib/portalApi';
 
@@ -150,7 +151,7 @@ export default function DriverNoticesPage() {
     }
   };
 
-  if (loading) return <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading notices & polls…</div>;
+  if (loading) return <BrandLoader label="Loading notices & polls…" />;
 
   return (
     <div>

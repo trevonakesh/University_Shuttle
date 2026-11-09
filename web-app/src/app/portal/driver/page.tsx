@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../components/Brand';
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { portalFetch, getPortalUser } from '../../../lib/portalApi';
@@ -72,7 +73,7 @@ export default function DriverDashboardPage() {
     return polls.find(p => p.id === selectedPollId) || polls[0];
   }, [polls, selectedPollId]);
 
-  if (loading) return <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading driver dashboard…</div>;
+  if (loading) return <BrandLoader label="Loading driver dashboard…" />;
 
   const summary = fareData?.summary || { total: 0, paid: 0, unpaid: 0, exempt: 0, expected: 0, collected: 0 };
   const pendingSeats = seatRequests.filter(r => r.status === 'PENDING');

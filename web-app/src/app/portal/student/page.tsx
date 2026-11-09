@@ -1,4 +1,5 @@
 'use client';
+import { BrandLoader } from '../../../components/Brand';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { portalFetch, getPortalUser, freezeMessage } from '../../../lib/portalApi';
@@ -23,7 +24,7 @@ export default function StudentDashboard() {
     }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ color: '#7a8699', padding: '40px 0' }}>Loading your dashboard…</div>;
+  if (loading) return <BrandLoader label="Loading your dashboard…" />;
 
   const totalPaid = payments.filter(p => p.status === 'COMPLETED').reduce((s, p) => s + p.amount, 0);
 
