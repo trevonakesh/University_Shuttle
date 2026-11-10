@@ -5,6 +5,9 @@ import {
   createPayout, getPayouts,
   getCommissionRateHandler, updateCommissionRateHandler
 } from '../controllers/adminController';
+import {
+  getDriverAccount, updateDriverAccount, getStudentAccount, updateStudentAccount, updateSignupOptions
+} from '../controllers/adminAccountController';
 import { getPayoutRequests, reviewPayoutRequest } from '../controllers/payoutRequestController';
 import { getContactMessages, markMessageRead, deleteContactMessage } from '../controllers/contactController';
 import { authenticate, authorizeRole } from '../middleware/authMiddleware';
@@ -18,12 +21,16 @@ router.use(authorizeRole([Role.ADMIN]) as any);
 
 router.get('/drivers', getDrivers as any);
 router.post('/drivers', createDriver as any);
+router.get('/drivers/:id', getDriverAccount as any);
+router.patch('/drivers/:id', updateDriverAccount as any);
 router.patch('/drivers/:id/status', updateDriverStatus as any);
 router.delete('/drivers/:id', deleteDriver as any);
 router.get('/drivers/:id/students', getStudentsByDriver as any);
 
 router.get('/students', getStudents as any);
 router.post('/students', createStudent as any);
+router.get('/students/:id', getStudentAccount as any);
+router.patch('/students/:id', updateStudentAccount as any);
 router.delete('/students/:id', deleteStudent as any);
 
 router.get('/payments', getPayments as any);
@@ -41,5 +48,6 @@ router.delete('/messages/:id', deleteContactMessage as any);
 // Platform settings
 router.get('/settings/commission', getCommissionRateHandler as any);
 router.patch('/settings/commission', updateCommissionRateHandler as any);
+router.patch('/settings/signup-options', updateSignupOptions as any);
 
 export default router;

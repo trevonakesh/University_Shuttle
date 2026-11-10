@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { authFetch } from '../../../lib/api';
 import PhotoField from '../../../components/PhotoField';
+import EditAccountModal from '../../../components/EditAccountModal';
 
 type Driver = { id: number; fullName: string; status: string };
 type Student = {
@@ -29,6 +30,8 @@ export default function StudentsPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Student | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     authFetch('/api/admin/drivers')
@@ -142,6 +145,12 @@ export default function StudentsPage() {
         </div>
       )}
 
+      {notice && (
+        <div className="glass-panel" style={{ marginBottom: '20px', color: 'var(--success)' }}>
+          {notice}
+        </div>
+      )}
+
       <div style={{ marginBottom: '24px' }}>
         <label style={{ marginRight: '16px', color: 'var(--text-muted)' }}>Show:</label>
         <select
@@ -189,7 +198,10 @@ export default function StudentsPage() {
                       : <span style={{ color: 'var(--text-muted)' }}>Unassigned</span>}
                   </td>
                   <td>
-                    <button className="btn btn-danger" onClick={() => deleteStudent(student)}>Delete</button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn btn-outline" onClick={() => { setNotice(null); setEditing(student); }}>Edit</button>
+                      <button className="btn btn-danger" onClick={() => deleteStudent(student)}>Delete</button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -203,6 +215,16 @@ export default function StudentsPage() {
           </tbody>
         </table>
       </div>
+
+      {editing && (
+        <EditAccountModal
+          kind="student"
+          id={editing.id}
+          name={editing.fullName}
+          onClose={() => setEditing(null)}
+          onSaved={message => { setEditing(null); setNotice(message); loadStudents(); }}
+        />
+      )}
 
       {showAdd && (
         <div style={{

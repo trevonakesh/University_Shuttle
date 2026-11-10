@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import PhotoField from '../../components/PhotoField';
 import RouteNetwork from '../../components/RouteNetwork';
@@ -10,12 +10,10 @@ import '../portal/portal.css';
 import '../auth.css';
 
 type Role = 'STUDENT' | 'DRIVER';
-type Field = { name: string; label: string; type?: string; options?: string[] };
+// `options` names a list served by /api/settings/signup-options, which admins
+// edit in the admin panel.
+type Field = { name: string; label: string; type?: string; options?: string };
 type Section = { title: string; fields: Field[]; photos?: Field[] };
-
-// Same choices as the mobile app. Buses are matched to students by
-// destination, so these lists have to stay in step with it.
-const UNIVERSITIES = ['NSBM', 'SLIIT'];
 
 const ACCOUNT: Field[] = [
   { name: 'fullName', label: 'Full name' },
@@ -34,10 +32,10 @@ const STUDENT_FORM: Section[] = [
   {
     title: 'University',
     fields: [
-      { name: 'universityName', label: 'University', options: UNIVERSITIES },
-      { name: 'faculty', label: 'Faculty', options: ['Science', 'Engineering', 'Arts'] },
-      { name: 'degreeProgram', label: 'Degree / program', options: ['BSc', 'BEng', 'BA'] },
-      { name: 'academicYear', label: 'Academic year', options: ['Year 1', 'Year 2', 'Year 3', 'Year 4'] },
+      { name: 'universityName', label: 'University', options: 'universities' },
+      { name: 'faculty', label: 'Faculty', options: 'faculties' },
+      { name: 'degreeProgram', label: 'Degree / program', options: 'degreePrograms' },
+      { name: 'academicYear', label: 'Academic year', options: 'academicYears' },
       { name: 'registrationNo', label: 'Registration number' }
     ]
   },
@@ -46,7 +44,7 @@ const STUDENT_FORM: Section[] = [
     fields: [
       { name: 'homeLocation', label: 'Home location' },
       { name: 'pickupPoint', label: 'Pickup point' },
-      { name: 'destination', label: 'Destination university', options: UNIVERSITIES }
+      { name: 'destination', label: 'Destination university', options: 'universities' }
     ]
   },
   {
@@ -54,7 +52,7 @@ const STUDENT_FORM: Section[] = [
     fields: [
       { name: 'emerContactName', label: 'Contact name' },
       { name: 'emerContactPhone', label: 'Contact phone', type: 'tel' },
-      { name: 'emerRelationship', label: 'Relationship', options: ['Parent', 'Sibling', 'Guardian'] }
+      { name: 'emerRelationship', label: 'Relationship', options: 'relationships' }
     ]
   }
 ];
@@ -68,7 +66,7 @@ const DRIVER_FORM: Section[] = [
   {
     title: 'Bank Details',
     fields: [
-      { name: 'bankName', label: 'Bank', options: ['BOC', 'Commercial', 'HNB', 'Sampath'] },
+      { name: 'bankName', label: 'Bank', options: 'banks' },
       { name: 'accNumber', label: 'Account number' },
       { name: 'accHolder', label: 'Account holder name' }
     ]
@@ -80,8 +78,8 @@ const DRIVER_FORM: Section[] = [
       { name: 'busCapacity', label: 'Number of seats', type: 'number' },
       { name: 'routeName', label: 'Route name' },
       { name: 'startingPoint', label: 'Starting point' },
-      { name: 'destination', label: 'Destination university', options: UNIVERSITIES },
-      { name: 'scheduleType', label: 'Schedule', options: ['Weekly (Mon-Fri)', 'Weekend Only', 'Everyday'] },
+      { name: 'destination', label: 'Destination university', options: 'universities' },
+      { name: 'scheduleType', label: 'Schedule', options: 'schedules' },
       { name: 'pickupTime', label: 'Pickup time', type: 'time' },
       { name: 'dropTime', label: 'Drop time', type: 'time' }
     ]
@@ -117,6 +115,14 @@ export default function SignupPage() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [options, setOptions] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/settings/signup-options`)
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+      .then(setOptions)
+      .catch(() => setError('Could not load the sign-up form. Please refresh the page.'));
+  }, []);
 
   const set = (name: string, value: string) => setValues(v => ({ ...v, [name]: value }));
   const sections = role === 'STUDENT' ? STUDENT_FORM : DRIVER_FORM;
@@ -198,7 +204,7 @@ export default function SignupPage() {
                       {f.options ? (
                         <select id={f.name} value={values[f.name] ?? ''} onChange={e => set(f.name, e.target.value)} required>
                           <option value="">Select</option>
-                          {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+                          {(options[f.options] ?? []).map(o => <option key={o} value={o}>{o}</option>)}
                         </select>
                       ) : (
                         <input

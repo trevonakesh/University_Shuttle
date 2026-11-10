@@ -56,6 +56,29 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
 
   final _picker = ImagePicker();
 
+  Map<String, List<String>>? _options;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOptions();
+  }
+
+  Future<void> _loadOptions() async {
+    final options = await ApiService.getSignupOptions();
+    if (!mounted) return;
+    if (options == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Could not load the form choices.'),
+        action: SnackBarAction(label: 'RETRY', onPressed: _loadOptions),
+      ));
+      return;
+    }
+    setState(() => _options = options);
+  }
+
+  List<String> _choices(String list) => _options?[list] ?? const [];
+
   Future<void> _pickImage(String type) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -267,7 +290,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 _buildSectionTitle('BANK DETAILS'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('BANK NAME', 'SELECT BANK', ['BOC', 'Commercial', 'HNB', 'Sampath'], _bankName, (v) => setState(() => _bankName = v)),
+                  _buildDropdownCol('BANK NAME', 'SELECT BANK', _choices('banks'), _bankName, (v) => setState(() => _bankName = v)),
                   _buildInputCol('ACCOUNT NUMBER', 'ENTER ACCOUNT NUMBER', _accNumCtrl),
                   _buildInputCol('ACCOUNT HOLDER NAME', 'ENTER ACCOUNT HOLDER NAME', _accHolderCtrl),
                 ]),
@@ -286,7 +309,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
                   _buildInputCol('STARTING POINT', 'ENTER STARTING POINT', _startCtrl),
-                  _buildDropdownCol('DESTINATION (UNIVERSITY)', 'SELECT UNIVERSITY', ['NSBM', 'SLIIT'], _destination, (v) => setState(() => _destination = v)),
+                  _buildDropdownCol('DESTINATION (UNIVERSITY)', 'SELECT UNIVERSITY', _choices('universities'), _destination, (v) => setState(() => _destination = v)),
                   _buildInputCol('MONTHLY FEE (LKR)', 'ENTER MONTHLY FEE', _feeCtrl),
                 ]),
                 const SizedBox(height: 20),
@@ -303,7 +326,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 _buildSectionTitle('SCHEDULE'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('SCHEDULE TYPE', 'WEEKLY (MON - FRI)', ['Weekly (Mon-Fri)', 'Weekend Only', 'Everyday'], _scheduleType, (v) => setState(() => _scheduleType = v)),
+                  _buildDropdownCol('SCHEDULE TYPE', 'WEEKLY (MON - FRI)', _choices('schedules'), _scheduleType, (v) => setState(() => _scheduleType = v)),
                   Expanded(
                     flex: 2,
                     child: Container(

@@ -269,6 +269,20 @@ export const cashRecorded = (to: string, studentName: string, month: string, amo
     footnote: "If you didn't make this payment, contact your driver or us."
   });
 
+export const accountUpdatedByAdmin = (to: string, fullName: string, changed: string[]) =>
+  build(to, 'account-updated', 'Your UniShuttle account details were updated', {
+    label: 'Details updated',
+    tone: 'info',
+    preheader: 'An administrator updated your account details.',
+    heading: 'Your account details were updated',
+    paragraphs: [
+      `Hi ${firstName(fullName)}, a UniShuttle administrator updated these details on your account:`,
+      changed.join(', ')
+    ],
+    button: { label: 'Open my account', url: PORTAL() },
+    footnote: "If you didn't ask for this, contact us."
+  });
+
 export const detailsUpdatedByDriver = (to: string, studentName: string, driverName: string, changes: Array<[string, string]>) =>
   build(to, 'details-updated', 'Your details were updated by your driver', {
     label: 'Details updated',

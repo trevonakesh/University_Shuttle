@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { API_BASE, authFetch } from '../../lib/api';
 import PhotoField from '../../components/PhotoField';
+import EditAccountModal from '../../components/EditAccountModal';
 
 type Driver = {
   id: number;
@@ -44,6 +45,8 @@ export default function DriversPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Driver | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const loadDrivers = () => {
     authFetch('/api/admin/drivers')
@@ -164,6 +167,12 @@ export default function DriversPage() {
         </div>
       )}
 
+      {notice && (
+        <div className="glass-panel" style={{ marginBottom: '20px', color: 'var(--success)' }}>
+          {notice}
+        </div>
+      )}
+
       <div className="glass-panel">
         <table className="data-table">
           <thead>
@@ -194,6 +203,7 @@ export default function DriversPage() {
                 <td>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button className="btn btn-primary" onClick={() => setSelectedDriver(driver)}>Review</button>
+                    <button className="btn btn-outline" onClick={() => { setNotice(null); setEditing(driver); }}>Edit</button>
                     <button className="btn btn-danger" onClick={() => deleteDriver(driver)}>Delete</button>
                   </div>
                 </td>
@@ -207,6 +217,16 @@ export default function DriversPage() {
           </tbody>
         </table>
       </div>
+
+      {editing && (
+        <EditAccountModal
+          kind="driver"
+          id={editing.id}
+          name={editing.fullName}
+          onClose={() => setEditing(null)}
+          onSaved={message => { setEditing(null); setNotice(message); loadDrivers(); }}
+        />
+      )}
 
       {showAdd && (
         <div style={overlayStyle}>

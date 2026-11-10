@@ -43,6 +43,29 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
   XFile? _profilePhoto;
   final _picker = ImagePicker();
 
+  Map<String, List<String>>? _options;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOptions();
+  }
+
+  Future<void> _loadOptions() async {
+    final options = await ApiService.getSignupOptions();
+    if (!mounted) return;
+    if (options == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Could not load the form choices.'),
+        action: SnackBarAction(label: 'RETRY', onPressed: _loadOptions),
+      ));
+      return;
+    }
+    setState(() => _options = options);
+  }
+
+  List<String> _choices(String list) => _options?[list] ?? const [];
+
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -213,13 +236,13 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 _buildSectionTitle('UNIVERSITY INFORMATION'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('UNIVERSITY NAME', 'SELECT UNIVERSITY', ['NSBM', 'SLIIT'], _university, (val) => setState(() => _university = val)),
-                  _buildDropdownCol('FACULTY', 'SELECT FACULTY', ['Science', 'Engineering', 'Arts'], _faculty, (val) => setState(() => _faculty = val)),
-                  _buildDropdownCol('DEGREE / PROGRAM', 'SELECT PROGRAM', ['BSc', 'BEng', 'BA'], _program, (val) => setState(() => _program = val)),
+                  _buildDropdownCol('UNIVERSITY NAME', 'SELECT UNIVERSITY', _choices('universities'), _university, (val) => setState(() => _university = val)),
+                  _buildDropdownCol('FACULTY', 'SELECT FACULTY', _choices('faculties'), _faculty, (val) => setState(() => _faculty = val)),
+                  _buildDropdownCol('DEGREE / PROGRAM', 'SELECT PROGRAM', _choices('degreePrograms'), _program, (val) => setState(() => _program = val)),
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('ACADEMIC YEAR', 'SELECT ACADEMIC YEAR', ['Year 1', 'Year 2', 'Year 3', 'Year 4'], _academicYear, (val) => setState(() => _academicYear = val)),
+                  _buildDropdownCol('ACADEMIC YEAR', 'SELECT ACADEMIC YEAR', _choices('academicYears'), _academicYear, (val) => setState(() => _academicYear = val)),
                   _buildInputCol('REGISTRATION NUMBER', 'ENTER REGISTRATION NUMBER', _regNoCtrl),
                   if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
@@ -237,7 +260,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('DESTINATION UNIVERSITY', 'SELECT DESTINATION UNIVERSITY', ['NSBM', 'SLIIT'], _destination, (val) => setState(() => _destination = val)),
+                  _buildDropdownCol('DESTINATION UNIVERSITY', 'SELECT DESTINATION UNIVERSITY', _choices('universities'), _destination, (val) => setState(() => _destination = val)),
                   if (isDesktop) const Expanded(child: SizedBox()),
                   if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
@@ -251,7 +274,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 _buildResponsiveRow(isDesktop, [
                   _buildInputCol('CONTACT PERSON NAME', 'ENTER CONTACT PERSON NAME', _emerNameCtrl),
                   _buildInputCol('PHONE NUMBER', 'ENTER CONTACT PHONE NUMBER', _emerPhoneCtrl),
-                  _buildDropdownCol('RELATIONSHIP', 'SELECT RELATIONSHIP', ['Parent', 'Sibling', 'Guardian'], _relationship, (val) => setState(() => _relationship = val)),
+                  _buildDropdownCol('RELATIONSHIP', 'SELECT RELATIONSHIP', _choices('relationships'), _relationship, (val) => setState(() => _relationship = val)),
                 ]),
                 
                 const SizedBox(height: 50),

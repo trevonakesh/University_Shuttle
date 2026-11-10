@@ -28,7 +28,8 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     { href: '/admin/students', label: 'Students' },
     { href: '/admin/payments', label: 'Payments' },
     { href: '/admin/earnings', label: 'Earnings' },
-    { href: '/admin/messages', label: 'Enquiries' }
+    { href: '/admin/messages', label: 'Enquiries' },
+    { href: '/admin/signup-options', label: 'Sign-up Form' }
   ];
 
   return (

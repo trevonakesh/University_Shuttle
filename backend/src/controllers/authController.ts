@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import prisma from '../prismaClient';
 import { Role } from '@prisma/client';
 import { sendEmail, emails } from '../services/email';
+import { universitiesAllowed } from '../services/settingsService';
 import { signToken } from '../utils/jwt';
 import { createAttemptTracker, minutesLabel } from '../utils/rateLimit';
 import { serverError } from '../utils/httpError';
@@ -179,6 +180,12 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
       registrationNo, homeLocation, emerContactName, emerContactPhone,
       emerRelationship, profilePhotoUrl
     } = req.body;
+
+    if (!await universitiesAllowed(universityName, destination)) {
+      res.status(400).json({ error: 'Please choose a university from the list.' });
+      return;
+    }
+
     const nic = blankToNull(req.body.nic);
     const studentId = blankToNull(req.body.studentId);
 
@@ -266,6 +273,12 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
       scheduleType, pickupTime, dropTime, profilePhotoUrl, nicCopyUrl, licenseCopyUrl,
       vehicleRegUrl, busPhotoUrl
     } = req.body;
+
+    if (!await universitiesAllowed(destination)) {
+      res.status(400).json({ error: 'Please choose a university from the list.' });
+      return;
+    }
+
     const licenseNumber = blankToNull(req.body.licenseNumber);
     const busRegNumber = blankToNull(req.body.busRegNumber);
 
