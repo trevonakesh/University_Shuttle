@@ -30,6 +30,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     }
   }
 
+  // Details an admin removed from sign-up are left blank, so their rows are skipped.
+  bool _filled(dynamic value) => value != null && value.toString().isNotEmpty;
+
   Widget _buildInfoRow(String label, String value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -154,10 +157,10 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                             ),
                             const Divider(color: Colors.white24, height: 30),
-                            _buildInfoRow('BUS REGISTRATION', profile['busRegNumber'] ?? 'Not set', Icons.directions_bus),
-                            _buildInfoRow('LICENSE NUMBER', profile['licenseNumber'] ?? 'Not set', Icons.card_membership),
-                            _buildInfoRow('ROUTE', profile['routeName'] ?? 'Not set', Icons.route),
-                            _buildInfoRow('SEATING CAPACITY', profile['busCapacity']?.toString() ?? 'Not set', Icons.event_seat),
+                            if (_filled(profile['busRegNumber'])) _buildInfoRow('BUS REGISTRATION', profile['busRegNumber'], Icons.directions_bus),
+                            if (_filled(profile['licenseNumber'])) _buildInfoRow('LICENSE NUMBER', profile['licenseNumber'], Icons.card_membership),
+                            if (_filled(profile['routeName'])) _buildInfoRow('ROUTE', profile['routeName'], Icons.route),
+                            if (_filled(profile['busCapacity'])) _buildInfoRow('SEATING CAPACITY', profile['busCapacity'].toString(), Icons.event_seat),
                           ],
                         ),
                       ),

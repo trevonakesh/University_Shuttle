@@ -164,13 +164,13 @@ class ApiService {
     }
   }
 
-  // The sign-up dropdown choices, which admins edit. Null if they can't be loaded.
-  static Future<Map<String, List<String>>?> getSignupOptions() async {
+  // The sign-up form as admins set it up: dropdown choices, removed fields and
+  // added fields for each role. Null if it can't be loaded.
+  static Future<Map<String, dynamic>?> getSignupForm() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/settings/signup-options'));
+      final response = await http.get(Uri.parse('$baseUrl/settings/signup-form'));
       if (response.statusCode != 200) return null;
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return data.map((list, items) => MapEntry(list, List<String>.from(items as List)));
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } catch (e) {
       return null;
     }

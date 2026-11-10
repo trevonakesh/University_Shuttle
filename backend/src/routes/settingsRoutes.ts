@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getCommissionRate, getSignupOptions } from '../services/settingsService';
+import { getCommissionRate, getSignupForm, getSignupOptions } from '../services/settingsService';
 import { onlinePaymentsEnabled } from '../services/payhere';
 
 const router = Router();
@@ -22,6 +22,18 @@ router.get('/signup-options', async (_req: Request, res: Response) => {
     res.status(200).json(await getSignupOptions());
   } catch (error) {
     console.error('Error fetching sign-up options:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Public: everything the sign-up forms need, the dropdown choices plus which
+// fields to leave out and which extra fields to show.
+router.get('/signup-form', async (_req: Request, res: Response) => {
+  try {
+    const [options, form] = await Promise.all([getSignupOptions(), getSignupForm()]);
+    res.status(200).json({ options, ...form });
+  } catch (error) {
+    console.error('Error fetching sign-up form:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import prisma from '../prismaClient';
 import { Role } from '@prisma/client';
 import { sendEmail, emails } from '../services/email';
-import { universitiesAllowed } from '../services/settingsService';
+import { getSignupForm, parseCustomAnswers, universitiesAllowed } from '../services/settingsService';
 import { signToken } from '../utils/jwt';
 import { createAttemptTracker, minutesLabel } from '../utils/rateLimit';
 import { serverError } from '../utils/httpError';
@@ -186,6 +186,12 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
       return;
     }
 
+    const custom = parseCustomAnswers((await getSignupForm()).student.custom, req.body.customFields, { enforceRequired: true });
+    if (custom.error) {
+      res.status(400).json({ error: custom.error });
+      return;
+    }
+
     const nic = blankToNull(req.body.nic);
     const studentId = blankToNull(req.body.studentId);
 
@@ -223,7 +229,8 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
             emerContactName,
             emerContactPhone,
             emerRelationship,
-            profilePhotoUrl
+            profilePhotoUrl,
+            customFields: custom.answers
           }
         }
       },
@@ -279,6 +286,12 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    const custom = parseCustomAnswers((await getSignupForm()).driver.custom, req.body.customFields, { enforceRequired: true });
+    if (custom.error) {
+      res.status(400).json({ error: custom.error });
+      return;
+    }
+
     const licenseNumber = blankToNull(req.body.licenseNumber);
     const busRegNumber = blankToNull(req.body.busRegNumber);
 
@@ -323,7 +336,8 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
             nicCopyUrl,
             licenseCopyUrl,
             vehicleRegUrl,
-            busPhotoUrl
+            busPhotoUrl,
+            customFields: custom.answers
           }
         }
       },

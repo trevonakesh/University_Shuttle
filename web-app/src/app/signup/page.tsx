@@ -10,10 +10,13 @@ import '../portal/portal.css';
 import '../auth.css';
 
 type Role = 'STUDENT' | 'DRIVER';
-// `options` names a list served by /api/settings/signup-options, which admins
-// edit in the admin panel.
-type Field = { name: string; label: string; type?: string; options?: string };
+// `options` names a list served by /api/settings/signup-form, which admins
+// edit in the admin panel. `choices` and `optional` are for admin-added fields.
+type Field = { name: string; label: string; type?: string; options?: string; choices?: string[]; optional?: boolean };
 type Section = { title: string; fields: Field[]; photos?: Field[] };
+type CustomField = { key: string; label: string; type: 'text' | 'number' | 'phone' | 'select'; required: boolean; options?: string[] };
+type FormLayout = { hidden: string[]; custom: CustomField[] };
+type SignupForm = { options: Record<string, string[]>; student: FormLayout; driver: FormLayout };
 
 const ACCOUNT: Field[] = [
   { name: 'fullName', label: 'Full name' },
@@ -115,27 +118,48 @@ export default function SignupPage() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [options, setOptions] = useState<Record<string, string[]>>({});
+  const [form, setForm] = useState<SignupForm | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/settings/signup-options`)
+    fetch(`${API_BASE}/api/settings/signup-form`)
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-      .then(setOptions)
+      .then(setForm)
       .catch(() => setError('Could not load the sign-up form. Please refresh the page.'));
   }, []);
 
   const set = (name: string, value: string) => setValues(v => ({ ...v, [name]: value }));
-  const sections = role === 'STUDENT' ? STUDENT_FORM : DRIVER_FORM;
+
+  const layout = form?.[role === 'STUDENT' ? 'student' : 'driver'];
+  const shown = (f: Field) => !layout?.hidden.includes(f.name);
+  const customFields = layout?.custom ?? [];
+  const sections: Section[] = (role === 'STUDENT' ? STUDENT_FORM : DRIVER_FORM)
+    .map(s => ({ ...s, fields: s.fields.filter(shown), photos: s.photos?.filter(shown) }))
+    .filter(s => s.fields.length > 0 || (s.photos?.length ?? 0) > 0);
+  if (customFields.length > 0) {
+    sections.push({
+      title: 'Additional Information',
+      fields: customFields.map(f => ({
+        name: f.key,
+        label: f.label,
+        type: f.type === 'phone' ? 'tel' : f.type === 'number' ? 'number' : 'text',
+        choices: f.type === 'select' ? f.options ?? [] : undefined,
+        optional: !f.required
+      }))
+    });
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const payload: Record<string, string> = { ...values };
-    for (const key of ['pickupTime', 'dropTime']) {
-      if (payload[key]) payload[key] = toDisplayTime(payload[key]);
+    const payload: Record<string, unknown> = {};
+    const answers: Record<string, string> = {};
+    for (const [key, value] of Object.entries(values)) {
+      if (customFields.some(f => f.key === key)) answers[key] = value;
+      else payload[key] = (key === 'pickupTime' || key === 'dropTime') && value ? toDisplayTime(value) : value;
     }
+    payload.customFields = answers;
 
     try {
       const res = await fetch(`${API_BASE}/api/auth/register/${role.toLowerCase()}`, {
@@ -193,7 +217,7 @@ export default function SignupPage() {
           )}
           {error && <div className="p-alert red" style={{ marginBottom: '20px' }}>{error}</div>}
 
-          <form onSubmit={submit}>
+          {!form ? (!error && <div style={{ textAlign: 'center', padding: '24px', color: '#7a8699' }}>Loading the form…</div>) : <form onSubmit={submit}>
             {sections.map(section => (
               <div key={section.title} style={{ marginBottom: '24px' }}>
                 <div className="p-card-title">{section.title}</div>
@@ -201,10 +225,10 @@ export default function SignupPage() {
                   {section.fields.map(f => (
                     <div className="p-field" key={f.name}>
                       <label htmlFor={f.name}>{f.label}</label>
-                      {f.options ? (
-                        <select id={f.name} value={values[f.name] ?? ''} onChange={e => set(f.name, e.target.value)} required>
+                      {f.options || f.choices ? (
+                        <select id={f.name} value={values[f.name] ?? ''} onChange={e => set(f.name, e.target.value)} required={!f.optional}>
                           <option value="">Select</option>
-                          {(options[f.options] ?? []).map(o => <option key={o} value={o}>{o}</option>)}
+                          {(f.choices ?? form.options[f.options!] ?? []).map(o => <option key={o} value={o}>{o}</option>)}
                         </select>
                       ) : (
                         <input
@@ -215,7 +239,7 @@ export default function SignupPage() {
                           value={values[f.name] ?? ''}
                           onChange={e => set(f.name, e.target.value)}
                           autoComplete={f.name === 'password' ? 'new-password' : undefined}
-                          required
+                          required={!f.optional}
                         />
                       )}
                     </div>
@@ -230,7 +254,7 @@ export default function SignupPage() {
             <button type="submit" className="p-btn primary" disabled={loading} style={{ width: '100%', padding: '13px', fontSize: '15px' }}>
               {loading ? 'Creating your account…' : 'Create Account'}
             </button>
-          </form>
+          </form>}
 
           <div className="auth-foot">
             Already have an account? <Link href="/login" className="auth-link">Sign in</Link>

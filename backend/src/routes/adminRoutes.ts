@@ -6,7 +6,8 @@ import {
   getCommissionRateHandler, updateCommissionRateHandler
 } from '../controllers/adminController';
 import {
-  getDriverAccount, updateDriverAccount, getStudentAccount, updateStudentAccount, updateSignupOptions
+  getDriverAccount, updateDriverAccount, getStudentAccount, updateStudentAccount, updateSignupOptions,
+  getAdminSignupForm, updateSignupForm
 } from '../controllers/adminAccountController';
 import { getPayoutRequests, reviewPayoutRequest } from '../controllers/payoutRequestController';
 import { getContactMessages, markMessageRead, deleteContactMessage } from '../controllers/contactController';
@@ -49,5 +50,7 @@ router.delete('/messages/:id', deleteContactMessage as any);
 router.get('/settings/commission', getCommissionRateHandler as any);
 router.patch('/settings/commission', updateCommissionRateHandler as any);
 router.patch('/settings/signup-options', updateSignupOptions as any);
+router.get('/settings/signup-form', getAdminSignupForm as any);
+router.patch('/settings/signup-form', updateSignupForm as any);
 
 export default router;

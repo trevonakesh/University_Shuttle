@@ -30,6 +30,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     }
   }
 
+  // Details an admin removed from sign-up are left blank, so their rows are skipped.
+  bool _filled(dynamic value) => value != null && value.toString().isNotEmpty;
+
   Widget _buildInfoRow(String label, String value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -136,7 +139,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                             _buildInfoRow('FULL NAME', profile['fullName'] ?? 'Not set', Icons.badge),
                             _buildInfoRow('EMAIL', _user?['email'] ?? 'Not set', Icons.email),
                             _buildInfoRow('PHONE', _user?['phone'] ?? 'Not set', Icons.phone),
-                            _buildInfoRow('NIC NUMBER', profile['nic'] ?? 'Not set', Icons.credit_card),
+                            if (_filled(profile['nic'])) _buildInfoRow('NIC NUMBER', profile['nic'], Icons.credit_card),
                             
                             const SizedBox(height: 40),
                             const Text(
@@ -145,9 +148,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                             ),
                             const Divider(color: Colors.white24, height: 30),
                             _buildInfoRow('UNIVERSITY', profile['universityName'] ?? 'Not set', Icons.account_balance),
-                            _buildInfoRow('FACULTY', profile['faculty'] ?? 'Not set', Icons.domain),
-                            _buildInfoRow('PROGRAM', profile['degreeProgram'] ?? 'Not set', Icons.book),
-                            _buildInfoRow('YEAR', profile['academicYear'] ?? 'Not set', Icons.school),
+                            if (_filled(profile['faculty'])) _buildInfoRow('FACULTY', profile['faculty'], Icons.domain),
+                            if (_filled(profile['degreeProgram'])) _buildInfoRow('PROGRAM', profile['degreeProgram'], Icons.book),
+                            if (_filled(profile['academicYear'])) _buildInfoRow('YEAR', profile['academicYear'], Icons.school),
 
                             const SizedBox(height: 40),
                             const Text(
@@ -155,7 +158,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                             ),
                             const Divider(color: Colors.white24, height: 30),
-                            _buildInfoRow('HOME LOCATION', profile['homeLocation'] ?? 'Not set', Icons.home),
+                            if (_filled(profile['homeLocation'])) _buildInfoRow('HOME LOCATION', profile['homeLocation'], Icons.home),
                             _buildInfoRow('PICKUP POINT', profile['pickupPoint'] ?? 'Not set', Icons.location_on),
                             _buildInfoRow('DESTINATION', profile['destination'] ?? 'Not set', Icons.flag),
                           ],

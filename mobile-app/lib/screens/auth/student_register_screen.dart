@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/app_background.dart';
+import '../../widgets/custom_signup_fields.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../student/student_dashboard.dart';
@@ -43,28 +44,33 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
   XFile? _profilePhoto;
   final _picker = ImagePicker();
 
-  Map<String, List<String>>? _options;
+  Map<String, dynamic>? _form;
+  final Map<String, String> _customAnswers = {};
 
   @override
   void initState() {
     super.initState();
-    _loadOptions();
+    _loadForm();
   }
 
-  Future<void> _loadOptions() async {
-    final options = await ApiService.getSignupOptions();
+  Future<void> _loadForm() async {
+    final form = await ApiService.getSignupForm();
     if (!mounted) return;
-    if (options == null) {
+    if (form == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Could not load the form choices.'),
-        action: SnackBarAction(label: 'RETRY', onPressed: _loadOptions),
+        content: const Text('Could not load the sign-up form.'),
+        duration: const Duration(days: 1),
+        action: SnackBarAction(label: 'RETRY', onPressed: _loadForm),
       ));
       return;
     }
-    setState(() => _options = options);
+    setState(() => _form = form);
   }
 
-  List<String> _choices(String list) => _options?[list] ?? const [];
+  List<String> _choices(String list) => List<String>.from(_form?['options']?[list] ?? const []);
+  bool _shown(String field) => !((_form?['student']?['hidden'] as List?) ?? const []).contains(field);
+  bool _anyShown(List<String> fields) => fields.any(_shown);
+  List<dynamic> get _customFields => (_form?['student']?['custom'] as List?) ?? const [];
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -98,6 +104,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         'emerContactPhone': _emerPhoneCtrl.text,
         'emerRelationship': _relationship,
         'profilePhotoUrl': profileUrl,
+        'customFields': _customAnswers,
       };
 
       final result = await ApiService.studentRegister(payload);
@@ -179,7 +186,10 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                           ],
                         ),
                         const SizedBox(height: 30),
-                        _buildFormCard(context, isDesktop),
+                        if (_form == null)
+                          const Center(child: CircularProgressIndicator(color: Colors.white))
+                        else
+                          _buildFormCard(context, isDesktop),
                       ],
                     ),
                   ),
@@ -213,8 +223,8 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
                   _buildInputCol('FULL NAME', 'ENTER FULL NAME', _fullNameCtrl),
-                  _buildInputCol('NIC NUMBER', 'ENTER NIC NUMBER', _nicCtrl),
-                  _buildInputCol('STUDENT ID', 'ENTER STUDENT ID', _studentIdCtrl),
+                  if (_shown('nic')) _buildInputCol('NIC NUMBER', 'ENTER NIC NUMBER', _nicCtrl),
+                  if (_shown('studentId')) _buildInputCol('STUDENT ID', 'ENTER STUDENT ID', _studentIdCtrl),
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
@@ -223,11 +233,12 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                   _buildInputCol('PASSWORD', 'ENTER PASSWORD', _passwordCtrl, obscureText: true),
                 ]),
                 const SizedBox(height: 20),
-                _buildResponsiveRow(isDesktop, [
-                  _buildPhotoUploadCol(),
-                  if (isDesktop) const Expanded(child: SizedBox()),
-                  if (isDesktop) const Expanded(child: SizedBox()),
-                ]),
+                if (_shown('profilePhotoUrl'))
+                  _buildResponsiveRow(isDesktop, [
+                    _buildPhotoUploadCol(),
+                    if (isDesktop) const Expanded(child: SizedBox()),
+                    if (isDesktop) const Expanded(child: SizedBox()),
+                  ]),
                 
                 const SizedBox(height: 30),
                 const Divider(color: Colors.white24, thickness: 1),
@@ -237,13 +248,13 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
                   _buildDropdownCol('UNIVERSITY NAME', 'SELECT UNIVERSITY', _choices('universities'), _university, (val) => setState(() => _university = val)),
-                  _buildDropdownCol('FACULTY', 'SELECT FACULTY', _choices('faculties'), _faculty, (val) => setState(() => _faculty = val)),
-                  _buildDropdownCol('DEGREE / PROGRAM', 'SELECT PROGRAM', _choices('degreePrograms'), _program, (val) => setState(() => _program = val)),
+                  if (_shown('faculty')) _buildDropdownCol('FACULTY', 'SELECT FACULTY', _choices('faculties'), _faculty, (val) => setState(() => _faculty = val)),
+                  if (_shown('degreeProgram')) _buildDropdownCol('DEGREE / PROGRAM', 'SELECT PROGRAM', _choices('degreePrograms'), _program, (val) => setState(() => _program = val)),
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('ACADEMIC YEAR', 'SELECT ACADEMIC YEAR', _choices('academicYears'), _academicYear, (val) => setState(() => _academicYear = val)),
-                  _buildInputCol('REGISTRATION NUMBER', 'ENTER REGISTRATION NUMBER', _regNoCtrl),
+                  if (_shown('academicYear')) _buildDropdownCol('ACADEMIC YEAR', 'SELECT ACADEMIC YEAR', _choices('academicYears'), _academicYear, (val) => setState(() => _academicYear = val)),
+                  if (_shown('registrationNo')) _buildInputCol('REGISTRATION NUMBER', 'ENTER REGISTRATION NUMBER', _regNoCtrl),
                   if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
                 
@@ -254,7 +265,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 _buildSectionTitle('TRAVEL INFORMATION'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildInputCol('HOME LOCATION', 'ENTER HOME LOCATION', _homeLocCtrl),
+                  if (_shown('homeLocation')) _buildInputCol('HOME LOCATION', 'ENTER HOME LOCATION', _homeLocCtrl),
                   _buildInputCol('MAIN ROAD / PICKUP POINT', 'ENTER PICKUP POINT', _pickupCtrl),
                   if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
@@ -265,18 +276,30 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                   if (isDesktop) const Expanded(child: SizedBox()),
                 ]),
                 
-                const SizedBox(height: 30),
-                const Divider(color: Colors.white24, thickness: 1),
-                const SizedBox(height: 30),
-                
-                _buildSectionTitle('EMERGENCY CONTACT'),
-                const SizedBox(height: 20),
-                _buildResponsiveRow(isDesktop, [
-                  _buildInputCol('CONTACT PERSON NAME', 'ENTER CONTACT PERSON NAME', _emerNameCtrl),
-                  _buildInputCol('PHONE NUMBER', 'ENTER CONTACT PHONE NUMBER', _emerPhoneCtrl),
-                  _buildDropdownCol('RELATIONSHIP', 'SELECT RELATIONSHIP', _choices('relationships'), _relationship, (val) => setState(() => _relationship = val)),
-                ]),
-                
+                if (_anyShown(['emerContactName', 'emerContactPhone', 'emerRelationship'])) ...[
+                  const SizedBox(height: 30),
+                  const Divider(color: Colors.white24, thickness: 1),
+                  const SizedBox(height: 30),
+
+                  _buildSectionTitle('EMERGENCY CONTACT'),
+                  const SizedBox(height: 20),
+                  _buildResponsiveRow(isDesktop, [
+                    if (_shown('emerContactName')) _buildInputCol('CONTACT PERSON NAME', 'ENTER CONTACT PERSON NAME', _emerNameCtrl),
+                    if (_shown('emerContactPhone')) _buildInputCol('PHONE NUMBER', 'ENTER CONTACT PHONE NUMBER', _emerPhoneCtrl),
+                    if (_shown('emerRelationship')) _buildDropdownCol('RELATIONSHIP', 'SELECT RELATIONSHIP', _choices('relationships'), _relationship, (val) => setState(() => _relationship = val)),
+                  ]),
+                ],
+
+                if (_customFields.isNotEmpty) ...[
+                  const SizedBox(height: 30),
+                  const Divider(color: Colors.white24, thickness: 1),
+                  const SizedBox(height: 30),
+
+                  _buildSectionTitle('ADDITIONAL INFORMATION'),
+                  const SizedBox(height: 20),
+                  CustomSignupFields(fields: _customFields, answers: _customAnswers),
+                ],
+
                 const SizedBox(height: 50),
                 
                 SizedBox(

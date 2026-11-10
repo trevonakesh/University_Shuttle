@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/app_background.dart';
+import '../../widgets/custom_signup_fields.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../driver/driver_dashboard.dart';
@@ -56,28 +57,33 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
 
   final _picker = ImagePicker();
 
-  Map<String, List<String>>? _options;
+  Map<String, dynamic>? _form;
+  final Map<String, String> _customAnswers = {};
 
   @override
   void initState() {
     super.initState();
-    _loadOptions();
+    _loadForm();
   }
 
-  Future<void> _loadOptions() async {
-    final options = await ApiService.getSignupOptions();
+  Future<void> _loadForm() async {
+    final form = await ApiService.getSignupForm();
     if (!mounted) return;
-    if (options == null) {
+    if (form == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Could not load the form choices.'),
-        action: SnackBarAction(label: 'RETRY', onPressed: _loadOptions),
+        content: const Text('Could not load the sign-up form.'),
+        duration: const Duration(days: 1),
+        action: SnackBarAction(label: 'RETRY', onPressed: _loadForm),
       ));
       return;
     }
-    setState(() => _options = options);
+    setState(() => _form = form);
   }
 
-  List<String> _choices(String list) => _options?[list] ?? const [];
+  List<String> _choices(String list) => List<String>.from(_form?['options']?[list] ?? const []);
+  bool _shown(String field) => !((_form?['driver']?['hidden'] as List?) ?? const []).contains(field);
+  bool _anyShown(List<String> fields) => fields.any(_shown);
+  List<dynamic> get _customFields => (_form?['driver']?['custom'] as List?) ?? const [];
 
   Future<void> _pickImage(String type) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -129,6 +135,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           'licenseCopyUrl': licenseUrl,
           'vehicleRegUrl': vehicleRegUrl,
           'busPhotoUrl': busPhotoUrl,
+          'customFields': _customAnswers,
         };
 
       final result = await ApiService.driverRegister(payload);
@@ -233,7 +240,10 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                           ],
                         ),
                         const SizedBox(height: 30),
-                        _buildFormCard(context, isDesktop),
+                        if (_form == null)
+                          const Center(child: CircularProgressIndicator(color: Colors.white))
+                        else
+                          _buildFormCard(context, isDesktop),
                       ],
                     ),
                   ),
@@ -274,27 +284,30 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 _buildResponsiveRow(isDesktop, [
                   _buildInputCol('EMAIL ADDRESS', 'ENTER EMAIL ADDRESS', _emailCtrl),
                   _buildInputCol('PASSWORD', 'ENTER PASSWORD', _passwordCtrl, obscureText: true),
-                  _buildInputCol('DRIVING LICENSE NUMBER', 'ENTER LICENSE NUMBER', _licenseCtrl),
+                  if (_shown('licenseNumber')) _buildInputCol('DRIVING LICENSE NUMBER', 'ENTER LICENSE NUMBER', _licenseCtrl),
                 ]),
                 const SizedBox(height: 20),
-                _buildResponsiveRow(isDesktop, [
-                  _buildUploadCol('PROFILE PHOTO', 'UPLOAD PHOTO', _profilePhoto, () => _pickImage('profile')),
-                  if (isDesktop) Expanded(child: const SizedBox()),
-                  if (isDesktop) Expanded(child: const SizedBox()),
-                ]),
-                
-                const SizedBox(height: 30),
-                const Divider(color: Colors.white24, thickness: 1),
-                const SizedBox(height: 30),
-                
-                _buildSectionTitle('BANK DETAILS'),
-                const SizedBox(height: 20),
-                _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('BANK NAME', 'SELECT BANK', _choices('banks'), _bankName, (v) => setState(() => _bankName = v)),
-                  _buildInputCol('ACCOUNT NUMBER', 'ENTER ACCOUNT NUMBER', _accNumCtrl),
-                  _buildInputCol('ACCOUNT HOLDER NAME', 'ENTER ACCOUNT HOLDER NAME', _accHolderCtrl),
-                ]),
-                
+                if (_shown('profilePhotoUrl'))
+                  _buildResponsiveRow(isDesktop, [
+                    _buildUploadCol('PROFILE PHOTO', 'UPLOAD PHOTO', _profilePhoto, () => _pickImage('profile')),
+                    if (isDesktop) Expanded(child: const SizedBox()),
+                    if (isDesktop) Expanded(child: const SizedBox()),
+                  ]),
+
+                if (_anyShown(['bankName', 'accNumber', 'accHolder'])) ...[
+                  const SizedBox(height: 30),
+                  const Divider(color: Colors.white24, thickness: 1),
+                  const SizedBox(height: 30),
+
+                  _buildSectionTitle('BANK DETAILS'),
+                  const SizedBox(height: 20),
+                  _buildResponsiveRow(isDesktop, [
+                    if (_shown('bankName')) _buildDropdownCol('BANK NAME', 'SELECT BANK', _choices('banks'), _bankName, (v) => setState(() => _bankName = v)),
+                    if (_shown('accNumber')) _buildInputCol('ACCOUNT NUMBER', 'ENTER ACCOUNT NUMBER', _accNumCtrl),
+                    if (_shown('accHolder')) _buildInputCol('ACCOUNT HOLDER NAME', 'ENTER ACCOUNT HOLDER NAME', _accHolderCtrl),
+                  ]),
+                ],
+
                 const SizedBox(height: 30),
                 const Divider(color: Colors.white24, thickness: 1),
                 const SizedBox(height: 30),
@@ -302,13 +315,13 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 _buildSectionTitle('BUS INFORMATION'),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildInputCol('BUS REGISTRATION NUMBER', 'ENTER BUS REG NUMBER', _busRegCtrl),
-                  _buildInputCol('BUS CAPACITY (SEATS)', 'ENTER CAPACITY', _busCapCtrl),
-                  _buildInputCol('ROUTE NAME', 'ENTER ROUTE NAME', _routeCtrl),
+                  if (_shown('busRegNumber')) _buildInputCol('BUS REGISTRATION NUMBER', 'ENTER BUS REG NUMBER', _busRegCtrl),
+                  if (_shown('busCapacity')) _buildInputCol('BUS CAPACITY (SEATS)', 'ENTER CAPACITY', _busCapCtrl),
+                  if (_shown('routeName')) _buildInputCol('ROUTE NAME', 'ENTER ROUTE NAME', _routeCtrl),
                 ]),
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
-                  _buildInputCol('STARTING POINT', 'ENTER STARTING POINT', _startCtrl),
+                  if (_shown('startingPoint')) _buildInputCol('STARTING POINT', 'ENTER STARTING POINT', _startCtrl),
                   _buildDropdownCol('DESTINATION (UNIVERSITY)', 'SELECT UNIVERSITY', _choices('universities'), _destination, (v) => setState(() => _destination = v)),
                   _buildInputCol('MONTHLY FEE (LKR)', 'ENTER MONTHLY FEE', _feeCtrl),
                 ]),
@@ -319,49 +332,64 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                   if (isDesktop) Expanded(child: const SizedBox()),
                 ]),
                 
-                const SizedBox(height: 30),
-                const Divider(color: Colors.white24, thickness: 1),
-                const SizedBox(height: 30),
-                
-                _buildSectionTitle('SCHEDULE'),
-                const SizedBox(height: 20),
-                _buildResponsiveRow(isDesktop, [
-                  _buildDropdownCol('SCHEDULE TYPE', 'WEEKLY (MON - FRI)', _choices('schedules'), _scheduleType, (v) => setState(() => _scheduleType = v)),
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white.withOpacity(0.2))),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('WEEKDAY (MON - FRI)', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 16),
-                          Row(
+                if (_anyShown(['scheduleType', 'pickupTime', 'dropTime'])) ...[
+                  const SizedBox(height: 30),
+                  const Divider(color: Colors.white24, thickness: 1),
+                  const SizedBox(height: 30),
+
+                  _buildSectionTitle('SCHEDULE'),
+                  const SizedBox(height: 20),
+                  _buildResponsiveRow(isDesktop, [
+                    if (_shown('scheduleType')) _buildDropdownCol('SCHEDULE TYPE', 'WEEKLY (MON - FRI)', _choices('schedules'), _scheduleType, (v) => setState(() => _scheduleType = v)),
+                    if (_anyShown(['pickupTime', 'dropTime']))
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white.withOpacity(0.2))),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(child: _buildTimePickerCol('PICKUP TIME', _pickupTime, () => _selectTime(context, true))),
-                              const SizedBox(width: 20),
-                              Expanded(child: _buildTimePickerCol('DROP TIME', _dropTime, () => _selectTime(context, false))),
+                              const Text('WEEKDAY (MON - FRI)', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  if (_shown('pickupTime')) Expanded(child: _buildTimePickerCol('PICKUP TIME', _pickupTime, () => _selectTime(context, true))),
+                                  if (_shown('pickupTime') && _shown('dropTime')) const SizedBox(width: 20),
+                                  if (_shown('dropTime')) Expanded(child: _buildTimePickerCol('DROP TIME', _dropTime, () => _selectTime(context, false))),
+                                ],
+                              )
                             ],
-                          )
-                        ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ]),
+                  ]),
+                ],
 
-                const SizedBox(height: 30),
-                const Divider(color: Colors.white24, thickness: 1),
-                const SizedBox(height: 30),
+                if (_anyShown(['nicCopyUrl', 'licenseCopyUrl', 'vehicleRegUrl', 'busPhotoUrl'])) ...[
+                  const SizedBox(height: 30),
+                  const Divider(color: Colors.white24, thickness: 1),
+                  const SizedBox(height: 30),
 
-                _buildSectionTitle('DOCUMENTS UPLOAD'),
-                const SizedBox(height: 20),
-                _buildResponsiveRow(isDesktop, [
-                  _buildUploadCol('NIC COPY', 'UPLOAD', _nicCopy, () => _pickImage('nic')),
-                  _buildUploadCol('DRIVING LICENSE COPY', 'UPLOAD', _licenseCopy, () => _pickImage('license')),
-                  _buildUploadCol('VEHICLE REGISTRATION COPY', 'UPLOAD', _vehicleReg, () => _pickImage('vehicle')),
-                  _buildUploadCol('BUS PHOTO', 'UPLOAD', _busPhoto, () => _pickImage('bus')),
-                ]),
+                  _buildSectionTitle('DOCUMENTS UPLOAD'),
+                  const SizedBox(height: 20),
+                  _buildResponsiveRow(isDesktop, [
+                    if (_shown('nicCopyUrl')) _buildUploadCol('NIC COPY', 'UPLOAD', _nicCopy, () => _pickImage('nic')),
+                    if (_shown('licenseCopyUrl')) _buildUploadCol('DRIVING LICENSE COPY', 'UPLOAD', _licenseCopy, () => _pickImage('license')),
+                    if (_shown('vehicleRegUrl')) _buildUploadCol('VEHICLE REGISTRATION COPY', 'UPLOAD', _vehicleReg, () => _pickImage('vehicle')),
+                    if (_shown('busPhotoUrl')) _buildUploadCol('BUS PHOTO', 'UPLOAD', _busPhoto, () => _pickImage('bus')),
+                  ]),
+                ],
+
+                if (_customFields.isNotEmpty) ...[
+                  const SizedBox(height: 30),
+                  const Divider(color: Colors.white24, thickness: 1),
+                  const SizedBox(height: 30),
+
+                  _buildSectionTitle('ADDITIONAL INFORMATION'),
+                  const SizedBox(height: 20),
+                  CustomSignupFields(fields: _customFields, answers: _customAnswers),
+                ],
 
                 const SizedBox(height: 50),
                 

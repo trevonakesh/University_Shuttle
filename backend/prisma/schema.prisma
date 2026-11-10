@@ -109,6 +109,9 @@ model Student {
   // Profile Photo URL
   profilePhotoUrl String?
 
+  // Answers to admin-added sign-up fields, by field key
+  customFields Json?
+
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   seatRequests      SeatRequest[]
   payments          Payment[]
@@ -150,6 +153,9 @@ model Driver {
   licenseCopyUrl  String?
   vehicleRegUrl   String?
   busPhotoUrl     String?
+
+  // Answers to admin-added sign-up fields, by field key
+  customFields Json?
 
   status        DriverStatus @default(PENDING)
   walletBalance Float        @default(0)
