@@ -3,6 +3,7 @@ import prisma from '../prismaClient';
 import { sendEmail, emails } from '../services/email';
 import { createNotification } from '../services/fareService';
 import crypto from 'crypto';
+import { findUserByEmail, normalizeEmail } from '../services/userLookup';
 import {
   getSignupForm, getSignupOptions, parseCustomAnswers, setSignupForm, setSignupOptions, universitiesAllowed,
   CustomField, CustomFieldType, FormKind, SIGNUP_FIELDS, SIGNUP_OPTION_LISTS, SignupOptionList
@@ -121,12 +122,15 @@ const updateAccount = (kind: Kind) => async (req: Request, res: Response) => {
       if (raw !== null && typeof raw !== 'string') {
         return res.status(400).json({ message: `${labels[field]} must be text.` });
       }
-      const value = (raw ?? '').trim() || null;
+      let value: string | null = (raw ?? '').trim() || null;
+      if (field === 'email') value = normalizeEmail(value) || null;
       if (value && value.length > MAX_LENGTH) {
         return res.status(400).json({ message: `${labels[field]} is too long.` });
       }
       const current = (field in ACCOUNT_FIELDS ? account.user[field] : account[field]) || null;
-      if (value !== current) changes[field] = value;
+      // An email that differs only by capitals or spaces is the same email.
+      const unchanged = field === 'email' ? (value ?? '') === normalizeEmail(current) : value === current;
+      if (!unchanged) changes[field] = value;
     }
 
     let customFields: Record<string, string> | undefined;
@@ -154,6 +158,9 @@ const updateAccount = (kind: Kind) => async (req: Request, res: Response) => {
 
     const invalid = await validationError(kind, changes);
     if (invalid) return res.status(400).json({ message: invalid });
+    if (changes.email && await findUserByEmail(changes.email, account.user.id)) {
+      return res.status(400).json({ message: 'Another account already uses this email.' });
+    }
 
     const { email, phone, ...profile } = changes;
     const userData: Record<string, unknown> = {};

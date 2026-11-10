@@ -8,6 +8,7 @@ import { sendEmail, emails } from '../services/email';
 import { debitWallet } from '../services/walletService';
 import { removeDriver, removeStudent } from '../services/accountService';
 import { HttpError } from '../utils/httpError';
+import { findUserByEmail, normalizeEmail } from '../services/userLookup';
 
 export const getDrivers = async (req: Request, res: Response) => {
   try {
@@ -104,10 +105,14 @@ export const createDriver = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'email, password, fullName and nic are required' });
     }
 
+    if (await findUserByEmail(email)) {
+      return res.status(400).json({ message: 'A user with this email already exists' });
+    }
+
     const passwordHash = await bcrypt.hash(String(password), 10);
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizeEmail(email),
         phone: phone || null,
         passwordHash,
         role: Role.DRIVER,
@@ -207,10 +212,14 @@ export const createStudent = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'email, password, fullName and universityName are required' });
     }
 
+    if (await findUserByEmail(email)) {
+      return res.status(400).json({ message: 'A user with this email already exists' });
+    }
+
     const passwordHash = await bcrypt.hash(String(password), 10);
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizeEmail(email),
         phone: phone || null,
         passwordHash,
         role: Role.STUDENT,

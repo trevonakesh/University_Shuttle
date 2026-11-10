@@ -5,6 +5,7 @@ import prisma from '../prismaClient';
 import { Role } from '@prisma/client';
 import { sendEmail, emails } from '../services/email';
 import { getSignupForm, parseCustomAnswers, universitiesAllowed } from '../services/settingsService';
+import { findUserByEmail, normalizeEmail } from '../services/userLookup';
 import { signToken } from '../utils/jwt';
 import { createAttemptTracker, minutesLabel } from '../utils/rateLimit';
 import { serverError } from '../utils/httpError';
@@ -61,7 +62,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     resetRequestsByEmail.fail(key);
     resetRequestsByIp.fail(req.ip ?? '');
 
-    const user = await prisma.user.findUnique({ where: { email }, include: { student: true, driver: true } });
+    const user = await findUserByEmail(email);
     const generic = { message: 'If an account exists for that email, a reset code has been sent.' };
 
     if (!user || user.deactivatedAt) {
@@ -105,7 +106,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     const wait = Math.max(codeGuessesByEmail.blockedFor(key), codeGuessesByIp.blockedFor(ip));
     if (wait) return tooMany(res, wait, 'wrong codes');
 
-    const user = await prisma.user.findUnique({ where: { email }, include: { student: true, driver: true } });
+    const user = await findUserByEmail(email);
     if (!user || !user.resetCodeHash || !user.resetCodeExpiry) {
       codeGuessesByIp.fail(ip);
       res.status(400).json({ error: 'No reset request found. Please request a new code.' });
@@ -174,8 +175,10 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
       return;
     }
 
+    const email = normalizeEmail(req.body.email);
+    const phone = String(req.body.phone).trim();
     const {
-      email, password, phone, fullName, universityName,
+      password, fullName, universityName,
       pickupPoint, destination, faculty, degreeProgram, academicYear,
       registrationNo, homeLocation, emerContactName, emerContactPhone,
       emerRelationship, profilePhotoUrl
@@ -195,9 +198,7 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
     const nic = blankToNull(req.body.nic);
     const studentId = blankToNull(req.body.studentId);
 
-    const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { phone }] }
-    });
+    const existingUser = await findUserByEmail(email) ?? await prisma.user.findFirst({ where: { phone } });
 
     if (existingUser) {
       res.status(400).json({ error: 'User with this email or phone already exists' });
@@ -273,8 +274,10 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    const email = normalizeEmail(req.body.email);
+    const phone = String(req.body.phone).trim();
     const {
-      email, password, phone, fullName, nic, bankName, accNumber, accHolder,
+      password, fullName, nic, bankName, accNumber, accHolder,
       busCapacity, routeName, startingPoint, destination, monthlyFee,
       dailyFeeRoundTrip, dailyFeeOneWay,
       scheduleType, pickupTime, dropTime, profilePhotoUrl, nicCopyUrl, licenseCopyUrl,
@@ -295,9 +298,7 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
     const licenseNumber = blankToNull(req.body.licenseNumber);
     const busRegNumber = blankToNull(req.body.busRegNumber);
 
-    const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { phone }] }
-    });
+    const existingUser = await findUserByEmail(email) ?? await prisma.user.findFirst({ where: { phone } });
 
     if (existingUser) {
       res.status(400).json({ error: 'User with this email or phone already exists' });
@@ -388,10 +389,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const wait = Math.max(loginFailsByAccount.blockedFor(key), loginFailsByIp.blockedFor(ip));
     if (wait) return tooMany(res, wait, 'failed sign-in attempts');
 
-    const user = await prisma.user.findFirst({
-      where: email ? { email } : { phone },
-      include: { student: true, driver: true }
-    });
+    const user = email
+      ? await findUserByEmail(email)
+      : await prisma.user.findFirst({ where: { phone: String(phone).trim() }, include: { student: true, driver: true } });
 
     const isMatch = user ? await bcrypt.compare(String(password), user.passwordHash) : false;
 

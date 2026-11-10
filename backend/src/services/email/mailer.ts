@@ -62,12 +62,14 @@ export const sendEmail = async (msg: EmailMessage | null | undefined): Promise<b
     }
     await getTransporter().sendMail({
       from: process.env.EMAIL_FROM || 'Uni Shuttle <no-reply@unishuttle.lk>',
-      to: msg.to,
+      to: msg.to.trim(),
       subject: msg.subject,
       html: msg.html,
       text: msg.text,
       ...(process.env.EMAIL_REPLY_TO ? { replyTo: process.env.EMAIL_REPLY_TO } : {})
     });
+    // One line per email, so "where did that email go?" can be answered from the log.
+    console.log(`[email] sent ${msg.template} -> ${msg.to.trim()}`);
     return true;
   } catch (error: any) {
     console.error(`[email] failed to send "${msg.subject}" to ${msg.to}: ${error?.message ?? error}`);
