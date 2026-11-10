@@ -23,6 +23,7 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email })
       });
       const data = await res.json();
+      if (!res.ok) { setError(data.error ?? 'Could not send the code. Please try again.'); return; }
       if (data.devCode) setDevCode(data.devCode); // dev only
       setMsg(data.message);
       setStep('code');
