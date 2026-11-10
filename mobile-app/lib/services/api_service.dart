@@ -287,6 +287,32 @@ class ApiService {
     }
   }
 
+  // The details a driver may edit for a student on their bus, or null on failure.
+  static Future<Map<String, dynamic>?> getPassengerDetails(int studentId) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/requests/passengers/$studentId'), headers: await _getHeaders());
+      if (response.statusCode == 200) return Map<String, dynamic>.from(jsonDecode(response.body)['student']);
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>> updatePassengerDetails(int studentId, Map<String, String> fields) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/requests/passengers/$studentId'),
+        headers: await _getHeaders(),
+        body: jsonEncode(fields),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true, 'message': data['message']};
+      return {'success': false, 'message': data['error'] ?? 'Could not save the changes'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
   static Future<List<dynamic>> getDriverRequests() async {
     try {
       final response = await http.get(

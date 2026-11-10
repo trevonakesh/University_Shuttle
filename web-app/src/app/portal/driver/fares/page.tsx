@@ -1,7 +1,8 @@
 'use client';
 import { BrandLoader } from '../../../../components/Brand';
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { portalFetch } from '../../../../lib/portalApi';
+import EditPassengerModal from '../../../../components/EditPassengerModal';
 
 interface StudentFare {
   studentId: number;
@@ -45,6 +46,16 @@ export default function DriverFaresPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAID' | 'UNPAID' | 'EXEMPT'>('ALL');
+  const [editing, setEditing] = useState<StudentFare | null>(null);
+
+  const closeEditor = useCallback(() => setEditing(null), []);
+
+  const handleSaved = (pickupPoint: string, message: string) => {
+    const studentId = editing?.studentId;
+    setData(d => d && { ...d, students: d.students.map(s => s.studentId === studentId ? { ...s, pickupPoint } : s) });
+    setMsg({ ok: true, text: message });
+    setEditing(null);
+  };
 
   const loadMonthData = (targetMonth: string) => {
     setLoading(true);
@@ -283,6 +294,10 @@ export default function DriverFaresPage() {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'inline-flex', gap: '6px' }}>
+                            <button onClick={() => setEditing(s)} className="p-btn sm outline" title="Edit pickup point and contact details">
+                              Edit Details
+                            </button>
+
                             {s.status !== 'PAID' && (
                               <button
                                 onClick={() => updateFare(s.studentId, 'PAID')}
@@ -329,6 +344,15 @@ export default function DriverFaresPage() {
         </>
       ) : (
         <div className="p-alert red">Could not load monthly fares.</div>
+      )}
+
+      {editing && (
+        <EditPassengerModal
+          studentId={editing.studentId}
+          studentName={editing.fullName}
+          onClose={closeEditor}
+          onSaved={handleSaved}
+        />
       )}
     </div>
   );

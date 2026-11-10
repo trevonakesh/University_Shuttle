@@ -269,6 +269,18 @@ export const cashRecorded = (to: string, studentName: string, month: string, amo
     footnote: "If you didn't make this payment, contact your driver or us."
   });
 
+export const detailsUpdatedByDriver = (to: string, studentName: string, driverName: string, changes: Array<[string, string]>) =>
+  build(to, 'details-updated', 'Your details were updated by your driver', {
+    label: 'Details updated',
+    tone: 'info',
+    preheader: `${driverName} updated your travel details.`,
+    heading: 'Your details were updated',
+    paragraphs: [`Hi ${firstName(studentName)}, ${driverName} updated these details on your account:`],
+    details: changes,
+    button: { label: 'Open my account', url: PORTAL() },
+    footnote: "If this doesn't look right, contact your driver or us."
+  });
+
 export const markedNotTravelling = (to: string, studentName: string, month: string, amount: number, driverName: string) =>
   build(to, 'not-travelling', `Marked as not travelling: ${monthLabel(month)}`, {
     label: 'Account frozen',

@@ -34,6 +34,23 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
     }
   }
 
+  Future<void> _editPassenger(int studentId, String studentName) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final details = await ApiService.getPassengerDetails(studentId);
+    if (!mounted) return;
+    if (details == null) {
+      messenger.showSnackBar(const SnackBar(content: Text('Could not load this student. Please try again.')));
+      return;
+    }
+    final message = await showDialog<String>(
+      context: context,
+      builder: (_) => _EditPassengerDialog(studentId: studentId, studentName: studentName, details: details),
+    );
+    if (message == null || !mounted) return;
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+    _fetchData();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -116,6 +133,14 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
                                   ),
                                   child: const Text('APPROVED', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
                                 ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.white70),
+                                  tooltip: 'Edit student details',
+                                  onPressed: () {
+                                    final int id = (p['studentId'] as num?)?.toInt() ?? 0;
+                                    if (id != 0) _editPassenger(id, student['fullName'] ?? 'Student');
+                                  },
+                                ),
                               ],
                             ),
                           );
@@ -126,6 +151,116 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _EditPassengerDialog extends StatefulWidget {
+  final int studentId;
+  final String studentName;
+  final Map<String, dynamic> details;
+
+  const _EditPassengerDialog({required this.studentId, required this.studentName, required this.details});
+
+  @override
+  State<_EditPassengerDialog> createState() => _EditPassengerDialogState();
+}
+
+class _EditPassengerDialogState extends State<_EditPassengerDialog> {
+  static const _labels = {
+    'pickupPoint': 'Pickup point',
+    'homeLocation': 'Home location',
+    'emerContactName': 'Emergency contact name',
+    'emerContactPhone': 'Emergency contact phone',
+    'emerRelationship': 'Relationship to student',
+  };
+
+  late final Map<String, TextEditingController> _controllers = {
+    for (final field in _labels.keys) field: TextEditingController(text: (widget.details[field] ?? '').toString()),
+  };
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_controllers['pickupPoint']!.text.trim().isEmpty) {
+      setState(() => _error = 'Pickup point cannot be empty.');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final res = await ApiService.updatePassengerDetails(
+      widget.studentId,
+      _controllers.map((field, controller) => MapEntry(field, controller.text)),
+    );
+    if (!mounted) return;
+    if (res['success'] == true) {
+      Navigator.pop(context, res['message']?.toString() ?? 'Student details updated.');
+    } else {
+      setState(() {
+        _saving = false;
+        _error = res['message']?.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF1E2128),
+      title: const Text('Edit Student Details', style: TextStyle(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${widget.studentName}. The student will be told about any change you save.',
+                style: const TextStyle(color: Colors.white70, fontSize: 13)),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+              ),
+            for (final entry in _labels.entries)
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: TextField(
+                  controller: _controllers[entry.key],
+                  maxLength: 200,
+                  keyboardType: entry.key == 'emerContactPhone' ? TextInputType.phone : TextInputType.text,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: InputDecoration(
+                    labelText: entry.value,
+                    labelStyle: const TextStyle(color: Colors.black54),
+                    counterText: '',
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+          onPressed: _saving ? null : _save,
+          child: Text(_saving ? 'SAVING...' : 'SAVE', style: const TextStyle(color: Colors.white)),
+        ),
+      ],
     );
   }
 }
