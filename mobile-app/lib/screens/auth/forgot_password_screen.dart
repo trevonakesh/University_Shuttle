@@ -14,11 +14,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
 
-  // 0 = enter email, 1 = enter code + new password
+  // One step at a time: 0 = email, 1 = emailed code, 2 = new password.
+  // Step 2 only opens once the server has confirmed the code.
   int _step = 0;
   bool _isLoading = false;
   bool _passwordVisible = false;
+  String _resetToken = '';
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _codeController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
 
   Future<void> _requestCode() async {
     if (_emailController.text.trim().isEmpty) {
@@ -31,35 +43,45 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = false);
 
     if (res['success'] == true) {
+      _codeController.clear();
       setState(() => _step = 1);
-      // Dev convenience: when no email provider is set, prefill the code.
-      if (res['devCode'] != null) {
-        _codeController.text = res['devCode'].toString();
-        _snack('Dev mode: code auto-filled (${res['devCode']}). In production this is emailed.');
-      } else {
-        _snack('If an account exists, a reset code was sent to your email.');
-      }
+      _snack('If an account exists, a reset code was sent to your email.');
     } else {
       _snack(res['message'] ?? 'Something went wrong');
     }
   }
 
-  Future<void> _resetPassword() async {
-    if (_codeController.text.trim().isEmpty || _passwordController.text.isEmpty) {
-      _snack('Enter the code and a new password');
+  Future<void> _verifyCode() async {
+    final code = _codeController.text.replaceAll(RegExp(r'\D'), '');
+    if (code.length != 6) {
+      _snack('Enter the 6-digit code from the email');
       return;
     }
+    setState(() => _isLoading = true);
+    final res = await ApiService.verifyResetCode(_emailController.text.trim(), code);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (res['success'] == true) {
+      _resetToken = res['resetToken'].toString();
+      setState(() => _step = 2);
+    } else {
+      _snack(res['message'] ?? 'Could not check the code');
+    }
+  }
+
+  Future<void> _resetPassword() async {
     final password = _passwordController.text;
     if (password.length < 8 || !RegExp(r'\p{L}', unicode: true).hasMatch(password) || !RegExp(r'\d').hasMatch(password)) {
       _snack('Password needs at least 8 characters, with a letter and a number');
       return;
     }
+    if (password != _confirmController.text) {
+      _snack("The two passwords don't match");
+      return;
+    }
     setState(() => _isLoading = true);
-    final res = await ApiService.resetPassword(
-      _emailController.text.trim(),
-      _codeController.text.trim(),
-      _passwordController.text,
-    );
+    final res = await ApiService.resetPassword(_resetToken, password);
     if (!mounted) return;
     setState(() => _isLoading = false);
 
@@ -68,6 +90,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       Navigator.pop(context);
     } else {
       _snack(res['message'] ?? 'Reset failed');
+      // The confirmed code is only good for a few minutes; start over if it ran out.
+      if (res['expired'] == true) {
+        _passwordController.clear();
+        _confirmController.clear();
+        setState(() => _step = 0);
+      }
     }
   }
 
@@ -109,20 +137,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            _step == 0
-                                ? 'ENTER YOUR EMAIL TO GET A RESET CODE'
-                                : 'ENTER THE CODE AND YOUR NEW PASSWORD',
+                            'STEP ${_step + 1} OF 3\n${const [
+                              'ENTER YOUR EMAIL TO GET A RESET CODE',
+                              'ENTER THE CODE WE EMAILED YOU',
+                              'CODE CONFIRMED. CHOOSE A NEW PASSWORD',
+                            ][_step]}',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 11, color: Colors.white70, letterSpacing: 1),
+                            style: const TextStyle(fontSize: 11, color: Colors.white70, letterSpacing: 1, height: 1.6),
                           ),
                           const SizedBox(height: 30),
 
-                          _field(controller: _emailController, hint: 'EMAIL', enabled: _step == 0),
+                          if (_step < 2) _field(controller: _emailController, hint: 'EMAIL', enabled: _step == 0, keyboardType: TextInputType.emailAddress),
 
                           if (_step == 1) ...[
                             const SizedBox(height: 16),
                             _field(controller: _codeController, hint: '6-DIGIT CODE', keyboardType: TextInputType.number),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'ASKED MORE THAN ONCE? ONLY THE NEWEST CODE WORKS.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 10, color: Colors.white70, letterSpacing: 0.5),
+                            ),
+                          ],
+
+                          if (_step == 2) ...[
                             _field(
                               controller: _passwordController,
                               hint: 'NEW PASSWORD (8+, LETTER AND NUMBER)',
@@ -132,6 +170,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
                               ),
                             ),
+                            const SizedBox(height: 16),
+                            _field(controller: _confirmController, hint: 'TYPE IT AGAIN', obscure: !_passwordVisible),
                           ],
 
                           const SizedBox(height: 24),
@@ -142,21 +182,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 backgroundColor: Colors.black,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              onPressed: _isLoading ? null : (_step == 0 ? _requestCode : _resetPassword),
+                              onPressed: _isLoading ? null : [_requestCode, _verifyCode, _resetPassword][_step],
                               child: _isLoading
                                   ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                                   : Text(
-                                      _step == 0 ? 'SEND RESET CODE' : 'RESET PASSWORD',
+                                      const ['SEND RESET CODE', 'VERIFY CODE', 'RESET PASSWORD'][_step],
                                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                                     ),
                             ),
                           ),
 
-                          if (_step == 1)
+                          if (_step == 1) ...[
+                            TextButton(
+                              onPressed: _isLoading ? null : _requestCode,
+                              child: const Text('SEND A NEW CODE', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                            ),
                             TextButton(
                               onPressed: _isLoading ? null : () => setState(() => _step = 0),
                               child: const Text('CHANGE EMAIL', style: TextStyle(color: Colors.white70, fontSize: 11)),
                             ),
+                          ],
 
                           TextButton(
                             onPressed: () => Navigator.pop(context),

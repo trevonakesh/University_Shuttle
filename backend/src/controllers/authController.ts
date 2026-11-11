@@ -6,7 +6,7 @@ import { Role } from '@prisma/client';
 import { sendEmail, emails } from '../services/email';
 import { getSignupForm, parseCustomAnswers, universitiesAllowed } from '../services/settingsService';
 import { findUserByEmail, normalizeEmail } from '../services/userLookup';
-import { signToken } from '../utils/jwt';
+import { signToken, verifyToken } from '../utils/jwt';
 import { passwordError } from '../utils/password';
 import { createAttemptTracker, minutesLabel } from '../utils/rateLimit';
 import { serverError } from '../utils/httpError';
@@ -89,53 +89,116 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// POST /api/auth/reset-password  { email, code, newPassword }
-export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+// Checks an emailed reset code. Answers the request itself and returns null
+// when the code is not accepted.
+const acceptResetCode = async (req: Request, res: Response, email: unknown, code: unknown) => {
+  const key = accountKey(email);
+  const ip = req.ip ?? '';
+  const wait = Math.max(codeGuessesByEmail.blockedFor(key), codeGuessesByIp.blockedFor(ip));
+  if (wait) {
+    tooMany(res, wait, 'wrong codes');
+    return null;
+  }
+
+  const user = await findUserByEmail(email);
+  if (!user || !user.resetCodeHash || !user.resetCodeExpiry) {
+    codeGuessesByIp.fail(ip);
+    res.status(400).json({ error: 'No reset request found. Please request a new code.' });
+    return null;
+  }
+  if (user.resetCodeExpiry.getTime() < Date.now()) {
+    res.status(400).json({ error: 'This code has expired. Please request a new one.' });
+    return null;
+  }
+
+  // Codes are six digits: spaces or other characters picked up when copying
+  // the code out of the email are ignored.
+  const matches = await bcrypt.compare(String(code).replace(/\D/g, ''), user.resetCodeHash);
+  if (!matches) {
+    codeGuessesByIp.fail(ip);
+    const guesses = codeGuessesByEmail.fail(key);
+    if (guesses >= MAX_CODE_GUESSES) {
+      // Burn the code: the owner has to request a new one from their inbox.
+      await prisma.user.update({ where: { id: user.id }, data: { resetCodeHash: null, resetCodeExpiry: null } });
+      res.status(400).json({ error: 'Too many wrong codes. That code no longer works. Please request a new one.' });
+      return null;
+    }
+    const left = MAX_CODE_GUESSES - guesses;
+    res.status(400).json({ error: `That code doesn't match. Only the code in the newest email works. ${left} attempt${left === 1 ? '' : 's'} left.` });
+    return null;
+  }
+  return user;
+};
+
+// How long someone has to choose a password once their code is confirmed.
+const RESET_PASS_MINUTES = 10;
+
+// Ties a reset pass to the exact code it was issued for. When the password
+// changes or a new code is requested the stored hash changes, so the pass
+// stops working: it can be used once, and only for this reset.
+const codeStamp = (resetCodeHash: string): string =>
+  crypto.createHash('sha256').update(resetCodeHash).digest('hex').slice(0, 24);
+
+// The account a reset pass belongs to, or null if the pass is no longer good.
+// A pass carries no userId or role, so it can never be used to sign in.
+const userForResetPass = async (resetToken: unknown) => {
   try {
-    const { email, code, newPassword } = req.body;
-    if (!email || !code || !newPassword) {
-      res.status(400).json({ error: 'Email, code and new password are required' });
+    const { resetFor, stamp } = verifyToken<{ resetFor?: number; stamp?: string }>(String(resetToken));
+    if (typeof resetFor !== 'number' || typeof stamp !== 'string') return null;
+    const user = await prisma.user.findUnique({ where: { id: resetFor }, include: { student: true, driver: true } });
+    if (!user || user.deactivatedAt || !user.resetCodeHash || codeStamp(user.resetCodeHash) !== stamp) return null;
+    return user;
+  } catch {
+    return null;
+  }
+};
+
+// POST /api/auth/verify-reset-code  { email, code }
+// Step two of a reset: the code is confirmed before a new password is asked for.
+export const verifyResetCode = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      res.status(400).json({ error: 'Email and code are required' });
       return;
     }
-    const weak = passwordError(newPassword, [email]);
+    const user = await acceptResetCode(req, res, email, code);
+    if (!user) return;
+
+    const resetToken = signToken({ resetFor: user.id, stamp: codeStamp(user.resetCodeHash as string) }, `${RESET_PASS_MINUTES}m`);
+    res.status(200).json({ message: 'Code confirmed. Choose your new password.', resetToken });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// POST /api/auth/reset-password  { resetToken, newPassword }
+// Step three. Apps released before the code had its own step still send
+// { email, code, newPassword } in one go, which keeps working.
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { resetToken, email, code, newPassword } = req.body;
+    if (!newPassword || (!resetToken && (!email || !code))) {
+      res.status(400).json({ error: 'A confirmed code and a new password are required' });
+      return;
+    }
+
+    let user = resetToken ? await userForResetPass(resetToken) : null;
+    if (resetToken && !user) {
+      res.status(400).json({ error: 'This reset has timed out. Please request a new code.', code: 'RESET_EXPIRED' });
+      return;
+    }
+
+    const weak = passwordError(newPassword, [user ? user.email : email]);
     if (weak) {
       res.status(400).json({ error: weak });
       return;
     }
 
-    const key = accountKey(email);
-    const ip = req.ip ?? '';
-    const wait = Math.max(codeGuessesByEmail.blockedFor(key), codeGuessesByIp.blockedFor(ip));
-    if (wait) return tooMany(res, wait, 'wrong codes');
+    if (!user) user = await acceptResetCode(req, res, email, code);
+    if (!user) return;
 
-    const user = await findUserByEmail(email);
-    if (!user || !user.resetCodeHash || !user.resetCodeExpiry) {
-      codeGuessesByIp.fail(ip);
-      res.status(400).json({ error: 'No reset request found. Please request a new code.' });
-      return;
-    }
-    if (user.resetCodeExpiry.getTime() < Date.now()) {
-      res.status(400).json({ error: 'This code has expired. Please request a new one.' });
-      return;
-    }
-
-    // Codes are six digits: spaces or other characters picked up when copying
-    // the code out of the email are ignored.
-    const matches = await bcrypt.compare(String(code).replace(/\D/g, ''), user.resetCodeHash);
-    if (!matches) {
-      codeGuessesByIp.fail(ip);
-      const guesses = codeGuessesByEmail.fail(key);
-      if (guesses >= MAX_CODE_GUESSES) {
-        // Burn the code: the owner has to request a new one from their inbox.
-        await prisma.user.update({ where: { id: user.id }, data: { resetCodeHash: null, resetCodeExpiry: null } });
-        res.status(400).json({ error: 'Too many wrong codes. That code no longer works. Please request a new one.' });
-        return;
-      }
-      const left = MAX_CODE_GUESSES - guesses;
-      res.status(400).json({ error: `That code doesn't match. Only the code in the newest email works. ${left} attempt${left === 1 ? '' : 's'} left.` });
-      return;
-    }
-
+    const key = accountKey(user.email);
     const passwordHash = await bcrypt.hash(String(newPassword), 10);
     await prisma.user.update({
       where: { id: user.id },

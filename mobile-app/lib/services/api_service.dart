@@ -149,16 +149,35 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> resetPassword(String email, String code, String newPassword) async {
+  // Step two of a reset: confirms the emailed code and returns a short-lived
+  // `resetToken` that the new password is then saved with.
+  static Future<Map<String, dynamic>> verifyResetCode(String email, String code) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/verify-reset-code'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'code': code}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) return {'success': true, ...data};
+      return {'success': false, 'message': data['error'] ?? 'Could not check the code'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Step three. `expired` is true when the confirmed code has timed out and
+  // the reset has to start again.
+  static Future<Map<String, dynamic>> resetPassword(String resetToken, String newPassword) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/reset-password'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'code': code, 'newPassword': newPassword}),
+        body: jsonEncode({'resetToken': resetToken, 'newPassword': newPassword}),
       );
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) return {'success': true, ...data};
-      return {'success': false, 'message': data['error'] ?? 'Reset failed'};
+      return {'success': false, 'message': data['error'] ?? 'Reset failed', 'expired': data['code'] == 'RESET_EXPIRED'};
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
     }
