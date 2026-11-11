@@ -117,7 +117,9 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const matches = await bcrypt.compare(String(code), user.resetCodeHash);
+    // Codes are six digits: spaces or other characters picked up when copying
+    // the code out of the email are ignored.
+    const matches = await bcrypt.compare(String(code).replace(/\D/g, ''), user.resetCodeHash);
     if (!matches) {
       codeGuessesByIp.fail(ip);
       const guesses = codeGuessesByEmail.fail(key);
@@ -128,7 +130,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
         return;
       }
       const left = MAX_CODE_GUESSES - guesses;
-      res.status(400).json({ error: `Invalid reset code. ${left} attempt${left === 1 ? '' : 's'} left.` });
+      res.status(400).json({ error: `That code doesn't match. Only the code in the newest email works. ${left} attempt${left === 1 ? '' : 's'} left.` });
       return;
     }
 

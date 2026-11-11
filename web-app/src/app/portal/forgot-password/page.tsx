@@ -86,7 +86,9 @@ export default function ForgotPasswordPage() {
             <form onSubmit={resetPwd} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="p-field">
                 <label>6-digit code</label>
-                <input type="text" value={code} onChange={e => setCode(e.target.value)} required maxLength={6} placeholder="123456" style={{ letterSpacing: '0.2em', fontSize: '20px' }} />
+                {/* Digits only, so a code pasted with spaces isn't cut short. */}
+                <input type="text" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required minLength={6} placeholder="123456" style={{ letterSpacing: '0.2em', fontSize: '20px' }} />
+                <span style={{ fontSize: '12px', color: '#7a8699' }}>Asked more than once? Only the code in the newest email works.</span>
               </div>
               <div className="p-field">
                 <label>New password</label>

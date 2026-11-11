@@ -145,16 +145,25 @@ export const signInAlert = (to: string, fullName: string, device: string, ip: st
     footnote: "If this was you, there's nothing to do."
   });
 
-export const passwordResetCode = (to: string, fullName: string, code: string, minutes: number) =>
-  build(to, 'password-reset', 'Your password reset code', {
+// The time goes in the subject so each code arrives as its own email. With
+// one fixed subject, mail apps stack every code into a single conversation
+// and people read an old one.
+export const passwordResetCode = (to: string, fullName: string, code: string, minutes: number, at = new Date()) => {
+  const time = at.toLocaleString('en-GB', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'Asia/Colombo' });
+  return build(to, 'password-reset', `Your password reset code (requested ${time})`, {
     label: 'Password reset',
     tone: 'warning',
     preheader: `Your code expires in ${minutes} minutes.`,
     heading: 'Reset your password',
-    paragraphs: [`Hi ${firstName(fullName)}, enter this code to choose a new password. It expires in ${minutes} minutes.`],
+    paragraphs: [
+      `Hi ${firstName(fullName)}, enter this code to choose a new password. It expires in ${minutes} minutes.`,
+      'Asked for a code more than once? Only the newest one works.'
+    ],
     code,
+    details: [['Requested', colomboTime(at)]],
     footnote: "If you didn't ask to reset your password, ignore this email. Your password stays the same."
   });
+};
 
 export const passwordChanged = (to: string, fullName: string, at = new Date()) =>
   build(to, 'password-changed', 'Your password was changed', {
