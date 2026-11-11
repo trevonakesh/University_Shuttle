@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { API_BASE } from '../../../lib/portalApi';
+import { PASSWORD_HINT, passwordInputProps } from '../../../lib/password';
 import '../portal.css';
 
 export default function ForgotPasswordPage() {
@@ -92,7 +93,7 @@ export default function ForgotPasswordPage() {
               </div>
               <div className="p-field">
                 <label>New password</label>
-                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} placeholder="Min. 6 characters" />
+                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required {...passwordInputProps} autoComplete="new-password" placeholder={PASSWORD_HINT} />
               </div>
               <button type="submit" className="p-btn primary" disabled={loading} style={{ width: '100%', padding: '13px' }}>
                 {loading ? 'Resetting…' : 'Set New Password'}

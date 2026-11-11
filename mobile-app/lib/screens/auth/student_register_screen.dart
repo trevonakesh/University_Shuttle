@@ -230,7 +230,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                 _buildResponsiveRow(isDesktop, [
                   _buildInputCol('PHONE NUMBER', 'ENTER PHONE NUMBER', _phoneCtrl),
                   _buildInputCol('EMAIL ADDRESS', 'ENTER EMAIL ADDRESS', _emailCtrl),
-                  _buildInputCol('PASSWORD', 'ENTER PASSWORD', _passwordCtrl, obscureText: true),
+                  _buildInputCol('PASSWORD', '8+ CHARACTERS, A LETTER AND A NUMBER', _passwordCtrl, obscureText: true),
                 ]),
                 const SizedBox(height: 20),
                 if (_shown('profilePhotoUrl'))

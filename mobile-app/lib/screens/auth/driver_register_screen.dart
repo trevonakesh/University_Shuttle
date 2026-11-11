@@ -283,7 +283,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 const SizedBox(height: 20),
                 _buildResponsiveRow(isDesktop, [
                   _buildInputCol('EMAIL ADDRESS', 'ENTER EMAIL ADDRESS', _emailCtrl),
-                  _buildInputCol('PASSWORD', 'ENTER PASSWORD', _passwordCtrl, obscureText: true),
+                  _buildInputCol('PASSWORD', '8+ CHARACTERS, A LETTER AND A NUMBER', _passwordCtrl, obscureText: true),
                   if (_shown('licenseNumber')) _buildInputCol('DRIVING LICENSE NUMBER', 'ENTER LICENSE NUMBER', _licenseCtrl),
                 ]),
                 const SizedBox(height: 20),

@@ -7,6 +7,7 @@ import { sendEmail, emails } from '../services/email';
 import { getSignupForm, parseCustomAnswers, universitiesAllowed } from '../services/settingsService';
 import { findUserByEmail, normalizeEmail } from '../services/userLookup';
 import { signToken } from '../utils/jwt';
+import { passwordError } from '../utils/password';
 import { createAttemptTracker, minutesLabel } from '../utils/rateLimit';
 import { serverError } from '../utils/httpError';
 
@@ -96,8 +97,9 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       res.status(400).json({ error: 'Email, code and new password are required' });
       return;
     }
-    if (String(newPassword).length < 6) {
-      res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const weak = passwordError(newPassword, [email]);
+    if (weak) {
+      res.status(400).json({ error: weak });
       return;
     }
 
@@ -157,8 +159,7 @@ const registrationError = (body: any, requiredFields: Record<string, string>): s
     if (typeof body?.[field] !== 'string' || !body[field].trim()) return `${label} is required.`;
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())) return 'Please enter a valid email address.';
-  if (body.password.length < 6) return 'Password must be at least 6 characters.';
-  return null;
+  return passwordError(body.password, [body.email]);
 };
 
 // Optional unique columns: a blank must be stored as null, or the second

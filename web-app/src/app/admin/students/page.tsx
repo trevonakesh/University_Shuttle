@@ -246,7 +246,7 @@ export default function StudentsPage() {
               {field('universityName', 'University', 'text', true)}
               {field('email', 'Email', 'email', true)}
               {field('phone', 'Phone')}
-              {field('password', 'Password', 'password', true)}
+              {field('password', 'Password (8+ characters, a letter and a number)', 'password', true)}
               {field('studentId', 'Student ID')}
               {field('nic', 'NIC')}
               {field('pickupPoint', 'Pickup Point')}

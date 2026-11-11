@@ -231,7 +231,7 @@ Create the tables, seed an admin and start the server:
 ```bash
 npx prisma db push
 npx prisma generate
-npx ts-node seedAdmin.ts      # admin@unishuttle.com / admin123 (override with ADMIN_EMAIL / ADMIN_PASSWORD)
+ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='a-long-strong-password' npx ts-node seedAdmin.ts   # both required, 12+ characters
 npm run dev                   # http://localhost:3000
 ```
 `seedDemo.ts`, `seedDriver.ts` and `seedUsers.ts` add sample data.

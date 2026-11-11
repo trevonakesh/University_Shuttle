@@ -246,7 +246,7 @@ export default function DriversPage() {
               {field('nic', 'NIC', 'text', true)}
               {field('email', 'Email', 'email', true)}
               {field('phone', 'Phone')}
-              {field('password', 'Password', 'password', true)}
+              {field('password', 'Password (8+ characters, a letter and a number)', 'password', true)}
               {field('licenseNumber', 'License Number')}
               {field('busRegNumber', 'Bus Registration')}
               {field('busCapacity', 'Bus Capacity')}

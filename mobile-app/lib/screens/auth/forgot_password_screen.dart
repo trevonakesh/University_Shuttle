@@ -49,8 +49,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _snack('Enter the code and a new password');
       return;
     }
-    if (_passwordController.text.length < 6) {
-      _snack('Password must be at least 6 characters');
+    final password = _passwordController.text;
+    if (password.length < 8 || !RegExp(r'\p{L}', unicode: true).hasMatch(password) || !RegExp(r'\d').hasMatch(password)) {
+      _snack('Password needs at least 8 characters, with a letter and a number');
       return;
     }
     setState(() => _isLoading = true);
@@ -124,7 +125,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             const SizedBox(height: 16),
                             _field(
                               controller: _passwordController,
-                              hint: 'NEW PASSWORD',
+                              hint: 'NEW PASSWORD (8+, LETTER AND NUMBER)',
                               obscure: !_passwordVisible,
                               suffix: IconButton(
                                 icon: Icon(_passwordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.black54),

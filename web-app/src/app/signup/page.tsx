@@ -5,6 +5,7 @@ import PhotoField from '../../components/PhotoField';
 import RouteNetwork from '../../components/RouteNetwork';
 import { fontVariables } from '../../lib/fonts';
 import { API_BASE, setPortalToken, setPortalUser } from '../../lib/portalApi';
+import { PASSWORD_HINT, passwordInputProps } from '../../lib/password';
 import '../site.css';
 import '../portal/portal.css';
 import '../auth.css';
@@ -23,7 +24,7 @@ const ACCOUNT: Field[] = [
   { name: 'nic', label: 'NIC number' },
   { name: 'phone', label: 'Phone number', type: 'tel' },
   { name: 'email', label: 'Email address', type: 'email' },
-  { name: 'password', label: 'Password (at least 6 characters)', type: 'password' }
+  { name: 'password', label: `Password (${PASSWORD_HINT.toLowerCase()})`, type: 'password' }
 ];
 
 const STUDENT_FORM: Section[] = [
@@ -235,7 +236,7 @@ export default function SignupPage() {
                           id={f.name}
                           type={f.type ?? 'text'}
                           min={f.type === 'number' ? 0 : undefined}
-                          minLength={f.name === 'password' ? 6 : undefined}
+                          {...(f.name === 'password' ? passwordInputProps : {})}
                           value={values[f.name] ?? ''}
                           onChange={e => set(f.name, e.target.value)}
                           autoComplete={f.name === 'password' ? 'new-password' : undefined}

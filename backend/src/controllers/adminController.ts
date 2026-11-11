@@ -9,6 +9,7 @@ import { debitWallet } from '../services/walletService';
 import { removeDriver, removeStudent } from '../services/accountService';
 import { HttpError } from '../utils/httpError';
 import { findUserByEmail, normalizeEmail } from '../services/userLookup';
+import { passwordError } from '../utils/password';
 
 export const getDrivers = async (req: Request, res: Response) => {
   try {
@@ -104,6 +105,9 @@ export const createDriver = async (req: Request, res: Response) => {
     if (!email || !password || !fullName || !nic) {
       return res.status(400).json({ message: 'email, password, fullName and nic are required' });
     }
+
+    const weak = passwordError(password, [email]);
+    if (weak) return res.status(400).json({ message: weak });
 
     if (await findUserByEmail(email)) {
       return res.status(400).json({ message: 'A user with this email already exists' });
@@ -211,6 +215,9 @@ export const createStudent = async (req: Request, res: Response) => {
     if (!email || !password || !fullName || !universityName) {
       return res.status(400).json({ message: 'email, password, fullName and universityName are required' });
     }
+
+    const weak = passwordError(password, [email]);
+    if (weak) return res.status(400).json({ message: weak });
 
     if (await findUserByEmail(email)) {
       return res.status(400).json({ message: 'A user with this email already exists' });
