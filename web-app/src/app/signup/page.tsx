@@ -121,6 +121,11 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<SignupForm | null>(null);
 
+  // The home page's "I'm a driver" button links to /signup?role=driver.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('role') === 'driver') setRole('DRIVER');
+  }, []);
+
   useEffect(() => {
     fetch(`${API_BASE}/api/settings/signup-form`)
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })

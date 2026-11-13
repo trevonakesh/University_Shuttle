@@ -1,7 +1,10 @@
 import Link from 'next/link';
-import SiteChrome from '../components/SiteChrome';
-import RouteNetwork from '../components/RouteNetwork';
-import { getCommissionPercent } from '../lib/business';
+import HomeNav from '../components/HomeNav';
+import { BrandMark, BrandWordmark } from '../components/Brand';
+import { DriverArt, HeroScene, PhoneTracking, StudentArt } from '../components/HomeArt';
+import { business, getCommissionPercent } from '../lib/business';
+import { homeFontVariables } from '../lib/fonts';
+import './home.css';
 
 export const metadata = {
   title: 'UniShuttle: university bus travel in Sri Lanka',
@@ -9,269 +12,245 @@ export const metadata = {
     'UniShuttle connects university students with private bus operators in Sri Lanka. Request a seat, answer attendance polls, pay your fare to your driver and track your bus live.'
 };
 
-const Icon = ({ d }: { d: React.ReactNode }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {d}
+// The key must match THEME_KEY in components/HomeNav.tsx.
+const THEME_SCRIPT = `try{if(localStorage.getItem('us-home-theme')==='dark')document.currentScript.parentElement.setAttribute('data-theme','dark')}catch(e){}`;
+
+const Icon = ({ children }: { children: React.ReactNode }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {children}
   </svg>
 );
 
+const icons = {
+  student: <><path d="M3 9.500L12 5l9 4.500-9 4.500z" /><path d="M7 11.800V16c1.500 1.400 3.200 2 5 2s3.500-.6 5-2v-4.200" /><path d="M21 9.500V14" /></>,
+  wheel: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.500" /><path d="M12 14.500V21M9.700 11.200L3.600 9M14.300 11.200L20.400 9" /></>,
+  shield: <><path d="M12 3l8 3.500v5c0 4.600-3.200 8.600-8 9.500-4.800-.9-8-4.900-8-9.500v-5z" /><path d="M9 12l2.200 2.200L15.200 10" /></>,
+  pin: <><path d="M12 21c-4.500-5-7-8.300-7-11.500a7 7 0 0114 0c0 3.200-2.500 6.500-7 11.500z" /><circle cx="12" cy="9.500" r="2.500" /></>,
+  cash: <><rect x="2.500" y="6" width="19" height="12" rx="2.500" /><circle cx="12" cy="12" r="2.800" /><path d="M6 9.500v5M18 9.500v5" /></>,
+  profile: <><circle cx="12" cy="8" r="4" /><path d="M4.500 20c1-3.600 4-5.500 7.500-5.500s6.500 1.900 7.500 5.500" /></>,
+  bus: <><rect x="4" y="4" width="16" height="13" rx="3" /><path d="M4 11h16M8 17v2.500M16 17v2.500M8 14h.010M16 14h.010" /></>,
+  poll: <><path d="M9 11.500l2.500 2.500L20 6" /><path d="M20 12.500V18a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" /></>,
+  list: <><rect x="4" y="3.500" width="16" height="17" rx="2.500" /><path d="M8 9h8M8 13h8M8 17h5" /></>,
+  calendar: <><rect x="3.500" y="5" width="17" height="15.500" rx="2.500" /><path d="M3.500 10h17M8 3v4M16 3v4" /><path d="M9.500 15l1.800 1.800 3.400-3.600" /></>,
+  bell: <><path d="M6 16.500V11a6 6 0 0112 0v5.500l1.500 2h-15z" /><path d="M10 21h4" /></>
+};
+
+const steps = [
+  { icon: icons.profile, title: 'Sign up', text: 'Create your account with your university and pickup point.' },
+  { icon: icons.bus, title: 'Pick your bus', text: 'Choose a verified bus and ask for a seat. The driver accepts it.' },
+  { icon: icons.cash, title: 'Pay your driver', text: 'Hand your fare to the driver in cash. They mark it as paid.' },
+  { icon: icons.pin, title: 'Track and ride', text: 'See your bus on the map and know when it will arrive.' }
+];
+
 const features = [
-  {
-    audience: 'Students',
-    title: 'Find a bus, request a seat',
-    description: 'Browse admin-verified buses with their route, pickup time, seats and monthly fee.',
-    icon: <><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M3 10.5h18M7 17v2M17 17v2" /></>
-  },
-  {
-    audience: 'Students',
-    title: 'Monthly fare tracking',
-    description: 'Pay your driver in cash and they record it, so your full payment history is always in one place.',
-    icon: <><rect x="2.5" y="6" width="19" height="12" rx="2.5" /><path d="M2.5 10h19" /><path d="M6.5 14.5h3" /></>
-  },
-  {
-    audience: 'Drivers',
-    title: 'Passengers and polls',
-    description: 'Accept seat requests, manage your passenger list, and ask “Are you coming tomorrow?”',
-    icon: <><path d="M9 11l3 3 7-7" /><path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" /></>
-  },
-  {
-    audience: 'Drivers',
-    title: 'Monthly fare tracker',
-    description: 'See who has paid, who has not, and who is not travelling. Record cash payments in a tap.',
-    icon: <><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 14h3M8 17h6" /></>
-  }
+  { icon: icons.bus, tone: 'green', title: 'Find a bus', text: 'See verified buses going to your university, with pickup time and monthly fare.' },
+  { icon: icons.pin, tone: 'blue', title: 'Live tracking', text: 'Watch the bus move on the map once your driver starts the trip.' },
+  { icon: icons.poll, tone: 'amber', title: 'Coming tomorrow?', text: 'Drivers ask with one tap. Students answer, so nobody waits for no reason.' },
+  { icon: icons.list, tone: 'green', title: 'Fare tracker', text: 'Drivers see who has paid, who has not and who is not travelling this month.' },
+  { icon: icons.calendar, tone: 'blue', title: 'Daily rides', text: 'Need the bus for just one day? Book a single ride.' },
+  { icon: icons.bell, tone: 'amber', title: 'Notices', text: 'Drivers send one message and every passenger sees it.' }
 ];
-
-const ticker = ['Seat requests', 'Live GPS tracking', 'Attendance polls', 'Monthly fare tracker', 'Daily rides', 'Driver notices', 'Verified buses'];
-
-const fareRows = [
-  { name: 'Student A', status: 'Paid · Cash', color: 'var(--signal)' },
-  { name: 'Student B', status: 'Unpaid', color: '#ff7b72' },
-  { name: 'Student C', status: 'Not travelling', color: 'var(--ink-faint)' },
-  { name: 'Student D', status: 'Paid · Cash', color: 'var(--signal)' }
-];
-
-const arrow = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-);
 
 export default async function HomePage() {
   const commissionPercent = await getCommissionPercent();
+  const address = business.address;
+
   return (
-    <SiteChrome>
-      {/* ---------------- hero ---------------- */}
-      <section className="hero">
-        <RouteNetwork />
-        <div className="wrap hero-inner">
-          <div>
-            <span className="eyebrow">For university students &amp; bus operators in Sri Lanka</span>
-            <h1>
-              Your university bus, <span className="hl">live in one app</span>.
-            </h1>
-            <p className="hero-lead">
-              UniShuttle replaces phone calls and group chats. Request a seat, answer
-              attendance polls and follow your bus on the map. Drivers manage
-              passengers, fares and notices in one place.
-            </p>
-            <div className="hero-actions">
-              <Link href="/signup" className="btn-cta">Get started {arrow}</Link>
-              <Link href="/how-it-works" className="btn-ghost">See how it works</Link>
-            </div>
-          </div>
+    <div className={`home ${homeFontVariables}`} suppressHydrationWarning>
+      {/* Applies a remembered dark-mode choice before the page is drawn, so it never flashes light first. */}
+      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      <HomeNav />
 
-          {/* example of the student's tracking view */}
-          <div className="route-card" aria-label="Example of a bus route in the app">
-            <div className="route-card-head">
-              <span className="route-badge">EXAMPLE ROUTE</span>
-              <span className="live-dot"><i />LIVE</span>
+      <main>
+        {/* ---------------- hero ---------------- */}
+        <section className="h-hero">
+          <div className="h-wrap h-hero-text">
+            <span className="h-pill"><i />For students and bus drivers in Sri Lanka</span>
+            <h1>Your university bus, <em>made easy</em>.</h1>
+            <p className="h-lead">
+              Find a bus, book your seat and see where it is on the map.
+              Drivers keep their passengers and fares in one simple place.
+            </p>
+            <div className="h-actions">
+              <Link href="/signup" className="h-btn primary"><Icon>{icons.student}</Icon>I&apos;m a student</Link>
+              <Link href="/signup?role=driver" className="h-btn amber"><Icon>{icons.wheel}</Icon>I&apos;m a driver</Link>
             </div>
-            <ul className="stops">
-              <li className="stop">
-                <span className="stop-dot" />
-                <span>
-                  <span className="stop-name">Starting point</span><br />
-                  <span className="stop-time">Set by the driver</span>
-                </span>
-              </li>
-              <li className="stop is-bus">
-                <span className="stop-dot">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="12" rx="2" /><path d="M4 11h16" /></svg>
-                </span>
-                <span>
-                  <span className="stop-name">Bus is on the way</span><br />
-                  <span className="stop-time">Live GPS from the driver</span>
-                </span>
-              </li>
-              <li className="stop">
-                <span className="stop-dot" />
-                <span>
-                  <span className="stop-name">Your pickup point</span><br />
-                  <span className="stop-time">Saved in your profile</span>
-                </span>
-              </li>
-              <li className="stop">
-                <span className="stop-dot" />
-                <span>
-                  <span className="stop-name">University</span><br />
-                  <span className="stop-time">Driver’s destination</span>
-                </span>
-              </li>
-            </ul>
-            <div className="telemetry">
-              <div><span>Arrives in</span><b className="mint">8 min</b></div>
-              <div><span>Distance</span><b>3.2 km</b></div>
-              <div><span>Speed</span><b>32 km/h</b></div>
-            </div>
+            <p className="h-signin">Already have an account? <Link href="/login">Sign in</Link></p>
+          </div>
+          <HeroScene />
+        </section>
+
+        <div className="h-strip">
+          <div className="h-wrap h-strip-inner">
+            <div className="h-strip-item"><Icon>{icons.shield}</Icon>Every driver is checked first</div>
+            <div className="h-strip-item"><Icon>{icons.pin}</Icon>See your bus live on the map</div>
+            <div className="h-strip-item"><Icon>{icons.cash}</Icon>Pay your driver in cash</div>
           </div>
         </div>
-      </section>
 
-      {/* ---------------- ticker ---------------- */}
-      <div className="ticker" aria-hidden="true">
-        <div className="ticker-track">
-          {[...ticker, ...ticker].map((item, i) => <span key={i}>{item}</span>)}
-        </div>
-      </div>
+        {/* ---------------- who are you ---------------- */}
+        <section className="h-section">
+          <div className="h-wrap">
+            <div className="h-head">
+              <span className="h-kicker">Start here</span>
+              <h2>Who are you?</h2>
+              <p>Pick one and we&apos;ll set you up in a few minutes.</p>
+            </div>
 
-      {/* ---------------- features ---------------- */}
-      <section className="section">
-        <div className="wrap reveal">
-          <div className="section-head">
-            <span className="eyebrow">What it does</span>
-            <h2>One platform for students, drivers and admins</h2>
-            <p>
-              Use the UniShuttle app or this website. An admin verifies every driver
-              before their bus is listed.
-            </p>
-          </div>
-
-          <div className="bento">
-            <article className="card span-2">
-              <div>
-                <span className="tag">Students</span>
-                <h3 style={{ marginTop: 14 }}>Watch your bus move, live</h3>
-                <p>
-                  When your driver starts sharing their location, the bus appears on
-                  your map and moves in real time, with distance and arrival time to you.
-                </p>
-              </div>
-              <div className="radar" aria-hidden="true"><i /></div>
-            </article>
-
-            {features.map((f, i) => (
-              <article className="card" key={f.title}>
-                <div className={`card-icon${i % 2 ? ' amber' : ''}`}>
-                  <Icon d={f.icon} />
+            <div className="h-paths">
+              <article className="h-path student">
+                <StudentArt />
+                <div className="h-path-body">
+                  <h3>I&apos;m a student</h3>
+                  <ul className="h-ticks">
+                    <li>Find a bus that goes to your university</li>
+                    <li>Ask for a seat and get a reply from the driver</li>
+                    <li>See where your bus is and when it arrives</li>
+                  </ul>
+                  <Link href="/signup" className="h-btn primary">Create student account</Link>
                 </div>
-                <span className="tag">{f.audience}</span>
-                <h3 style={{ marginTop: 12 }}>{f.title}</h3>
-                <p>{f.description}</p>
               </article>
-            ))}
 
-            <article className="card span-3">
-              <div className="card-icon amber">
-                <Icon d={<><path d="M12 3l8 3.5v5c0 4.6-3.2 8.6-8 9.5-4.8-.9-8-4.9-8-9.5v-5L12 3z" /><path d="M9.2 12l2 2 3.8-4" /></>} />
+              <article className="h-path driver">
+                <DriverArt />
+                <div className="h-path-body">
+                  <h3>I&apos;m a driver</h3>
+                  <ul className="h-ticks">
+                    <li>Get students for your bus, at the fare you set</li>
+                    <li>See who has paid this month at a glance</li>
+                    <li>
+                      {commissionPercent > 0
+                        ? `We keep ${commissionPercent}% of fares. The rest is yours`
+                        : 'You keep all of your fares'}
+                    </li>
+                  </ul>
+                  <Link href="/signup?role=driver" className="h-btn amber">Register my bus</Link>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------- live tracking ---------------- */}
+        <section className="h-section tint">
+          <div className="h-wrap">
+            <div className="h-track">
+              <div className="h-phone-wrap">
+                <PhoneTracking />
+                <span className="h-example">Example screen</span>
               </div>
               <div>
-                <span className="tag soon">Coming soon</span>
-                <h3 style={{ marginTop: 10, marginBottom: 6 }}>Online payments and driver payouts</h3>
-                <p>Pay your fare by card in the app, with earnings going straight to the driver’s wallet.</p>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------- steps ---------------- */}
-      <section className="section section-tint">
-        <div className="wrap reveal">
-          <div className="section-head">
-            <span className="eyebrow">Getting started</span>
-            <h2>From sign-up to your first ride</h2>
-          </div>
-
-          <div className="steps">
-            <div className="step">
-              <h3>Create your profile</h3>
-              <p>Register as a student with your university and pickup point.</p>
-            </div>
-            <div className="step">
-              <h3>Request a seat</h3>
-              <p>Choose a verified bus and send a request. The driver accepts it.</p>
-            </div>
-            <div className="step">
-              <h3>Pay your fare</h3>
-              <p>Hand cash to your driver, who records it. Online card payments are coming soon.</p>
-            </div>
-            <div className="step">
-              <h3>Track and travel</h3>
-              <p>Answer the driver’s attendance poll and follow the bus live on the map.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------- drivers ---------------- */}
-      <section className="section">
-        <div className="wrap reveal">
-          <div className="grid-2" style={{ alignItems: 'center', gap: 52 }}>
-            <div>
-              <span className="eyebrow">For bus operators</span>
-              <h2 className="h2-side">Stop chasing fares in a notebook</h2>
-              <p style={{ color: 'var(--ink-soft)', marginTop: 15, fontSize: '1.04rem' }}>
-                Register with your NIC, driving licence, vehicle registration and bus
-                photo. Once an admin approves you, students can find your bus and
-                request seats.
-              </p>
-              <ul className="ticks" style={{ marginTop: 22 }}>
-                <li>You set your own monthly and daily fees</li>
-                <li>The platform keeps a {commissionPercent}% commission on fares</li>
-                <li>Paid, unpaid and not-travelling students at a glance</li>
-                <li>Post notices to all your passengers</li>
-              </ul>
-              <div className="hero-actions" style={{ marginTop: 28 }}>
-                <Link href="/signup" className="btn-cta">Register your bus {arrow}</Link>
-                <Link href="/how-it-works#drivers" className="btn-ghost">How it works</Link>
+                <span className="h-kicker">Live tracking</span>
+                <h2>No more guessing where the bus is</h2>
+                <p>
+                  When your driver starts the trip, your bus shows up on the map
+                  and moves as it drives. You see how far away it is and when it
+                  will reach you.
+                </p>
+                <ul className="h-ticks">
+                  <li>Works on the website and in the app</li>
+                  <li>Only students travelling on the bus can see it</li>
+                </ul>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="card" style={{ padding: 0 }}>
-              <div className="fare-head">
-                <strong style={{ fontSize: 15 }}>Fare tracker (example)</strong>
-                <span className="tag">This month</span>
-              </div>
-              {fareRows.map(r => (
-                <div className="fare-row" key={r.name}>
-                  <i style={{ color: r.color }} />
-                  <b>{r.name}</b>
-                  <span>{r.status}</span>
+        {/* ---------------- steps ---------------- */}
+        <section className="h-section tint" style={{ paddingTop: 20 }}>
+          <div className="h-wrap">
+            <div className="h-head">
+              <span className="h-kicker">How it works</span>
+              <h2>Four easy steps</h2>
+            </div>
+            <div className="h-steps">
+              {steps.map(step => (
+                <div className="h-step" key={step.title}>
+                  <div className="h-step-icon"><Icon>{step.icon}</Icon></div>
+                  <h3>{step.title}</h3>
+                  <p>{step.text}</p>
                 </div>
               ))}
             </div>
+            <p style={{ textAlign: 'center', marginTop: 30 }}>
+              <Link href="/how-it-works" className="h-link">Read the full guide</Link>
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ---------------- CTA ---------------- */}
-      <section className="section" style={{ paddingTop: 0 }}>
-        <div className="wrap reveal">
-          <div className="cta-panel">
-            <RouteNetwork />
-            <div>
+        {/* ---------------- features ---------------- */}
+        <section className="h-section">
+          <div className="h-wrap">
+            <div className="h-head">
+              <span className="h-kicker">What you get</span>
+              <h2>Everything for the daily ride</h2>
+            </div>
+            <div className="h-features">
+              {features.map(feature => (
+                <div className="h-feature" key={feature.title}>
+                  <div className={`h-feature-icon ${feature.tone}`}><Icon>{feature.icon}</Icon></div>
+                  <div>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="h-soon"><b>Coming soon</b>Pay your fare by card in the app.</div>
+          </div>
+        </section>
+
+        {/* ---------------- closing ---------------- */}
+        <section className="h-section" style={{ paddingTop: 0 }}>
+          <div className="h-wrap">
+            <div className="h-cta">
               <h2>Ready when your bus is</h2>
-              <p>
-                Whether you are a student looking for a bus or an operator who wants
-                to join, it takes a few minutes to get set up.
-              </p>
-              <div className="hero-actions">
-                <Link href="/signup" className="btn-cta">Create an account {arrow}</Link>
-                <Link href="/contact" className="btn-ghost">Contact us</Link>
+              <p>It&apos;s free to join and takes a few minutes.</p>
+              <div className="h-actions">
+                <Link href="/signup" className="h-btn amber">Create an account</Link>
+                <Link href="/contact" className="h-btn onDark">Talk to us</Link>
               </div>
             </div>
           </div>
+        </section>
+      </main>
+
+      <footer className="h-footer">
+        <div className="h-wrap">
+          <div className="h-footer-grid">
+            <div>
+              <div className="h-footer-brand">
+                <BrandMark height={30} />
+                <BrandWordmark height={20} />
+              </div>
+              <p>University bus travel in Sri Lanka, made simple for students and drivers.</p>
+            </div>
+            <div>
+              <h4>Site</h4>
+              <div className="h-footer-links">
+                <Link href="/how-it-works">How it works</Link>
+                <Link href="/contact">Contact us</Link>
+              </div>
+            </div>
+            <div>
+              <h4>Your account</h4>
+              <div className="h-footer-links">
+                <Link href="/login">Sign in</Link>
+                <Link href="/signup">Create an account</Link>
+              </div>
+            </div>
+            <div>
+              <h4>Get in touch</h4>
+              <div className="h-footer-links">
+                <a href={`mailto:${business.email}`}>{business.email}</a>
+                <a href={`tel:${business.phoneHref}`}>{business.phone}</a>
+                <span>{address.line1}<br />{address.city}, {address.country}</span>
+              </div>
+            </div>
+          </div>
+          <div className="h-footer-bottom">© {new Date().getFullYear()} {business.name}. All rights reserved.</div>
         </div>
-      </section>
-    </SiteChrome>
+      </footer>
+    </div>
   );
 }

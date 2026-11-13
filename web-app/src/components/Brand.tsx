@@ -11,11 +11,13 @@ const LETTERS = [
   'M298 18H326A14 18 0 1 0 321.9 30.7'
 ];
 
-export function BrandMark({ height = 30 }: { height?: number }) {
+// `tone` is the background the mark sits on: the light version uses the
+// deeper green and amber so it stays readable on white.
+export function BrandMark({ height = 30, tone = 'dark' }: { height?: number; tone?: 'light' | 'dark' }) {
   return (
     <svg viewBox="12 16 76 67" height={height} width={(height * 76) / 67} aria-hidden="true" style={{ flex: 'none', display: 'block' }}>
-      <path d="M20 44V60a15 15 0 0 0 30 0V46a15 15 0 0 1 30 0V72" fill="none" stroke="#35f0bd" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="20" cy="26" r="8.5" fill="#ffb347" />
+      <path d="M20 44V60a15 15 0 0 0 30 0V46a15 15 0 0 1 30 0V72" fill="none" stroke={tone === 'dark' ? '#35f0bd' : '#0e7c66'} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="20" cy="26" r="8.5" fill={tone === 'dark' ? '#ffb347' : '#e8912f'} />
     </svg>
   );
 }
