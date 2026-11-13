@@ -1,9 +1,9 @@
-/* The home page, in a light and a dark theme. Everything is scoped under
-   .home so the other public pages, which still use site.css, are not affected.
+/* The public pages, in a light and a dark theme. Everything is scoped under
+   .home so the signed-in portals and the admin panel are not affected.
 
-   Theme: .home is light unless it carries data-theme="dark" (set by the
-   switch in the header). Every colour that differs between the two is a
-   variable below; the a-* variables colour the illustrations. */
+   Theme: light unless <html> carries data-theme="dark" (set by the switch
+   in the header, see lib/theme.ts). Every colour that differs between the
+   two is a variable below; the a-* variables colour the illustrations. */
 
 .home {
   --bg: #fff;
@@ -56,7 +56,7 @@
   color-scheme: light;
 }
 
-.home[data-theme='dark'] {
+[data-theme='dark'] .home {
   --bg: #0a1220;
   --card: #111c2e;
   --tint: #0e1828;
@@ -103,8 +103,8 @@
 .home ::selection { background: var(--mint); color: #10203a; }
 
 .h-wrap { width: 100%; max-width: 1140px; margin: 0 auto; padding: 0 20px; }
-.h-only-dark, .home[data-theme='dark'] .h-only-light { display: none; }
-.home[data-theme='dark'] .h-only-dark { display: block; }
+.h-only-dark, [data-theme='dark'] .home .h-only-light { display: none; }
+[data-theme='dark'] .home .h-only-dark { display: block; }
 
 /* ---------- illustration colours ---------- */
 .home .a-hill1 { fill: var(--a-hill1); }   .home .a-hill2 { fill: var(--a-hill2); }
@@ -123,7 +123,7 @@
 .home .a-spot-sky { fill: var(--a-spot-sky); }  .home .a-spot-warm { fill: var(--a-spot-warm); }
 .home .a-spot-hill { fill: var(--a-spot-hill); } .home .a-phone { fill: var(--a-phone); }
 .home .a-night { display: none; }
-.home[data-theme='dark'] .a-night { display: inline; }
+[data-theme='dark'] .home .a-night { display: inline; }
 
 /* ---------- buttons ---------- */
 .h-btn {
@@ -140,6 +140,8 @@
 .home a.h-btn.amber { background: var(--amber); color: #10203a; box-shadow: 0 8px 20px rgba(255, 179, 71, .3); }
 .home a.h-btn.amber:hover { background: #ffa726; }
 .home a.h-btn.onDark { background: #fff; color: #0a6151; }
+.home a.h-btn.plain { background: var(--card); color: var(--ink); border-color: var(--line); }
+.home a.h-btn.plain:hover { border-color: var(--accent); }
 .home a.h-btn.small { min-height: 44px; padding: 8px 18px; font-size: 16px; border-radius: 13px; box-shadow: none; }
 
 /* ---------- header ---------- */
@@ -171,7 +173,7 @@
 
 /* ---------- promise strip ---------- */
 .h-strip { background: #0e7c66; color: #fff; }
-.home[data-theme='dark'] .h-strip { background: #0c5f50; }
+[data-theme='dark'] .home .h-strip { background: #0c5f50; }
 .h-strip-inner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 20px; padding-bottom: 20px; }
 .h-strip-item { display: flex; align-items: center; justify-content: center; gap: 12px; font-family: var(--display); font-weight: 500; font-size: 17.5px; text-align: left; }
 .h-strip-item svg { width: 30px; height: 30px; flex: none; color: var(--mint); }
@@ -230,7 +232,7 @@
 
 /* ---------- closing panel ---------- */
 .h-cta { position: relative; overflow: hidden; border-radius: 32px; padding: 56px 32px; text-align: center; color: #fff; background: linear-gradient(135deg, #0e7c66 0%, #0a6151 100%); }
-.home[data-theme='dark'] .h-cta { background: linear-gradient(135deg, #0d6e5b 0%, #0a4b40 100%); }
+[data-theme='dark'] .home .h-cta { background: linear-gradient(135deg, #0d6e5b 0%, #0a4b40 100%); }
 .h-cta::before, .h-cta::after { content: ''; position: absolute; border-radius: 50%; background: rgba(53, 240, 189, .16); }
 .h-cta::before { width: 280px; height: 280px; left: -90px; top: -110px; }
 .h-cta::after { width: 220px; height: 220px; right: -60px; bottom: -110px; background: rgba(255, 179, 71, .2); }
@@ -239,13 +241,114 @@
 
 /* ---------- footer ---------- */
 .h-footer { background: var(--footer); color: #b9c6d6; padding: 60px 0 26px; font-size: 15.5px; border-top: 1px solid transparent; }
-.home[data-theme='dark'] .h-footer { border-top-color: var(--line); }
+[data-theme='dark'] .home .h-footer { border-top-color: var(--line); }
 .h-footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; gap: 36px; }
 .h-footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .h-footer h4 { font-family: var(--display); font-weight: 500; font-size: 16px; color: #fff; margin-bottom: 14px; }
 .h-footer-links { display: grid; gap: 9px; }
 .home .h-footer a:hover { color: var(--mint); }
 .h-footer-bottom { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, .12); font-size: 14px; color: #8fa0b5; }
+
+/* ---------- header link for the page you are on ---------- */
+.home .h-nav a.current:not(.h-btn) { color: var(--link); background: var(--mint-soft); }
+
+/* ---------- inner pages ---------- */
+.home {
+  /* used by the shared photo picker on the sign-up form */
+  --text-muted: var(--faint);
+  --surface-border: var(--line);
+  --field: #fbfdff;
+  --ok-bg: #e6faf3;   --ok-ink: #0a6151;  --ok-line: #bfe9da;
+  --err-bg: #fdecec;  --err-ink: #9b1c1c; --err-line: #f6c4c4;
+  --info-bg: #e7f3fc; --info-ink: #134f7c; --info-line: #bddcf2;
+  --warn-bg: #fff3df; --warn-ink: #6b4208; --warn-line: #f5d9a8;
+}
+[data-theme='dark'] .home {
+  --field: #0b1424;
+  --ok-bg: rgba(53, 240, 189, .12);  --ok-ink: #8ff3d4;  --ok-line: rgba(53, 240, 189, .35);
+  --err-bg: rgba(255, 110, 110, .13); --err-ink: #ffb8b8; --err-line: rgba(255, 110, 110, .42);
+  --info-bg: rgba(76, 201, 240, .12); --info-ink: #bde9fa; --info-line: rgba(76, 201, 240, .38);
+  --warn-bg: rgba(255, 179, 71, .14); --warn-ink: #ffd699; --warn-line: rgba(255, 179, 71, .4);
+}
+
+.h-page-head { background: var(--hero); text-align: center; padding-top: 52px; }
+.h-page-head h1 { font-size: clamp(2.1rem, 5.4vw, 3.4rem); margin: 4px 0 12px; }
+.h-page-head p { color: var(--soft); max-width: 640px; margin: 0 auto; font-size: clamp(1.03rem, 2.2vw, 1.15rem); }
+.h-band { display: block; width: 100%; height: clamp(84px, 10vw, 140px); margin-top: 30px; }
+
+.h-cards { display: grid; gap: 20px; }
+.h-cards.two { grid-template-columns: repeat(2, 1fr); }
+.h-cards.three { grid-template-columns: repeat(3, 1fr); }
+.h-card { background: var(--card); border: 2px solid var(--line); border-radius: 22px; padding: 24px; }
+.h-card h3 { font-size: 1.2rem; margin: 10px 0 6px; }
+.h-card h3:first-child { margin-top: 0; }
+.h-card > p { color: var(--soft); }
+.h-card .h-ticks { margin-top: 12px; }
+.h-tag { display: inline-block; padding: 3px 12px; border-radius: 999px; background: var(--mint-soft); color: var(--accent); font-weight: 800; font-size: 13px; }
+.h-tag.amber { background: var(--amber-soft); color: var(--amber-ink); }
+.h-note { margin-top: 26px; padding: 18px 22px; border-radius: 18px; background: var(--warn-bg); color: var(--warn-ink); border: 2px solid var(--warn-line); }
+.h-steps.plain .h-step { padding-top: 34px; }
+.h-center { text-align: center; }
+.h-label { font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); }
+.home a.h-strong-link { color: var(--link); font-weight: 800; overflow-wrap: anywhere; }
+.h-hours { display: grid; gap: 10px; margin-top: 14px; }
+.h-hours div { display: flex; justify-content: space-between; gap: 16px; }
+.h-hours span:first-child { color: var(--soft); }
+.h-hours span:last-child { font-weight: 700; text-align: right; }
+.h-contact { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; align-items: start; }
+.h-done { text-align: center; padding: 18px 6px; }
+.h-done-icon { width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: var(--mint-soft); color: var(--accent); }
+.h-done-icon svg { width: 34px; height: 34px; }
+.h-done p { color: var(--soft); margin-top: 8px; }
+
+/* ---------- sign in, sign up, forgot password ---------- */
+.h-auth { background: var(--hero); min-height: calc(100vh - 69px); padding-top: 44px; display: flex; flex-direction: column; }
+.h-auth-inner { width: 100%; max-width: 470px; margin: 0 auto; padding: 0 16px; flex: 1; }
+.h-auth-inner.wide { max-width: 800px; }
+.h-auth-head { text-align: center; margin-bottom: 22px; }
+.h-auth-head h1 { font-size: clamp(1.9rem, 4.6vw, 2.5rem); }
+.h-auth-head p { color: var(--soft); margin-top: 6px; font-size: 1.04rem; }
+.h-auth-card { background: var(--card); border: 2px solid var(--line); border-radius: 26px; padding: 30px; box-shadow: 0 22px 54px var(--shade); }
+.h-auth-foot { margin-top: 22px; padding-top: 18px; border-top: 2px solid var(--line); text-align: center; color: var(--soft); }
+.h-form { display: flex; flex-direction: column; gap: 16px; }
+.h-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+.h-tabs .p-btn { flex: 1; }
+.h-muted { color: var(--soft); }
+.h-hint { font-size: 13.5px; color: var(--faint); }
+.home button.h-text-btn { background: none; border: none; padding: 4px 0; font: inherit; font-size: 14.5px; font-weight: 800; color: var(--link); cursor: pointer; }
+.home button.h-text-btn:hover { text-decoration: underline; }
+.home button.h-text-btn:disabled { opacity: .5; cursor: progress; }
+.h-loading { text-align: center; padding: 24px; color: var(--faint); }
+
+/* the shared form pieces (p-field, p-btn, p-alert) restyled for these pages */
+.home .p-field { display: flex; flex-direction: column; gap: 7px; }
+.home .p-field label { font-size: 15px; font-weight: 800; color: var(--ink); }
+.home .p-field input, .home .p-field select, .home .p-field textarea {
+  width: 100%; min-height: 52px; padding: 12px 15px; border-radius: 14px;
+  border: 2px solid var(--line); background: var(--field); color: var(--ink);
+  font: inherit; font-size: 16px; transition: border-color .15s ease, box-shadow .15s ease;
+}
+.home .p-field textarea { min-height: 140px; resize: vertical; }
+.home .p-field input::placeholder, .home .p-field textarea::placeholder { color: var(--faint); opacity: 1; }
+.home .p-field input:focus, .home .p-field select:focus, .home .p-field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--mint-soft); }
+.home .p-field option { background: var(--card); color: var(--ink); }
+.home .p-card-title { font-family: var(--display); font-size: 1.2rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); margin: 4px 0 14px; }
+.home .p-btn {
+  min-height: 52px; padding: 12px 22px; border-radius: 14px; border: 2px solid transparent;
+  font-family: var(--display); font-size: 17px; font-weight: 600; cursor: pointer;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.home .p-btn:hover { opacity: 1; transform: translateY(-1px); }
+.home .p-btn:disabled { opacity: .55; cursor: progress; transform: none; }
+.home .p-btn.primary { background: var(--btn); color: #fff; box-shadow: 0 8px 18px rgba(14, 124, 102, .22); }
+.home .p-btn.primary:hover { background: var(--btn-hover); }
+.home .p-btn.outline { background: transparent; border-color: var(--line); color: var(--ink); }
+.home .p-btn.outline:hover { border-color: var(--accent); }
+.home .p-alert { padding: 14px 16px; border-radius: 14px; border: 2px solid; font-size: 15px; font-weight: 600; margin-bottom: 0; }
+.home .p-alert.green { background: var(--ok-bg); color: var(--ok-ink); border-color: var(--ok-line); }
+.home .p-alert.red { background: var(--err-bg); color: var(--err-ink); border-color: var(--err-line); }
+.home .p-alert.blue { background: var(--info-bg); color: var(--info-ink); border-color: var(--info-line); }
+.home .p-alert.amber { background: var(--warn-bg); color: var(--warn-ink); border-color: var(--warn-line); }
 
 /* ---------- motion ---------- */
 @media (prefers-reduced-motion: no-preference) {
@@ -276,6 +379,8 @@
 /* ---------- smaller screens ---------- */
 @media (max-width: 900px) {
   .h-section { padding: 64px 0; }
+  .h-cards.three { grid-template-columns: 1fr; }
+  .h-contact { grid-template-columns: 1fr; }
   .h-steps { grid-template-columns: repeat(2, 1fr); row-gap: 40px; }
   .h-features { grid-template-columns: repeat(2, 1fr); }
   .h-footer-grid { grid-template-columns: 1fr 1fr; }
@@ -301,6 +406,10 @@
   .h-features { grid-template-columns: 1fr; }
   .h-soon { flex-direction: column; text-align: center; }
   .h-cta { padding: 44px 22px; border-radius: 26px; }
+  .h-cards.two { grid-template-columns: 1fr; }
+  .h-page-head { padding-top: 38px; }
+  .h-auth { padding-top: 30px; }
+  .h-auth-card { padding: 22px 18px; border-radius: 22px; }
 }
 @media (max-width: 460px) {
   .h-steps { grid-template-columns: 1fr; }

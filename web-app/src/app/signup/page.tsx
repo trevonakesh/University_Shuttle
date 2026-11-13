@@ -2,13 +2,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import PhotoField from '../../components/PhotoField';
-import RouteNetwork from '../../components/RouteNetwork';
-import { fontVariables } from '../../lib/fonts';
+import PublicShell from '../../components/PublicShell';
+import { RoadBand } from '../../components/HomeArt';
 import { API_BASE, setPortalToken, setPortalUser } from '../../lib/portalApi';
 import { PASSWORD_HINT, passwordInputProps } from '../../lib/password';
-import '../site.css';
 import '../portal/portal.css';
-import '../auth.css';
 
 type Role = 'STUDENT' | 'DRIVER';
 // `options` names a list served by /api/settings/signup-form, which admins
@@ -196,34 +194,34 @@ export default function SignupPage() {
   };
 
   const tab = (value: Role, label: string) => (
-    <button type="button" className={`p-btn ${role === value ? 'primary' : 'outline'}`} style={{ flex: 1 }} onClick={() => switchRole(value)}>
+    <button type="button" className={`p-btn ${role === value ? 'primary' : 'outline'}`} aria-pressed={role === value} onClick={() => switchRole(value)}>
       {label}
     </button>
   );
 
   return (
-    <div className={`portal auth ${fontVariables}`}>
-      <RouteNetwork />
-      <div className="auth-inner" style={{ maxWidth: '740px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h1 className="auth-title">Create your account</h1>
-          <p className="auth-sub">Uni Shuttle for students and bus drivers</p>
+    <PublicShell footer={false}>
+     <section className="h-auth">
+      <div className="h-auth-inner wide">
+        <div className="h-auth-head">
+          <h1>Create your account</h1>
+          <p>Free for students and bus drivers. It takes a few minutes.</p>
         </div>
 
-        <div className="auth-card">
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            {tab('STUDENT', "I'm a Student")}
-            {tab('DRIVER', "I'm a Driver")}
+        <div className="h-auth-card">
+          <div className="h-tabs">
+            {tab('STUDENT', "I'm a student")}
+            {tab('DRIVER', "I'm a driver")}
           </div>
 
           {role === 'DRIVER' && (
             <div className="p-alert blue" style={{ marginBottom: '20px' }}>
-              An administrator reviews every driver application before the bus goes live.
+              Our team checks every driver before the bus appears to students.
             </div>
           )}
-          {error && <div className="p-alert red" style={{ marginBottom: '20px' }}>{error}</div>}
+          {error && <div className="p-alert red" role="alert" style={{ marginBottom: '20px' }}>{error}</div>}
 
-          {!form ? (!error && <div style={{ textAlign: 'center', padding: '24px', color: '#7a8699' }}>Loading the form…</div>) : <form onSubmit={submit}>
+          {!form ? (!error && <div className="h-loading">Loading the form…</div>) : <form onSubmit={submit}>
             {sections.map(section => (
               <div key={section.title} style={{ marginBottom: '24px' }}>
                 <div className="p-card-title">{section.title}</div>
@@ -257,16 +255,18 @@ export default function SignupPage() {
               </div>
             ))}
 
-            <button type="submit" className="p-btn primary" disabled={loading} style={{ width: '100%', padding: '13px', fontSize: '15px' }}>
-              {loading ? 'Creating your account…' : 'Create Account'}
+            <button type="submit" className="p-btn primary" disabled={loading} style={{ width: '100%' }}>
+              {loading ? 'Creating your account…' : 'Create account'}
             </button>
           </form>}
 
-          <div className="auth-foot">
-            Already have an account? <Link href="/login" className="auth-link">Sign in</Link>
+          <div className="h-auth-foot">
+            Already have an account? <Link href="/login" className="h-link">Sign in</Link>
           </div>
         </div>
       </div>
-    </div>
+      <RoadBand />
+     </section>
+    </PublicShell>
   );
 }

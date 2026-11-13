@@ -73,7 +73,8 @@ export function PageLoader() {
   return (
     <>
       <div id="page-loader" className="page-loader" suppressHydrationWarning>
-        <BrandLoader tone="dark" size={104} />
+        <div className="pl-light"><BrandLoader tone="light" size={104} /></div>
+        <div className="pl-dark"><BrandLoader tone="dark" size={104} /></div>
       </div>
       <script dangerouslySetInnerHTML={{ __html: PAGE_LOADER_SCRIPT }} />
     </>

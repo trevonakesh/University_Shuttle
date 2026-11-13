@@ -1,19 +1,13 @@
 import Link from 'next/link';
-import HomeNav from '../components/HomeNav';
-import { BrandMark, BrandWordmark } from '../components/Brand';
+import PublicShell from '../components/PublicShell';
 import { DriverArt, HeroScene, PhoneTracking, StudentArt } from '../components/HomeArt';
-import { business, getCommissionPercent } from '../lib/business';
-import { homeFontVariables } from '../lib/fonts';
-import './home.css';
+import { getCommissionPercent } from '../lib/business';
 
 export const metadata = {
   title: 'UniShuttle: university bus travel in Sri Lanka',
   description:
     'UniShuttle connects university students with private bus operators in Sri Lanka. Request a seat, answer attendance polls, pay your fare to your driver and track your bus live.'
 };
-
-// The key must match THEME_KEY in components/HomeNav.tsx.
-const THEME_SCRIPT = `try{if(localStorage.getItem('us-home-theme')==='dark')document.currentScript.parentElement.setAttribute('data-theme','dark')}catch(e){}`;
 
 const Icon = ({ children }: { children: React.ReactNode }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -53,15 +47,9 @@ const features = [
 
 export default async function HomePage() {
   const commissionPercent = await getCommissionPercent();
-  const address = business.address;
 
   return (
-    <div className={`home ${homeFontVariables}`} suppressHydrationWarning>
-      {/* Applies a remembered dark-mode choice before the page is drawn, so it never flashes light first. */}
-      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-      <HomeNav />
-
-      <main>
+    <PublicShell>
         {/* ---------------- hero ---------------- */}
         <section className="h-hero">
           <div className="h-wrap h-hero-text">
@@ -213,44 +201,6 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-      </main>
-
-      <footer className="h-footer">
-        <div className="h-wrap">
-          <div className="h-footer-grid">
-            <div>
-              <div className="h-footer-brand">
-                <BrandMark height={30} />
-                <BrandWordmark height={20} />
-              </div>
-              <p>University bus travel in Sri Lanka, made simple for students and drivers.</p>
-            </div>
-            <div>
-              <h4>Site</h4>
-              <div className="h-footer-links">
-                <Link href="/how-it-works">How it works</Link>
-                <Link href="/contact">Contact us</Link>
-              </div>
-            </div>
-            <div>
-              <h4>Your account</h4>
-              <div className="h-footer-links">
-                <Link href="/login">Sign in</Link>
-                <Link href="/signup">Create an account</Link>
-              </div>
-            </div>
-            <div>
-              <h4>Get in touch</h4>
-              <div className="h-footer-links">
-                <a href={`mailto:${business.email}`}>{business.email}</a>
-                <a href={`tel:${business.phoneHref}`}>{business.phone}</a>
-                <span>{address.line1}<br />{address.city}, {address.country}</span>
-              </div>
-            </div>
-          </div>
-          <div className="h-footer-bottom">© {new Date().getFullYear()} {business.name}. All rights reserved.</div>
-        </div>
-      </footer>
-    </div>
+    </PublicShell>
   );
 }

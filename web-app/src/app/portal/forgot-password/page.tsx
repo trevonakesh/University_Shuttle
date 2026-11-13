@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import PublicShell from '../../../components/PublicShell';
+import { RoadBand } from '../../../components/HomeArt';
 import { API_BASE } from '../../../lib/portalApi';
 import { PASSWORD_HINT, passwordInputProps } from '../../../lib/password';
 import '../portal.css';
@@ -79,84 +81,86 @@ export default function ForgotPasswordPage() {
   });
 
   const submit = (action: () => void) => (e: React.FormEvent) => { e.preventDefault(); action(); };
-  const formStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '16px' };
-  const mainButton: React.CSSProperties = { width: '100%', padding: '13px' };
-  const linkButton: React.CSSProperties = { background: 'none', border: 'none', padding: 0, color: '#0e7c66', fontWeight: 600, fontSize: '13px', cursor: 'pointer' };
 
   return (
-    <div className="portal" style={{ background: 'linear-gradient(135deg, #0e7c66 0%, #10203a 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ width: '100%', maxWidth: '420px' }}>
-        <div style={{ background: '#fff', borderRadius: '20px', padding: '36px', boxShadow: '0 24px 60px rgba(0,0,0,.3)' }}>
-          {step !== 'done' && (
-            <div style={{ fontSize: '12px', fontWeight: 700, color: '#0e7c66', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Step {step === 'email' ? 1 : step === 'code' ? 2 : 3} of 3
+    <PublicShell footer={false}>
+      <section className="h-auth">
+        <div className="h-auth-inner">
+          <div className="h-auth-head">
+            {step !== 'done' && (
+              <span className="h-kicker">Step {step === 'email' ? 1 : step === 'code' ? 2 : 3} of 3</span>
+            )}
+            <h1>{HEADINGS[step]}</h1>
+            <p>
+              {step === 'email' && "Enter your email and we'll send you a 6-digit code."}
+              {step === 'code' && `We sent a code to ${email}. Enter it to continue.`}
+              {step === 'password' && 'Your code is confirmed. Choose the password you want to use from now on.'}
+              {step === 'done' && 'Taking you to the sign-in page…'}
+            </p>
+          </div>
+
+          <div className="h-auth-card">
+            <div className="h-form">
+              {notice && step === 'code' && <div className="p-alert green">{notice}</div>}
+              {error && <div className="p-alert red" role="alert">{error}</div>}
+
+              {step === 'email' && (
+                <form onSubmit={submit(sendCode)} className="h-form">
+                  <div className="p-field">
+                    <label htmlFor="reset-email">Email address</label>
+                    <input id="reset-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@university.edu" autoComplete="email" />
+                  </div>
+                  <button type="submit" className="p-btn primary" disabled={loading}>
+                    {loading ? 'Sending…' : 'Send reset code'}
+                  </button>
+                </form>
+              )}
+
+              {step === 'code' && (
+                <form onSubmit={submit(verifyCode)} className="h-form">
+                  <div className="p-field">
+                    <label htmlFor="reset-code">6-digit code</label>
+                    {/* Digits only, so a code pasted with spaces isn't cut short. */}
+                    <input id="reset-code" type="text" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required minLength={6} placeholder="123456" style={{ letterSpacing: '0.25em', fontSize: '22px', fontWeight: 800 }} />
+                    <span className="h-hint">Asked more than once? Only the code in the newest email works.</span>
+                  </div>
+                  <button type="submit" className="p-btn primary" disabled={loading}>
+                    {loading ? 'Checking…' : 'Verify code'}
+                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                    <button type="button" className="h-text-btn" disabled={loading} onClick={sendCode}>Send a new code</button>
+                    <button type="button" className="h-text-btn" disabled={loading} onClick={() => { setError(null); setNotice(null); setStep('email'); }}>Use a different email</button>
+                  </div>
+                </form>
+              )}
+
+              {step === 'password' && (
+                <form onSubmit={submit(savePassword)} className="h-form">
+                  <div className="p-field">
+                    <label htmlFor="reset-new">New password</label>
+                    <input id="reset-new" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required {...passwordInputProps} autoComplete="new-password" />
+                    <span className="h-hint">{PASSWORD_HINT}.</span>
+                  </div>
+                  <div className="p-field">
+                    <label htmlFor="reset-confirm">Type it again</label>
+                    <input id="reset-confirm" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autoComplete="new-password" />
+                  </div>
+                  <button type="submit" className="p-btn primary" disabled={loading}>
+                    {loading ? 'Saving…' : 'Set new password'}
+                  </button>
+                </form>
+              )}
+
+              {step === 'done' && <div className="p-alert green" role="status">Password changed. You can now sign in with it.</div>}
             </div>
-          )}
-          <h2 style={{ fontSize: '22px', marginBottom: '8px', color: '#10203a' }}>{HEADINGS[step]}</h2>
-          <p style={{ fontSize: '14px', color: '#7a8699', marginBottom: '28px' }}>
-            {step === 'email' && "Enter your email and we'll send a 6-digit reset code."}
-            {step === 'code' && `We sent a code to ${email}. Enter it to continue.`}
-            {step === 'password' && 'Your code is confirmed. Choose the password you want to use from now on.'}
-            {step === 'done' && 'Taking you to the sign-in page…'}
-          </p>
 
-          {notice && step === 'code' && <div className="p-alert green" style={{ marginBottom: '20px' }}>{notice}</div>}
-          {error && <div className="p-alert red" role="alert" style={{ marginBottom: '20px' }}>{error}</div>}
-
-          {step === 'email' && (
-            <form onSubmit={submit(sendCode)} style={formStyle}>
-              <div className="p-field">
-                <label htmlFor="reset-email">Email address</label>
-                <input id="reset-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@university.edu" />
-              </div>
-              <button type="submit" className="p-btn primary" disabled={loading} style={mainButton}>
-                {loading ? 'Sending…' : 'Send Reset Code'}
-              </button>
-            </form>
-          )}
-
-          {step === 'code' && (
-            <form onSubmit={submit(verifyCode)} style={formStyle}>
-              <div className="p-field">
-                <label htmlFor="reset-code">6-digit code</label>
-                {/* Digits only, so a code pasted with spaces isn't cut short. */}
-                <input id="reset-code" type="text" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required minLength={6} placeholder="123456" style={{ letterSpacing: '0.2em', fontSize: '20px' }} />
-                <span style={{ fontSize: '12px', color: '#7a8699' }}>Asked more than once? Only the code in the newest email works.</span>
-              </div>
-              <button type="submit" className="p-btn primary" disabled={loading} style={mainButton}>
-                {loading ? 'Checking…' : 'Verify Code'}
-              </button>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                <button type="button" style={linkButton} disabled={loading} onClick={sendCode}>Send a new code</button>
-                <button type="button" style={linkButton} disabled={loading} onClick={() => { setError(null); setNotice(null); setStep('email'); }}>Use a different email</button>
-              </div>
-            </form>
-          )}
-
-          {step === 'password' && (
-            <form onSubmit={submit(savePassword)} style={formStyle}>
-              <div className="p-field">
-                <label htmlFor="reset-new">New password</label>
-                <input id="reset-new" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required {...passwordInputProps} autoComplete="new-password" />
-                <span style={{ fontSize: '12px', color: '#7a8699' }}>{PASSWORD_HINT}.</span>
-              </div>
-              <div className="p-field">
-                <label htmlFor="reset-confirm">Type it again</label>
-                <input id="reset-confirm" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autoComplete="new-password" />
-              </div>
-              <button type="submit" className="p-btn primary" disabled={loading} style={mainButton}>
-                {loading ? 'Saving…' : 'Set New Password'}
-              </button>
-            </form>
-          )}
-
-          {step === 'done' && <div className="p-alert green">Password changed. You can now sign in with it.</div>}
-
-          <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '14px' }}>
-            <Link href="/login" style={{ color: '#0e7c66', fontWeight: 600 }}>← Back to login</Link>
+            <div className="h-auth-foot">
+              <Link href="/login" className="h-link">Back to sign in</Link>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+        <RoadBand />
+      </section>
+    </PublicShell>
   );
 }

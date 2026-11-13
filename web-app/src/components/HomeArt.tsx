@@ -212,6 +212,39 @@ export function HeroScene() {
   );
 }
 
+// A thin road scene for the top of the inner pages: hills, a few trees and
+// buildings, and a small UniShuttle bus. Night version comes from the theme.
+export function RoadBand() {
+  return (
+    <svg className="h-band" viewBox="0 0 1440 130" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <path className="a-hill1" d="M0 80C220 34 420 52 640 70s420-50 800 4v56H0z" />
+      <path className="a-hill2" d="M0 98C260 70 520 88 760 92s420-26 680 0v38H0z" />
+      <g transform="translate(0 -230)">
+        <RoundTree x={150} size={0.7} light />
+        <Building x={220} width={92} height={56} />
+        <RoundTree x={360} size={0.6} />
+        <Palm x={1020} />
+        <Building x={1080} width={100} height={64} />
+        <RoundTree x={1230} size={0.75} light />
+      </g>
+      <rect className="a-pave" y="100" width="1440" height="5" />
+      <rect className="a-road" y="104" width="1440" height="20" />
+      <path d="M0 114h1440" stroke="#fff" strokeOpacity=".8" strokeWidth="3" strokeDasharray="26 20" />
+      <rect className="a-grass" y="123" width="1440" height="7" />
+      <g transform="translate(672 64)">
+        <g className="h-bus-body">
+          <path className="a-night" d="M86 22l60-8v26l-60-4z" fill="#ffe08a" opacity=".22" />
+          <rect width="86" height="40" rx="11" fill="#14b88f" />
+          <rect y="24" width="86" height="16" rx="0" fill={GREEN} /><rect y="28" width="86" height="12" rx="6" fill={GREEN} />
+          <rect y="22" width="86" height="3" fill={AMBER} />
+          <g className="a-buswin"><rect x="7" y="6" width="17" height="13" rx="4" /><rect x="28" y="6" width="17" height="13" rx="4" /><rect x="49" y="6" width="17" height="13" rx="4" /><rect x="70" y="6" width="12" height="13" rx="4" /></g>
+          <circle cx="20" cy="41" r="7" fill="#1b2738" /><circle cx="66" cy="41" r="7" fill="#1b2738" />
+        </g>
+      </g>
+    </svg>
+  );
+}
+
 // A phone showing the live tracking screen, with the bus moving along its route.
 const ROUTE = 'M58 356C58 300 96 290 128 262S150 196 196 180s52-48 40-84';
 

@@ -151,10 +151,16 @@ h2 {
 .bl-still { display: none; }
 .page-loader {
   position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
-  background: #070b14; transition: opacity .4s ease, visibility .4s ease;
+  background: linear-gradient(180deg, #cfecff 0%, #e6f6ff 50%, #f1fbf7 100%);
+  transition: opacity .4s ease, visibility .4s ease;
   animation: page-loader-out .4s ease 5s forwards; /* still clears if the script never runs */
 }
 .page-loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+/* Follows the light / dark choice from the public pages (lib/theme.ts). */
+.page-loader .pl-dark { display: none; }
+[data-theme='dark'] .page-loader { background: linear-gradient(180deg, #070d1c 0%, #0d1a33 100%); }
+[data-theme='dark'] .page-loader .pl-light { display: none; }
+[data-theme='dark'] .page-loader .pl-dark { display: block; }
 @keyframes page-loader-out { to { opacity: 0; visibility: hidden; } }
 @media (prefers-reduced-motion: reduce) {
   .bl-anim { display: none; }

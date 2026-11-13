@@ -1,32 +1,34 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { BrandMark, BrandWordmark } from './Brand';
+import { THEME_KEY } from '../lib/theme';
 
-export const THEME_KEY = 'us-home-theme';
 type Theme = 'light' | 'dark';
 
-// Header for the home page, with the light / dark switch. The chosen theme is
-// an attribute on the page's .home element (set before first paint by the
-// script in page.tsx) and is remembered on this device.
+const links = [
+  { href: '/how-it-works', label: 'How it works' },
+  { href: '/contact', label: 'Contact' },
+  { href: '/login', label: 'Sign in' }
+];
+
+// Header for the public pages, with the light / dark switch. The theme is a
+// data-theme attribute on <html>, applied before first paint by the script in
+// the root layout and remembered on this device.
 export default function HomeNav() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>('light');
 
-  // The script in page.tsx has usually applied the saved choice already. It
-  // doesn't run when the page is reached by an in-site link, so apply it here too.
   useEffect(() => {
-    let saved: string | null = null;
-    try { saved = localStorage.getItem(THEME_KEY); } catch { /* storage blocked */ }
-    if (saved !== 'dark') return;
-    document.querySelector('.home')?.setAttribute('data-theme', 'dark');
-    setTheme('dark');
+    if (document.documentElement.getAttribute('data-theme') === 'dark') setTheme('dark');
   }, []);
 
   const switchTheme = () => {
     const next: Theme = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
-    document.querySelector('.home')?.setAttribute('data-theme', next);
+    document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem(THEME_KEY, next); } catch { /* private window: applies to this visit only */ }
   };
 
@@ -47,8 +49,8 @@ export default function HomeNav() {
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {theme === 'dark'
-              ? <><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.300v2.200M2.500 12h2.200M19.300 12h2.200M5.300 5.300l1.600 1.600M17.100 17.100l1.600 1.600M5.300 18.700l1.600-1.600M17.100 6.900l1.600-1.600" /></>
-              : <path d="M20 14.500A8.500 8.500 0 019.500 4a7 7 0 1010.500 10.500z" />}
+              ? <><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" /></>
+              : <path d="M20 14.5A8.5 8.5 0 019.5 4a7 7 0 1010.5 10.5z" />}
           </svg>
         </button>
 
@@ -59,9 +61,11 @@ export default function HomeNav() {
         </button>
 
         <nav className={`h-nav${open ? ' open' : ''}`} onClick={() => setOpen(false)}>
-          <Link href="/how-it-works">How it works</Link>
-          <Link href="/contact">Contact</Link>
-          <Link href="/login">Sign in</Link>
+          {links.map(l => (
+            <Link key={l.href} href={l.href} className={pathname === l.href ? 'current' : undefined} aria-current={pathname === l.href ? 'page' : undefined}>
+              {l.label}
+            </Link>
+          ))}
           <Link href="/signup" className="h-btn primary small">Get started</Link>
         </nav>
       </div>

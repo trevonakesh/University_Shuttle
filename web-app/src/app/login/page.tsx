@@ -2,12 +2,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { API_BASE, setPortalToken, setPortalUser } from '../../lib/portalApi';
-import { fontVariables } from '../../lib/fonts';
-import RouteNetwork from '../../components/RouteNetwork';
-import { BrandMark, BrandWordmark } from '../../components/Brand';
-import '../site.css';
+import PublicShell from '../../components/PublicShell';
+import { RoadBand } from '../../components/HomeArt';
 import '../portal/portal.css';
-import '../auth.css';
 
 export default function PortalLoginPage() {
   const [email, setEmail] = useState('');
@@ -47,68 +44,56 @@ export default function PortalLoginPage() {
   };
 
   return (
-    <div className={`portal auth ${fontVariables}`}>
-      <RouteNetwork />
-      <div className="auth-inner" style={{ maxWidth: '430px' }}>
-        {/* Brand */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div className="auth-mark"><BrandMark height={58} /></div>
-          <h1 className="auth-title"><BrandWordmark height={34} /></h1>
-          <p className="auth-sub">Student &amp; Driver Portal</p>
-        </div>
+    <PublicShell footer={false}>
+      <section className="h-auth">
+        <div className="h-auth-inner">
+          <div className="h-auth-head">
+            <h1>Welcome back</h1>
+            <p>Sign in to your student or driver account.</p>
+          </div>
 
-        {/* Card */}
-        <div className="auth-card">
-          <h2 className="auth-card-title">Sign in to your account</h2>
-          <p className="auth-muted" style={{ marginBottom: '28px' }}>
-            Students and drivers sign in here.
-          </p>
+          <div className="h-auth-card">
+            <form onSubmit={submit} className="h-form">
+              {error && <div className="p-alert red" role="alert">{error}</div>}
 
-          {error && (
-            <div className="p-alert red" style={{ marginBottom: '20px' }}>
-              {error}
-            </div>
-          )}
+              <div className="p-field">
+                <label htmlFor="email">Email address</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  placeholder="you@university.edu"
+                  autoComplete="email"
+                />
+              </div>
+              <div className="p-field">
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+              <div style={{ textAlign: 'right', marginTop: '-6px' }}>
+                <Link href="/portal/forgot-password" className="h-link" style={{ fontSize: 15 }}>Forgot password?</Link>
+              </div>
+              <button type="submit" className="p-btn primary" disabled={loading}>
+                {loading ? 'Signing in…' : 'Sign in'}
+              </button>
+            </form>
 
-          <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="p-field">
-              <label htmlFor="email">Email address</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                placeholder="you@university.edu"
-                autoComplete="email"
-              />
+            <div className="h-auth-foot">
+              New to UniShuttle? <Link href="/signup" className="h-link">Create an account</Link>
             </div>
-            <div className="p-field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                autoComplete="current-password"
-              />
-            </div>
-            <div style={{ textAlign: 'right', marginTop: '-8px' }}>
-              <Link href="/portal/forgot-password" className="auth-link" style={{ fontSize: '13px' }}>Forgot password?</Link>
-            </div>
-            <button type="submit" className="p-btn primary" disabled={loading} style={{ width: '100%', padding: '13px', marginTop: '4px', fontSize: '15px' }}>
-              {loading ? 'Signing in…' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="auth-foot">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="auth-link">Create one</Link>
           </div>
         </div>
-      </div>
-    </div>
+        <RoadBand />
+      </section>
+    </PublicShell>
   );
 }
