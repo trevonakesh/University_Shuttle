@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/palette.dart';
 import '../services/api_service.dart';
 
 /// Circular avatar that shows the logged-in user's profile photo, loading it
@@ -34,14 +35,14 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = widget.backgroundColor ?? Colors.white24;
+    final bg = widget.backgroundColor ?? context.pal.fg24;
     return CircleAvatar(
       radius: widget.radius,
       backgroundColor: bg,
       backgroundImage: _photoUrl != null ? NetworkImage(_photoUrl!) : null,
       onBackgroundImageError: _photoUrl != null ? (_, __) {} : null,
       child: _photoUrl == null
-          ? Icon(Icons.person, color: Colors.white, size: widget.radius * 1.1)
+          ? Icon(Icons.person, color: context.pal.fg, size: widget.radius * 1.1)
           : null,
     );
   }

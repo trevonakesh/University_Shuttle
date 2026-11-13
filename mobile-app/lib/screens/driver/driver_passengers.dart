@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
@@ -54,9 +55,9 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF12141D),
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      return Scaffold(
+        backgroundColor: context.pal.bg,
+        body: Center(child: CircularProgressIndicator(color: context.pal.fg)),
       );
     }
 
@@ -72,35 +73,35 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'MY PASSENGERS',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+              style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
             Text(
               "TOTAL PASSENGERS: ${_passengers.length}",
-              style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(color: context.pal.fg70, fontSize: 14, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 40),
             
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: context.pal.tint(0.05),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white24),
+                  border: Border.all(color: context.pal.fg24),
                 ),
                 child: _passengers.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'NO PASSENGERS YET',
-                          style: TextStyle(color: Colors.white54, fontSize: 16),
+                          style: TextStyle(color: context.pal.fg54, fontSize: 16),
                         ),
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.all(20),
                         itemCount: _passengers.length,
-                        separatorBuilder: (context, index) => const Divider(color: Colors.white24, height: 1),
+                        separatorBuilder: (context, index) => Divider(color: context.pal.fg24, height: 1),
                         itemBuilder: (context, index) {
                           final p = _passengers[index];
                           final student = p['student'];
@@ -108,19 +109,19 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 15),
                             child: Row(
                               children: [
-                                const CircleAvatar(
-                                  backgroundColor: Colors.white10,
+                                CircleAvatar(
+                                  backgroundColor: context.pal.fg12,
                                   radius: 25,
-                                  child: Icon(Icons.person, color: Colors.white, size: 30),
+                                  child: Icon(Icons.person, color: context.pal.fg, size: 30),
                                 ),
                                 const SizedBox(width: 20),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(student['fullName'] ?? 'Unknown', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                      Text(student['fullName'] ?? 'Unknown', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 16)),
                                       const SizedBox(height: 4),
-                                      Text('${student['universityName'] ?? 'Unknown Uni'} • ${student['pickupPoint'] ?? 'Unknown Pickup'}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                      Text('${student['universityName'] ?? 'Unknown Uni'} • ${student['pickupPoint'] ?? 'Unknown Pickup'}', style: TextStyle(color: context.pal.fg54, fontSize: 12)),
                                     ],
                                   ),
                                 ),
@@ -134,7 +135,7 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
                                   child: const Text('APPROVED', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.white70),
+                                  icon: Icon(Icons.edit, color: context.pal.fg70),
                                   tooltip: 'Edit student details',
                                   onPressed: () {
                                     final int id = (p['studentId'] as num?)?.toInt() ?? 0;
@@ -216,15 +217,15 @@ class _EditPassengerDialogState extends State<_EditPassengerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF1E2128),
-      title: const Text('Edit Student Details', style: TextStyle(color: Colors.white)),
+      backgroundColor: context.pal.surface,
+      title: Text('Edit Student Details', style: TextStyle(color: context.pal.fg)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('${widget.studentName}. The student will be told about any change you save.',
-                style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                style: TextStyle(color: context.pal.fg70, fontSize: 13)),
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
@@ -253,12 +254,12 @@ class _EditPassengerDialogState extends State<_EditPassengerDialog> {
       actions: [
         TextButton(
           onPressed: _saving ? null : () => Navigator.pop(context),
-          child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+          child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
           onPressed: _saving ? null : _save,
-          child: Text(_saving ? 'SAVING...' : 'SAVE', style: const TextStyle(color: Colors.white)),
+          child: Text(_saving ? 'SAVING...' : 'SAVE', style: TextStyle(color: context.pal.fg)),
         ),
       ],
     );

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
@@ -75,30 +76,30 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E2128),
-        title: Text('Pay $month Fare', style: const TextStyle(color: Colors.white)),
+        backgroundColor: context.pal.surface,
+        title: Text('Pay $month Fare', style: TextStyle(color: context.pal.fg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Monthly fare to $driverName', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+            Text('Monthly fare to $driverName', style: TextStyle(color: context.pal.fg70, fontSize: 13)),
             const SizedBox(height: 12),
-            Text('LKR ${amount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            Text('LKR ${amount.toStringAsFixed(2)}', style: TextStyle(color: context.pal.fg, fontSize: 28, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'You will be taken to the secure PayHere page to pay with your card.',
-              style: TextStyle(color: Colors.white54, fontSize: 11),
+              style: TextStyle(color: context.pal.fg54, fontSize: 11),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+            child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-            icon: const Icon(Icons.credit_card, size: 18, color: Colors.white),
+            icon: Icon(Icons.credit_card, size: 18, color: context.pal.fg),
             onPressed: () async {
               final res = await ApiService.initiatePayment();
               if (!context.mounted) return;
@@ -115,7 +116,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Successful!')));
               }
             },
-            label: const Text('PAY WITH CARD', style: TextStyle(color: Colors.white)),
+            label: Text('PAY WITH CARD', style: TextStyle(color: context.pal.fg)),
           ),
         ],
       ),
@@ -159,16 +160,16 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
           }
         });
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E2128),
-          title: const Text('Waiting for payment…', style: TextStyle(color: Colors.white)),
+          backgroundColor: context.pal.surface,
+          title: Text('Waiting for payment…', style: TextStyle(color: context.pal.fg)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               CircularProgressIndicator(color: Colors.blueAccent),
               SizedBox(height: 20),
               Text(
                 'Complete the card payment in your browser. This screen updates automatically once PayHere confirms it.',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
+                style: TextStyle(color: context.pal.fg70, fontSize: 12),
               ),
             ],
           ),
@@ -179,7 +180,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                 Navigator.pop(dialogContext);
                 _fetchData();
               },
-              child: const Text('CLOSE', style: TextStyle(color: Colors.white54)),
+              child: Text('CLOSE', style: TextStyle(color: context.pal.fg54)),
             ),
           ],
         );
@@ -245,7 +246,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
               children: [
                 Text(title, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
                 const SizedBox(height: 4),
-                Text(message, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(message, style: TextStyle(color: context.pal.fg70, fontSize: 12)),
               ],
             ),
           ),
@@ -282,17 +283,18 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                 spacing: 20,
                 runSpacing: 20,
                 children: [
-                  const Text(
+                  Text(
                     'PAYMENTS',
-                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+                    style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: !_isDailyView ? Colors.blueAccent : Colors.white10,
-                          foregroundColor: Colors.white,
+                          backgroundColor: !_isDailyView ? Colors.blueAccent : context.pal.fg12,
+                          foregroundColor: !_isDailyView ? Colors.white : context.pal.fg,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(left: Radius.circular(20))),
                         ),
                         onPressed: () => setState(() => _isDailyView = false),
@@ -300,8 +302,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isDailyView ? Colors.greenAccent : Colors.white10,
-                          foregroundColor: _isDailyView ? Colors.black : Colors.white,
+                          backgroundColor: _isDailyView ? context.pal.green : context.pal.fg12,
+                          foregroundColor: _isDailyView ? context.pal.onFg : context.pal.fg,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(right: Radius.circular(20))),
                         ),
                         onPressed: () => setState(() => _isDailyView = true),
@@ -317,7 +320,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
               _isDailyView
                   ? (_dailyRidePayments ? "REQUEST AND PAY FOR SPECIFIC DAYS OF TRAVEL." : "REQUEST SPECIFIC DAYS OF TRAVEL. PAY YOUR DRIVER IN CASH.")
                   : "TRACK YOUR MONTHLY TRANSPORTATION FEES.",
-              style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+              style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 20),
 
@@ -330,10 +333,10 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                       icon: const Icon(Icons.payment, size: 18),
                       label: Text(_onlinePayments ? 'MAKE MONTHLY PAYMENT' : 'ONLINE PAYMENTS COMING SOON', style: const TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        disabledBackgroundColor: Colors.white12,
-                        disabledForegroundColor: Colors.white54,
+                        backgroundColor: context.pal.fg,
+                        foregroundColor: context.pal.onFg,
+                        disabledBackgroundColor: context.pal.fg12,
+                        disabledForegroundColor: context.pal.fg54,
                         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
@@ -344,8 +347,8 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                       icon: const Icon(Icons.add, size: 18),
                       label: const Text('REQUEST DAILY RIDE', style: TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isMonthlyPaid ? Colors.grey : Colors.greenAccent,
-                        foregroundColor: isMonthlyPaid ? Colors.white54 : Colors.black,
+                        backgroundColor: isMonthlyPaid ? Colors.grey : context.pal.green,
+                        foregroundColor: isMonthlyPaid ? context.pal.fg54 : context.pal.onFg,
                         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
@@ -363,19 +366,19 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
             else if (!hasApprovedDriver)
-              const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
+              Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: context.pal.fg70, fontSize: 16)))
             else if (_isDailyView)
               Expanded(child: _buildDailyRidesList())
             else if (_payments.isEmpty)
-              const Center(child: Text("No payments made yet.", style: TextStyle(color: Colors.white70)))
+              Center(child: Text("No payments made yet.", style: TextStyle(color: context.pal.fg70)))
             else
               // Payments List
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: context.pal.tint(0.05),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white24),
+                    border: Border.all(color: context.pal.fg24),
                   ),
                   child: Column(
                     children: [
@@ -383,17 +386,17 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                         Padding(
                           padding: const EdgeInsets.all(20.0),
                           child: Row(
-                            children: const [
-                              Expanded(flex: 2, child: Text('MONTH', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                              Expanded(flex: 3, child: Text('DRIVER/BUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                              Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                              Expanded(flex: 2, child: Text('STATUS', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
-                              Expanded(flex: 2, child: Text('METHOD', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold))),
+                            children: [
+                              Expanded(flex: 2, child: Text('MONTH', style: TextStyle(color: context.pal.fg70, fontSize: 12, fontWeight: FontWeight.bold))),
+                              Expanded(flex: 3, child: Text('DRIVER/BUS', style: TextStyle(color: context.pal.fg70, fontSize: 12, fontWeight: FontWeight.bold))),
+                              Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(color: context.pal.fg70, fontSize: 12, fontWeight: FontWeight.bold))),
+                              Expanded(flex: 2, child: Text('STATUS', style: TextStyle(color: context.pal.fg70, fontSize: 12, fontWeight: FontWeight.bold))),
+                              Expanded(flex: 2, child: Text('METHOD', style: TextStyle(color: context.pal.fg70, fontSize: 12, fontWeight: FontWeight.bold))),
                             ],
                           ),
                         ),
                       if (!isNarrow)
-                        const Divider(color: Colors.white24, height: 1),
+                        Divider(color: context.pal.fg24, height: 1),
                       Expanded(
                         child: ListView.builder(
                           itemCount: _payments.length,
@@ -404,19 +407,19 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                             if (isNarrow) {
                               return Container(
                                 padding: const EdgeInsets.all(20),
-                                decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white10))),
+                                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.pal.fg12))),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text('${payment['month'] ?? '-'}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                        Text('LKR ${payment['amount']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                        Text('${payment['month'] ?? '-'}', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        Text('LKR ${payment['amount']}', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    Text('Driver: $driverName', style: const TextStyle(color: Colors.white70)),
+                                    Text('Driver: $driverName', style: TextStyle(color: context.pal.fg70)),
                                     const SizedBox(height: 12),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -428,7 +431,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                                             Text(payment['status'] ?? 'COMPLETED', style: TextStyle(color: payment['status'] == 'COMPLETED' ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                                           ],
                                         ),
-                                        Text(payment['paymentMethod'] ?? 'IN_APP', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                        Text(payment['paymentMethod'] ?? 'IN_APP', style: TextStyle(color: context.pal.fg54, fontSize: 12)),
                                       ],
                                     ),
                                   ],
@@ -445,7 +448,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                                     payment['paymentMethod'] ?? 'IN_APP',
                                   ),
                                   if (index < _payments.length - 1)
-                                    const Divider(color: Colors.white10, height: 1),
+                                    Divider(color: context.pal.fg12, height: 1),
                                 ],
                               );
                             }
@@ -467,9 +470,9 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
         children: [
-          Expanded(flex: 2, child: Text(month, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text(driver, style: const TextStyle(color: Colors.white70))),
-          Expanded(flex: 2, child: Text(amount, style: const TextStyle(color: Colors.white))),
+          Expanded(flex: 2, child: Text(month, style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold))),
+          Expanded(flex: 3, child: Text(driver, style: TextStyle(color: context.pal.fg70))),
+          Expanded(flex: 2, child: Text(amount, style: TextStyle(color: context.pal.fg))),
           Expanded(
             flex: 2,
             child: Row(
@@ -487,7 +490,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
               ],
             ),
           ),
-          Expanded(flex: 2, child: Text(method, style: const TextStyle(color: Colors.white54, fontSize: 12))),
+          Expanded(flex: 2, child: Text(method, style: TextStyle(color: context.pal.fg54, fontSize: 12))),
         ],
       ),
     );
@@ -503,13 +506,13 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return AlertDialog(
-              backgroundColor: const Color(0xFF1E2128),
-              title: const Text('Request Daily Ride', style: TextStyle(color: Colors.white)),
+              backgroundColor: context.pal.surface,
+              title: Text('Request Daily Ride', style: TextStyle(color: context.pal.fg)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Date:', style: TextStyle(color: Colors.white70)),
+                  Text('Date:', style: TextStyle(color: context.pal.fg70)),
                   ElevatedButton(
                     onPressed: () async {
                       final picked = await showDatePicker(
@@ -525,11 +528,11 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                     child: Text('${selectedDate.toLocal()}'.split(' ')[0]),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Trip Type:', style: TextStyle(color: Colors.white70)),
+                  Text('Trip Type:', style: TextStyle(color: context.pal.fg70)),
                   DropdownButton<String>(
-                    dropdownColor: const Color(0xFF2A2E38),
+                    dropdownColor: context.pal.surface,
                     value: selectedTripType,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: context.pal.fg),
                     items: const [
                       DropdownMenuItem(value: 'ROUND_TRIP', child: Text('Round Trip')),
                       DropdownMenuItem(value: 'TO_UNI_ONLY', child: Text('To Uni Only')),
@@ -544,7 +547,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+                  child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -578,20 +581,20 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
 
   Widget _buildDailyRidesList() {
     if (_dailyRequests.isEmpty) {
-      return const Center(child: Text("No daily rides found.", style: TextStyle(color: Colors.white70)));
+      return Center(child: Text("No daily rides found.", style: TextStyle(color: context.pal.fg70)));
     }
     
     final isMonthlyPaid = _myFare != null && _myFare!['status'] == 'PAID';
     
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: context.pal.tint(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: context.pal.fg24),
       ),
       child: ListView.separated(
         itemCount: _dailyRequests.length,
-        separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
+        separatorBuilder: (_, __) => Divider(color: context.pal.fg24, height: 1),
         itemBuilder: (context, index) {
           final req = _dailyRequests[index];
           final date = req['date'];
@@ -612,7 +615,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('$date • $type', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('$date • $type', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
                       const SizedBox(height: 6),
                       Row(
                         children: [
@@ -625,7 +628,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text(amount, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text(amount, style: TextStyle(color: context.pal.fg70, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -644,7 +647,7 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
                       }
                     },
-                    child: const Text('PAY NOW', style: TextStyle(color: Colors.white)),
+                    child: Text('PAY NOW', style: TextStyle(color: context.pal.fg)),
                   ),
               ],
             ),

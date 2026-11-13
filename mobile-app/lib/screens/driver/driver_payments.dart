@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
@@ -108,17 +109,17 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A24),
-        title: const Text('Confirm', style: TextStyle(color: Colors.white)),
-        content: Text(confirmText, style: const TextStyle(color: Colors.white70)),
+        backgroundColor: context.pal.surface,
+        title: Text('Confirm', style: TextStyle(color: context.pal.fg)),
+        content: Text(confirmText, style: TextStyle(color: context.pal.fg70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+            child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('CONFIRM', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+            child: Text('CONFIRM', style: TextStyle(color: context.pal.green, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -159,7 +160,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
       child: Padding(
         padding: EdgeInsets.all(isNarrow ? 16.0 : 40.0),
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            ? Center(child: CircularProgressIndicator(color: context.pal.fg))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -167,9 +168,9 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
                   const SizedBox(height: 20),
                   TabBar(
                     controller: _tabController,
-                    indicatorColor: Colors.white,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.white54,
+                    indicatorColor: context.pal.fg,
+                    labelColor: context.pal.fg,
+                    unselectedLabelColor: context.pal.fg54,
                     labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                     tabs: const [
                       Tab(text: 'FARE TRACKER'),
@@ -212,26 +213,26 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
             children: [
               const Text('WALLET BALANCE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
               const SizedBox(height: 3),
-              Text('LKR ${_walletBalance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text('LKR ${_walletBalance.toStringAsFixed(2)}', style: TextStyle(color: context.pal.fg, fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 3),
-              const Text('ONLINE PAYMENTS & PAYOUTS COMING SOON', style: TextStyle(color: Colors.white54, fontSize: 9, letterSpacing: 1)),
+              Text('ONLINE PAYMENTS & PAYOUTS COMING SOON', style: TextStyle(color: context.pal.fg54, fontSize: 9, letterSpacing: 1)),
             ],
           ),
         ],
       ),
     );
 
-    const title = Column(
+    final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
         Text(
           'MONTHLY FARES',
-          style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+          style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
         ),
         SizedBox(height: 5),
         Text(
           "TRACK WHO PAID, WHO DIDN'T, AND WHO ISN'T TRAVELLING",
-          style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+          style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
         ),
       ],
     );
@@ -281,12 +282,12 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.chevron_left, color: Colors.white),
+              icon: Icon(Icons.chevron_left, color: context.pal.fg),
               onPressed: () => _changeMonth(-1),
             ),
-            Text(_monthLabel, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            Text(_monthLabel, style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
             IconButton(
-              icon: const Icon(Icons.chevron_right, color: Colors.white),
+              icon: Icon(Icons.chevron_right, color: context.pal.fg),
               onPressed: () => _changeMonth(1),
             ),
             const Spacer(),
@@ -305,13 +306,13 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildFilterChip('ALL', 'ALL', summary['total'], Colors.white),
+                _buildFilterChip('ALL', 'ALL', summary['total'], context.pal.fg),
                 const SizedBox(width: 8),
                 _buildFilterChip('PAID', 'PAID', summary['paid'], Colors.green),
                 const SizedBox(width: 8),
                 _buildFilterChip('UNPAID', 'UNPAID', summary['unpaid'], Colors.redAccent),
                 const SizedBox(width: 8),
-                _buildFilterChip('EXEMPT', "DIDN'T COME", summary['exempt'], Colors.white54),
+                _buildFilterChip('EXEMPT', "DIDN'T COME", summary['exempt'], context.pal.fg54),
               ],
             ),
           ),
@@ -320,17 +321,17 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
+              color: context.pal.tint(0.05),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
+              border: Border.all(color: context.pal.fg24),
             ),
             child: _fareData == null
-                ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                ? Center(child: CircularProgressIndicator(color: context.pal.fg))
                 : students.isEmpty
-                    ? Center(child: Text(_emptyListText, style: const TextStyle(color: Colors.white54)))
+                    ? Center(child: Text(_emptyListText, style: TextStyle(color: context.pal.fg54)))
                     : ListView.separated(
                         itemCount: students.length,
-                        separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+                        separatorBuilder: (_, __) => Divider(color: context.pal.fg12, height: 1),
                         itemBuilder: (context, index) => _buildStudentRow(students[index]),
                       ),
           ),
@@ -348,12 +349,12 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         decoration: BoxDecoration(
           color: isActive ? color.withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isActive ? color : Colors.white24),
+          border: Border.all(color: isActive ? color : context.pal.fg24),
         ),
         child: Text(
           '$label (${count ?? 0})',
           style: TextStyle(
-            color: isActive ? color : Colors.white54,
+            color: isActive ? color : context.pal.fg54,
             fontSize: 11,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             letterSpacing: 1,
@@ -368,7 +369,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
     final expected = (summary['expected'] as num?)?.toDouble() ?? 0;
     return Text(
       'COLLECTED LKR ${collected.toStringAsFixed(0)} / ${expected.toStringAsFixed(0)}',
-      style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+      style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
     );
   }
 
@@ -385,7 +386,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         chipText = method == 'CASH' ? 'PAID · CASH' : 'PAID · APP';
         break;
       case 'EXEMPT':
-        chipColor = Colors.white54;
+        chipColor = context.pal.fg54;
         chipText = "DIDN'T COME";
         break;
       default:
@@ -397,21 +398,21 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: Colors.white24,
+          CircleAvatar(
+            backgroundColor: context.pal.fg24,
             radius: 18,
-            child: Icon(Icons.person, color: Colors.white, size: 20),
+            child: Icon(Icons.person, color: context.pal.fg, size: 20),
           ),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(s['fullName'] ?? 'Student', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(s['fullName'] ?? 'Student', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 3),
                 Text(
                   '${s['pickupPoint'] ?? '-'}${s['phone'] != null ? ' · ${s['phone']}' : ''}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                  style: TextStyle(color: context.pal.fg54, fontSize: 10),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -424,7 +425,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
                 color: Colors.blue.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text('FROZEN', style: TextStyle(color: Colors.lightBlueAccent, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              child: Text('FROZEN', style: TextStyle(color: context.pal.blue, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
             ),
             const SizedBox(width: 8),
           ],
@@ -445,16 +446,16 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
 
   Widget _buildActionsMenu(Map<String, dynamic> s, String status, String? method) {
     final name = s['fullName'] ?? 'this student';
-    const itemStyle = TextStyle(color: Colors.white, fontSize: 13);
+    final itemStyle = TextStyle(color: context.pal.fg, fontSize: 13);
     final items = <PopupMenuItem<String>>[];
 
     if (status == 'UNPAID') {
-      items.add(const PopupMenuItem(value: 'PAID', child: Text('Mark Paid (Cash)', style: itemStyle)));
-      items.add(const PopupMenuItem(value: 'EXEMPT', child: Text("Mark Didn't Come", style: itemStyle)));
+      items.add(PopupMenuItem(value: 'PAID', child: Text('Mark Paid (Cash)', style: itemStyle)));
+      items.add(PopupMenuItem(value: 'EXEMPT', child: Text("Mark Didn't Come", style: itemStyle)));
     } else if (status == 'EXEMPT') {
-      items.add(const PopupMenuItem(value: 'UNPAID', child: Text('Undo (back to Unpaid)', style: itemStyle)));
+      items.add(PopupMenuItem(value: 'UNPAID', child: Text('Undo (back to Unpaid)', style: itemStyle)));
     } else if (status == 'PAID' && method == 'CASH') {
-      items.add(const PopupMenuItem(value: 'UNPAID', child: Text('Undo Cash Payment', style: itemStyle)));
+      items.add(PopupMenuItem(value: 'UNPAID', child: Text('Undo Cash Payment', style: itemStyle)));
     }
 
     if (items.isEmpty) {
@@ -463,8 +464,8 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
     }
 
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Colors.white54),
-      color: const Color(0xFF1A1A24),
+      icon: Icon(Icons.more_vert, color: context.pal.fg54),
+      color: context.pal.surface,
       onSelected: (value) {
         switch (value) {
           case 'PAID':
@@ -522,15 +523,15 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
     await showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1E2128),
-        title: const Text('Request Payout', style: TextStyle(color: Colors.white)),
+        backgroundColor: context.pal.surface,
+        title: Text('Request Payout', style: TextStyle(color: context.pal.fg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Available balance: LKR ${_walletBalance.toStringAsFixed(2)}',
-              style: const TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.bold),
+              style: TextStyle(color: context.pal.green, fontSize: 13, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
             TextField(
@@ -556,16 +557,16 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'The admin will review your request and transfer the money to your registered bank account.',
-              style: TextStyle(color: Colors.white54, fontSize: 11),
+              style: TextStyle(color: context.pal.fg54, fontSize: 11),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+            child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent.shade700),
@@ -591,7 +592,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
               );
               if (res['success'] == true) _loadPayoutRequests();
             },
-            child: const Text('SEND REQUEST', style: TextStyle(color: Colors.white)),
+            child: Text('SEND REQUEST', style: TextStyle(color: context.pal.fg)),
           ),
         ],
       ),
@@ -602,14 +603,14 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
     final confirm = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A24),
-        title: const Text('Cancel request?', style: TextStyle(color: Colors.white)),
+        backgroundColor: context.pal.surface,
+        title: Text('Cancel request?', style: TextStyle(color: context.pal.fg)),
         content: Text(
           'Withdraw your pending request for LKR ${((request['amount'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}?',
-          style: const TextStyle(color: Colors.white70),
+          style: TextStyle(color: context.pal.fg70),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('KEEP', style: TextStyle(color: Colors.white54))),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text('KEEP', style: TextStyle(color: context.pal.fg54))),
           TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('CANCEL REQUEST', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold))),
         ],
       ),
@@ -635,9 +636,9 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: context.pal.tint(0.05),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white24),
+            border: Border.all(color: context.pal.fg24),
           ),
           child: Row(
             children: [
@@ -645,18 +646,18 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('AVAILABLE TO WITHDRAW',
-                        style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.bold)),
+                    Text('AVAILABLE TO WITHDRAW',
+                        style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
                     Text('LKR ${_walletBalance.toStringAsFixed(2)}',
                         style: TextStyle(
-                          color: _walletBalance > 0 ? Colors.greenAccent : Colors.white38,
+                          color: _walletBalance > 0 ? context.pal.green : context.pal.fg38,
                           fontSize: 24, fontWeight: FontWeight.bold,
                         )),
                     if (_hasPendingRequest) ...[
                       const SizedBox(height: 6),
-                      const Text('A request is awaiting admin review.',
-                          style: TextStyle(color: Colors.orangeAccent, fontSize: 11)),
+                      Text('A request is awaiting admin review.',
+                          style: TextStyle(color: context.pal.orange, fontSize: 11)),
                     ],
                   ],
                 ),
@@ -665,8 +666,8 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
                 icon: const Icon(Icons.account_balance, size: 18),
                 label: const Text('REQUEST', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: (_walletBalance > 0 && !_hasPendingRequest) ? Colors.white : Colors.white24,
-                  foregroundColor: (_walletBalance > 0 && !_hasPendingRequest) ? Colors.black : Colors.white54,
+                  backgroundColor: (_walletBalance > 0 && !_hasPendingRequest) ? context.pal.fg : context.pal.fg24,
+                  foregroundColor: (_walletBalance > 0 && !_hasPendingRequest) ? context.pal.onFg : context.pal.fg54,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -680,15 +681,15 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
+              color: context.pal.tint(0.05),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
+              border: Border.all(color: context.pal.fg24),
             ),
             child: _payoutRequests.isEmpty
-                ? const Center(child: Text('NO WITHDRAWAL REQUESTS YET', style: TextStyle(color: Colors.white54)))
+                ? Center(child: Text('NO WITHDRAWAL REQUESTS YET', style: TextStyle(color: context.pal.fg54)))
                 : ListView.separated(
                     itemCount: _payoutRequests.length,
-                    separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+                    separatorBuilder: (_, __) => Divider(color: context.pal.fg12, height: 1),
                     itemBuilder: (context, index) => _buildRequestRow(_payoutRequests[index]),
                   ),
           ),
@@ -715,7 +716,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
         icon = Icons.cancel;
         break;
       default:
-        color = Colors.orangeAccent;
+        color = context.pal.orange;
         icon = Icons.hourglass_top;
     }
 
@@ -736,7 +737,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
                 Row(
                   children: [
                     Text('LKR ${amount.toStringAsFixed(2)}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(width: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -755,7 +756,7 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
                   'Requested $date'
                   '${payout?['method'] != null ? ' · paid by ${payout!['method'].toString().replaceAll('_', ' ').toLowerCase()}' : ''}'
                   '${payout?['referenceNo'] != null ? ' · ref ${payout!['referenceNo']}' : ''}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                  style: TextStyle(color: context.pal.fg54, fontSize: 10),
                 ),
                 if (adminNote != null && adminNote.toString().isNotEmpty) ...[
                   const SizedBox(height: 4),
@@ -779,17 +780,17 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
 
   Widget _buildHistory() {
     if (_payments.isEmpty) {
-      return const Center(child: Text('No payments received yet.', style: TextStyle(color: Colors.white70)));
+      return Center(child: Text('No payments received yet.', style: TextStyle(color: context.pal.fg70)));
     }
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.pal.tint(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: context.pal.fg24),
       ),
       child: ListView.separated(
         itemCount: _payments.length,
-        separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+        separatorBuilder: (_, __) => Divider(color: context.pal.fg12, height: 1),
         itemBuilder: (context, index) {
           final payment = _payments[index];
           final studentName = payment['student']?['fullName'] ?? 'Student';
@@ -803,20 +804,20 @@ class _DriverPaymentsScreenState extends State<DriverPaymentsScreen> with Single
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: Colors.white24,
+                  backgroundColor: context.pal.fg24,
                   radius: 16,
-                  child: Icon(isCash ? Icons.payments : Icons.phone_android, color: Colors.white, size: 18),
+                  child: Icon(isCash ? Icons.payments : Icons.phone_android, color: context.pal.fg, size: 18),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(studentName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text(studentName, style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 13)),
                       const SizedBox(height: 3),
                       Text(
                         '${payment['month'] ?? '-'} · ${isCash ? 'CASH' : 'IN-APP'}${commission > 0 ? ' · fee LKR ${commission.toStringAsFixed(0)}' : ''}',
-                        style: const TextStyle(color: Colors.white54, fontSize: 10),
+                        style: TextStyle(color: context.pal.fg54, fontSize: 10),
                       ),
                     ],
                   ),

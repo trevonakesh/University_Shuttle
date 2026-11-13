@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
@@ -76,13 +77,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A24),
-          title: const Text('Confirm Unassign', style: TextStyle(color: Colors.white)),
-          content: const Text('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.', style: TextStyle(color: Colors.white70)),
+          backgroundColor: context.pal.surface,
+          title: Text('Confirm Unassign', style: TextStyle(color: context.pal.fg)),
+          content: Text('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.', style: TextStyle(color: context.pal.fg70)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+              child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
@@ -112,9 +113,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF12141D),
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      return Scaffold(
+        backgroundColor: context.pal.bg,
+        body: Center(child: CircularProgressIndicator(color: context.pal.fg)),
       );
     }
 
@@ -157,7 +158,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       paymentColor = Colors.green;
     } else if (fareStatus == 'EXEMPT') {
       paymentStatus = 'EXEMPT';
-      paymentColor = Colors.white54;
+      paymentColor = context.pal.fg54;
     } else {
       paymentStatus = 'DUE BY 10TH';
       paymentColor = Colors.orange;
@@ -187,9 +188,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               ),
 
             // Welcome Section
-            const Text(
+            Text(
               'DASHBOARD',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+              style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
             Row(
@@ -197,17 +198,17 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 Flexible(
                   child: Text(
                     '$_greeting, ${firstName.toUpperCase()}! ',
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(_greetingIcon, color: Colors.white70, size: 20),
+                Icon(_greetingIcon, color: context.pal.fg70, size: 20),
               ],
             ),
             const SizedBox(height: 5),
-            const Text(
+            Text(
               "HERE'S WHAT'S HAPPENING WITH YOUR TRAVEL.",
-              style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+              style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 30),
 
@@ -232,9 +233,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             // Available Buses Near You
             Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: context.pal.tint(0.05),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white24),
+                border: Border.all(color: context.pal.fg24),
               ),
               child: Column(
                 children: [
@@ -243,9 +244,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'AVAILABLE BUSES',
-                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+                          style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                         ),
                         TextButton(
                           onPressed: _fetchData,
@@ -254,11 +255,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                       ],
                     ),
                   ),
-                  const Divider(color: Colors.white24, height: 1),
+                  Divider(color: context.pal.fg24, height: 1),
                   if (_buses.isEmpty)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(40.0),
-                      child: Text('NO BUSES AVAILABLE', style: TextStyle(color: Colors.white54)),
+                      child: Text('NO BUSES AVAILABLE', style: TextStyle(color: context.pal.fg54)),
                     ),
                   ..._buses.map((bus) => Column(
                     children: [
@@ -269,7 +270,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         'LKR ${bus['monthlyFee'] ?? '0'}',
                         hasActiveRequestAnywhere
                       ),
-                      const Divider(color: Colors.white24, height: 1),
+                      Divider(color: context.pal.fg24, height: 1),
                     ],
                   )).toList(),
                 ],
@@ -289,24 +290,24 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         child: Container(
           padding: const EdgeInsets.all(25),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: context.pal.tint(0.1),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: context.pal.tint(0.2)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: Colors.white54, size: 30),
+              Icon(icon, color: context.pal.fg54, size: 30),
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1)),
+                    Text(title, style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
                     const SizedBox(height: 5),
                     Text(value, style: TextStyle(color: statusColor, fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 5),
-                    Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                    Text(subtitle, style: TextStyle(color: context.pal.fg54, fontSize: 10)),
                   ],
                 ),
               ),
@@ -337,10 +338,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.white10,
+              color: context.pal.fg12,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.directions_bus, color: Colors.white, size: 24),
+            child: Icon(Icons.directions_bus, color: context.pal.fg, size: 24),
           ),
           const SizedBox(width: 20),
           
@@ -349,11 +350,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(route, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(route, style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
-                Text('DRIVER: $driver', style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                Text('DRIVER: $driver', style: TextStyle(color: context.pal.fg54, fontSize: 10)),
                 const SizedBox(height: 4),
-                Text('$price / MONTH', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Text('$price / MONTH', style: TextStyle(color: context.pal.fg70, fontSize: 12)),
               ],
             ),
           ),
@@ -363,8 +364,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           // Button
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? Colors.white24 : Colors.white),
-              foregroundColor: hasRequestedThis ? Colors.white : Colors.black,
+              backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? context.pal.fg24 : context.pal.fg),
+              foregroundColor: hasRequestedThis ? context.pal.fg : context.pal.onFg,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),

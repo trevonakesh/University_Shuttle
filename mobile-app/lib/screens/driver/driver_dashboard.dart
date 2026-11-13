@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
@@ -98,23 +99,23 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A24),
-          title: Text('$optionName Students', style: const TextStyle(color: Colors.white)),
+          backgroundColor: context.pal.surface,
+          title: Text('$optionName Students', style: TextStyle(color: context.pal.fg)),
           content: SizedBox(
             width: double.maxFinite,
             child: students.isEmpty 
-              ? Text('No students have selected $optionName yet.', style: const TextStyle(color: Colors.white70))
+              ? Text('No students have selected $optionName yet.', style: TextStyle(color: context.pal.fg70))
               : ListView.builder(
                   shrinkWrap: true,
                   itemCount: students.length,
                   itemBuilder: (context, index) {
                     final s = students[index];
                     return ListTile(
-                      title: Text(s['name'] ?? 'Unknown', style: const TextStyle(color: Colors.white)),
-                      subtitle: Text(s['pickupPoint'] ?? 'Unknown', style: const TextStyle(color: Colors.white54)),
-                      leading: const CircleAvatar(
-                        backgroundColor: Colors.white10,
-                        child: Icon(Icons.person, color: Colors.white),
+                      title: Text(s['name'] ?? 'Unknown', style: TextStyle(color: context.pal.fg)),
+                      subtitle: Text(s['pickupPoint'] ?? 'Unknown', style: TextStyle(color: context.pal.fg54)),
+                      leading: CircleAvatar(
+                        backgroundColor: context.pal.fg12,
+                        child: Icon(Icons.person, color: context.pal.fg),
                       ),
                     );
                   },
@@ -123,7 +124,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('CLOSE', style: TextStyle(color: Colors.white)),
+              child: Text('CLOSE', style: TextStyle(color: context.pal.fg)),
             ),
           ],
         );
@@ -134,9 +135,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF12141D),
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      return Scaffold(
+        backgroundColor: context.pal.bg,
+        body: Center(child: CircularProgressIndicator(color: context.pal.fg)),
       );
     }
 
@@ -162,23 +163,23 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
     final isNarrow = MediaQuery.of(context).size.width < 900;
     final statCards = [
-      _buildStatCard('TOTAL STUDENTS', _totalStudents.toString(), Icons.school, Colors.white),
-      _buildStatCard('SEATS', seats, Icons.event_seat, Colors.white),
-      _buildStatCard('WALLET BALANCE', 'LKR ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, _walletBalance > 0 ? Colors.greenAccent : Colors.redAccent),
-      _buildStatCard('PENDING REQUESTS', _requests.length.toString(), Icons.swap_calls, Colors.white),
+      _buildStatCard('TOTAL STUDENTS', _totalStudents.toString(), Icons.school, context.pal.fg),
+      _buildStatCard('SEATS', seats, Icons.event_seat, context.pal.fg),
+      _buildStatCard('WALLET BALANCE', 'LKR ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, _walletBalance > 0 ? context.pal.green : Colors.redAccent),
+      _buildStatCard('PENDING REQUESTS', _requests.length.toString(), Icons.swap_calls, context.pal.fg),
     ];
 
     final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'DRIVER DASHBOARD',
-          style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+          style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
         ),
         const SizedBox(height: 10),
         Text(
           "WELCOME BACK, ${firstName.toUpperCase()}! HERE'S YOUR OVERVIEW",
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -256,9 +257,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Widget _buildRequestsPanel() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.pal.tint(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: context.pal.fg24),
       ),
       child: Column(
         children: [
@@ -267,27 +268,27 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Flexible(
+                Flexible(
                   child: Text(
                     'PENDING STUDENT REQUESTS',
-                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 TextButton(
                   onPressed: _fetchData,
-                  child: const Text('REFRESH', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  child: Text('REFRESH', style: TextStyle(color: context.pal.fg54, fontSize: 12)),
                 ),
               ],
             ),
           ),
-          const Divider(color: Colors.white24, height: 1),
+          Divider(color: context.pal.fg24, height: 1),
           Expanded(
             child: _requests.isEmpty
-              ? const Center(child: Text('NO PENDING REQUESTS', style: TextStyle(color: Colors.white54)))
+              ? Center(child: Text('NO PENDING REQUESTS', style: TextStyle(color: context.pal.fg54)))
               : ListView.separated(
                   itemCount: _requests.length,
-                  separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
+                  separatorBuilder: (_, __) => Divider(color: context.pal.fg24, height: 1),
                   itemBuilder: (context, index) {
                     final req = _requests[index];
                     return _buildRequestItem(req);
@@ -302,9 +303,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Widget _buildPollPanel(int coming, int notComing, double comingPct, double notComingPct) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.pal.tint(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: context.pal.fg24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -313,23 +314,23 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             padding: const EdgeInsets.all(20.0),
             child: Text(
               _isTodayPoll ? "TODAY'S POLL" : 'LATEST POLL',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+              style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
             ),
           ),
-          const Divider(color: Colors.white24, height: 1),
+          Divider(color: context.pal.fg24, height: 1),
           Padding(
             padding: const EdgeInsets.all(30.0),
             child: _todayPoll == null
-              ? const Center(child: Text('NO POLLS AVAILABLE', style: TextStyle(color: Colors.white54)))
+              ? Center(child: Text('NO POLLS AVAILABLE', style: TextStyle(color: context.pal.fg54)))
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '${_todayPoll!['question']}\n(${_todayPoll!['date']})',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
+                      style: TextStyle(color: context.pal.fg, fontSize: 12, height: 1.5),
                     ),
                     const SizedBox(height: 30),
-                    _buildPollBar('${(_todayPoll!['option1'] ?? 'COMING').toString().toUpperCase()} ($coming)', Colors.lightGreenAccent, comingPct),
+                    _buildPollBar('${(_todayPoll!['option1'] ?? 'COMING').toString().toUpperCase()} ($coming)', context.pal.green, comingPct),
                     const SizedBox(height: 20),
                     _buildPollBar('${(_todayPoll!['option2'] ?? 'NOT COMING').toString().toUpperCase()} ($notComing)', Colors.redAccent, notComingPct),
                   ],
@@ -341,11 +342,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               padding: const EdgeInsets.all(20.0),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: context.pal.btn,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
-                    side: const BorderSide(color: Colors.white30),
+                    side: BorderSide(color: context.pal.fg38),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 20),
                 ),
@@ -366,21 +367,21 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         child: Container(
           padding: const EdgeInsets.all(30),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: context.pal.tint(0.1),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            border: Border.all(color: context.pal.tint(0.2)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(icon, color: Colors.white54, size: 40),
+              Icon(icon, color: context.pal.fg54, size: 40),
               const SizedBox(width: 20),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1)),
+                  Text(title, style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
                   const SizedBox(height: 10),
                   Text(value, style: TextStyle(color: valueColor, fontSize: 20, fontWeight: FontWeight.bold)),
                 ],
@@ -397,8 +398,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A24),
-          title: const Text('STUDENT DETAILS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          backgroundColor: context.pal.surface,
+          title: Text('STUDENT DETAILS', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, letterSpacing: 1)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -417,7 +418,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('CLOSE', style: TextStyle(color: Colors.white)),
+              child: Text('CLOSE', style: TextStyle(color: context.pal.fg)),
             ),
           ],
         );
@@ -428,14 +429,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, color: Colors.white54, size: 20),
+        Icon(icon, color: context.pal.fg54, size: 20),
         const SizedBox(width: 15),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1)),
+            Text(label, style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
             const SizedBox(height: 4),
-            Text(value, style: const TextStyle(color: Colors.white, fontSize: 14)),
+            Text(value, style: TextStyle(color: context.pal.fg, fontSize: 14)),
           ],
         ),
       ],
@@ -454,21 +455,21 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: Colors.white,
+          CircleAvatar(
+            backgroundColor: context.pal.fg,
             radius: 25,
-            child: Icon(Icons.person, color: Colors.black, size: 30),
+            child: Icon(Icons.person, color: context.pal.onFg, size: 30),
           ),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(name, style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
-                Text('PICKUP: $pickup', style: const TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1)),
+                Text('PICKUP: $pickup', style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
                 const SizedBox(height: 4),
-                Text(date, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                Text(date, style: TextStyle(color: context.pal.fg54, fontSize: 10)),
               ],
             ),
           ),
@@ -517,9 +518,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Widget _buildDailyRequestsPanel() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.pal.tint(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: context.pal.fg24),
       ),
       child: Column(
         children: [
@@ -528,27 +529,27 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Flexible(
+                Flexible(
                   child: Text(
                     'PENDING DAILY RIDES',
-                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 TextButton(
                   onPressed: _fetchData,
-                  child: const Text('REFRESH', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  child: Text('REFRESH', style: TextStyle(color: context.pal.fg54, fontSize: 12)),
                 ),
               ],
             ),
           ),
-          const Divider(color: Colors.white24, height: 1),
+          Divider(color: context.pal.fg24, height: 1),
           Expanded(
             child: _dailyRequests.isEmpty
-              ? const Center(child: Text('NO PENDING DAILY RIDES', style: TextStyle(color: Colors.white54)))
+              ? Center(child: Text('NO PENDING DAILY RIDES', style: TextStyle(color: context.pal.fg54)))
               : ListView.separated(
                   itemCount: _dailyRequests.length,
-                  separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 1),
+                  separatorBuilder: (_, __) => Divider(color: context.pal.fg24, height: 1),
                   itemBuilder: (context, index) {
                     final req = _dailyRequests[index];
                     return _buildDailyRequestItem(req);
@@ -572,21 +573,21 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: Colors.white,
+          CircleAvatar(
+            backgroundColor: context.pal.fg,
             radius: 25,
-            child: Icon(Icons.directions_car, color: Colors.black, size: 30),
+            child: Icon(Icons.directions_car, color: context.pal.onFg, size: 30),
           ),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(name, style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
-                Text('DATE: $date | TYPE: $tripType', style: const TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1)),
+                Text('DATE: $date | TYPE: $tripType', style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
                 const SizedBox(height: 4),
-                Text('FARE: $fare', style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                Text('FARE: $fare', style: TextStyle(color: context.pal.fg54, fontSize: 10)),
               ],
             ),
           ),
@@ -624,14 +625,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1)),
+        Text(label, style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 10),
         Stack(
           children: [
             Container(
               height: 10,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: context.pal.tint(0.2),
                 borderRadius: BorderRadius.circular(5),
               ),
             ),

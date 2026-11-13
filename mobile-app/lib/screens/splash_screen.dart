@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/palette.dart';
 import 'auth/login_screen.dart';
 import 'auth/driver_pending_screen.dart';
 import '../services/api_service.dart';
@@ -81,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: context.pal.fg,
               ),
             ),
           ],

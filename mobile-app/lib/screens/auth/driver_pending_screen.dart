@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/app_background.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../services/api_service.dart';
@@ -110,43 +111,43 @@ class _DriverPendingScreenState extends State<DriverPendingScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(40),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: context.pal.tint(0.1),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: context.pal.tint(0.2),
                           width: 1.5,
                         ),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.hourglass_empty,
-                            color: Colors.white,
+                            color: context.pal.fg,
                             size: 60,
                           ),
                           const SizedBox(height: 20),
-                          const Text(
+                          Text(
                             'UNDER REVIEW',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: context.pal.fg,
                               letterSpacing: 2,
                             ),
                           ),
                           const SizedBox(height: 15),
-                          const Text(
+                          Text(
                             'Your application is currently being reviewed by our admin team. This screen will automatically update once your account is approved.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white70,
+                              color: context.pal.fg70,
                               height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 30),
-                          const CircularProgressIndicator(
-                            color: Colors.white,
+                          CircularProgressIndicator(
+                            color: context.pal.fg,
                             strokeWidth: 2,
                           ),
                           const SizedBox(height: 30),
@@ -160,10 +161,10 @@ class _DriverPendingScreenState extends State<DriverPendingScreen> {
                                 (route) => false,
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               'LOGOUT',
                               style: TextStyle(
-                                color: Colors.white54,
+                                color: context.pal.fg54,
                                 letterSpacing: 1,
                               ),
                             ),

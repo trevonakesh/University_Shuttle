@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../utils/palette.dart';
 
-/// Shared full-screen background: remote photo with a dark overlay,
-/// falling back to a plain dark gradient when the image cannot load
-/// (offline, blocked, etc.).
+/// Shared full-screen background. Dark mode: a bus photo under a dark
+/// overlay, falling back to a dark gradient when the photo can't load.
+/// Light mode: a soft sky-to-mint gradient, like the website.
 class AppBackground extends StatelessWidget {
   final double overlayOpacity;
 
@@ -10,6 +11,17 @@ class AppBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.pal.isDark) {
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFD7EFFF), Color(0xFFEAF7FF), Color(0xFFF1FBF7)],
+          ),
+        ),
+      );
+    }
     return Stack(
       fit: StackFit.expand,
       children: [

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
@@ -55,20 +56,20 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E2128),
-        title: const Text('Post New Notice', style: TextStyle(color: Colors.white)),
+        backgroundColor: context.pal.surface,
+        title: Text('Post New Notice', style: TextStyle(color: context.pal.fg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleController,
               style: const TextStyle(color: Colors.black),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Title',
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
-                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: context.pal.fg24)),
               ),
             ),
             const SizedBox(height: 15),
@@ -76,12 +77,12 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
               controller: contentController,
               maxLines: 3,
               style: const TextStyle(color: Colors.black),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Content',
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
-                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: context.pal.fg24)),
               ),
             ),
           ],
@@ -89,7 +90,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+            child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
@@ -104,7 +105,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
                 }
               }
             },
-            child: const Text('POST', style: TextStyle(color: Colors.white)),
+            child: Text('POST', style: TextStyle(color: context.pal.fg)),
           ),
         ],
       ),
@@ -138,18 +139,18 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'NOTICE BOARD',
-                        style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+                        style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
                       ),
                       SizedBox(height: 5),
                       Text(
                         "IMPORTANT UPDATES AND ANNOUNCEMENTS",
-                        style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+                        style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -160,8 +161,8 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
                     icon: const Icon(Icons.add_alert, size: 18),
                     label: const Text('POST NOTICE', style: TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
+                      backgroundColor: context.pal.fg,
+                      foregroundColor: context.pal.onFg,
                       padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
@@ -174,9 +175,9 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
             else if (!hasApprovedDriver)
-              const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
+              Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: context.pal.fg70, fontSize: 16)))
             else if (_notices.isEmpty)
-              const Center(child: Text("No notices available.", style: TextStyle(color: Colors.white70)))
+              Center(child: Text("No notices available.", style: TextStyle(color: context.pal.fg70)))
             else
               // Notices Grid/List
               Expanded(
@@ -225,9 +226,9 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.pal.tint(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isUrgent ? Colors.redAccent.withValues(alpha: 0.5) : Colors.white24),
+        border: Border.all(color: isUrgent ? Colors.redAccent.withValues(alpha: 0.5) : context.pal.fg24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +245,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      color: isUrgent ? Colors.redAccent : Colors.white,
+                      color: isUrgent ? Colors.redAccent : context.pal.fg,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -255,7 +256,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
                 children: [
                   Text(
                     date,
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    style: TextStyle(color: context.pal.fg54, fontSize: 12),
                   ),
                   if (widget.isDriver) ...[
                     const SizedBox(width: 15),
@@ -273,20 +274,20 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
           const SizedBox(height: 15),
           Text(
             content,
-            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+            style: TextStyle(color: context.pal.fg70, fontSize: 14, height: 1.5),
           ),
           const SizedBox(height: 20),
           Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: Colors.white24,
+              CircleAvatar(
+                backgroundColor: context.pal.fg24,
                 radius: 12,
-                child: Icon(Icons.person, color: Colors.white, size: 14),
+                child: Icon(Icons.person, color: context.pal.fg, size: 14),
               ),
               const SizedBox(width: 10),
               Text(
                 'Posted by $author',
-                style: const TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic),
+                style: TextStyle(color: context.pal.fg54, fontSize: 12, fontStyle: FontStyle.italic),
               ),
             ],
           ),

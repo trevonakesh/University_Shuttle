@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
@@ -66,14 +67,14 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Text(
+            Text(
               'ATTENDANCE POLLS',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+              style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 5),
-            const Text(
+            Text(
               "CONFIRM YOUR SEAT FOR UPCOMING TRIPS",
-              style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+              style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 40),
 
@@ -88,9 +89,9 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                 ),
               )
             else if (!hasApprovedDriver)
-              const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
+              Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: context.pal.fg70, fontSize: 16)))
             else if (_polls.isEmpty)
-              const Center(child: Text("No polls available from your driver yet.", style: TextStyle(color: Colors.white70)))
+              Center(child: Text("No polls available from your driver yet.", style: TextStyle(color: context.pal.fg70)))
             else
               // Polls List
               Expanded(
@@ -138,12 +139,12 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.pal.tint(0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: hasVoted 
               ? (isComing == true ? Colors.green.withValues(alpha: 0.5) : Colors.redAccent.withValues(alpha: 0.5)) 
-              : Colors.white24,
+              : context.pal.fg24,
           width: hasVoted ? 2 : 1,
         ),
       ),
@@ -155,15 +156,15 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
             children: [
               Text(
                 date,
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Row(
                 children: [
-                  const Icon(Icons.directions_bus, color: Colors.white54, size: 16),
+                  Icon(Icons.directions_bus, color: context.pal.fg54, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     driverName,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    style: TextStyle(color: context.pal.fg70, fontSize: 14),
                   ),
                 ],
               ),
@@ -172,7 +173,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
           const SizedBox(height: 15),
           Text(
             question,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: TextStyle(color: context.pal.fg70, fontSize: 16),
           ),
           const SizedBox(height: 25),
           Row(
@@ -180,8 +181,8 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: hasVoted && isComing == true ? Colors.green : Colors.white10,
-                    foregroundColor: Colors.white,
+                    backgroundColor: hasVoted && isComing == true ? Colors.green : context.pal.fg12,
+                    foregroundColor: context.pal.fg,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     elevation: 0,
@@ -190,7 +191,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle_outline, color: hasVoted && isComing == true ? Colors.white : Colors.white54, size: 18),
+                      Icon(Icons.check_circle_outline, color: hasVoted && isComing == true ? context.pal.fg : context.pal.fg54, size: 18),
                       const SizedBox(width: 8),
                       Text(option1.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
@@ -201,8 +202,8 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: hasVoted && isComing == false ? Colors.redAccent : Colors.white10,
-                    foregroundColor: Colors.white,
+                    backgroundColor: hasVoted && isComing == false ? Colors.redAccent : context.pal.fg12,
+                    foregroundColor: context.pal.fg,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     elevation: 0,
@@ -211,7 +212,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.cancel_outlined, color: hasVoted && isComing == false ? Colors.white : Colors.white54, size: 18),
+                      Icon(Icons.cancel_outlined, color: hasVoted && isComing == false ? context.pal.fg : context.pal.fg54, size: 18),
                       const SizedBox(width: 8),
                       Text(option2.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],

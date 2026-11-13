@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
@@ -67,13 +68,13 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A24),
-          title: const Text('Confirm Unassign', style: TextStyle(color: Colors.white)),
-          content: const Text('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.', style: TextStyle(color: Colors.white70)),
+          backgroundColor: context.pal.surface,
+          title: Text('Confirm Unassign', style: TextStyle(color: context.pal.fg)),
+          content: Text('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.', style: TextStyle(color: context.pal.fg70)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+              child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
@@ -97,10 +98,10 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
         _isRequesting = false;
       });
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unassigned successfully!', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unassigned successfully!', style: TextStyle(color: context.pal.fg)), backgroundColor: Colors.green));
         _fetchData();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to unassign', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to unassign', style: TextStyle(color: context.pal.fg)), backgroundColor: Colors.redAccent));
       }
     }
   }
@@ -127,7 +128,7 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
       final busPhotoUrl = ApiService.resolveUrl(bus['busPhotoUrl']);
       return Container(
         decoration: BoxDecoration(
-          color: Colors.white10,
+          color: context.pal.fg12,
           image: busPhotoUrl != null
             ? DecorationImage(
                 image: NetworkImage(busPhotoUrl),
@@ -137,7 +138,7 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
             : null,
         ),
         child: busPhotoUrl == null
-          ? const Center(child: Icon(Icons.directions_bus, color: Colors.white24, size: 40))
+          ? Center(child: Icon(Icons.directions_bus, color: context.pal.fg24, size: 40))
           : null,
       );
     });
@@ -150,7 +151,7 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
               children: [
                 Text(
                   bus['routeName'] ?? 'Unknown Route',
-                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: context.pal.fg, fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 15),
                 Wrap(
@@ -160,41 +161,41 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.person, color: Colors.white54, size: 16),
+                        Icon(Icons.person, color: context.pal.fg54, size: 16),
                         const SizedBox(width: 8),
-                        Text('Driver: ${bus['fullName'] ?? 'Unknown'}', style: const TextStyle(color: Colors.white70)),
+                        Text('Driver: ${bus['fullName'] ?? 'Unknown'}', style: TextStyle(color: context.pal.fg70)),
                       ],
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.confirmation_number, color: Colors.white54, size: 16),
+                        Icon(Icons.confirmation_number, color: context.pal.fg54, size: 16),
                         const SizedBox(width: 8),
-                        Text('Reg: ${bus['busRegNumber'] ?? 'N/A'}', style: const TextStyle(color: Colors.white70)),
+                        Text('Reg: ${bus['busRegNumber'] ?? 'N/A'}', style: TextStyle(color: context.pal.fg70)),
                       ],
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.access_time, color: Colors.white54, size: 16),
+                        Icon(Icons.access_time, color: context.pal.fg54, size: 16),
                         const SizedBox(width: 8),
-                        Text(bus['pickupTime'] ?? 'N/A', style: const TextStyle(color: Colors.white70)),
+                        Text(bus['pickupTime'] ?? 'N/A', style: TextStyle(color: context.pal.fg70)),
                       ],
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.event_seat, color: Colors.white54, size: 16),
+                        Icon(Icons.event_seat, color: context.pal.fg54, size: 16),
                         const SizedBox(width: 8),
-                        Text('Seats: ${bus['busCapacity'] ?? 'N/A'}', style: const TextStyle(color: Colors.white70)),
+                        Text('Seats: ${bus['busCapacity'] ?? 'N/A'}', style: TextStyle(color: context.pal.fg70)),
                       ],
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.attach_money, color: Colors.white54, size: 16),
+                        Icon(Icons.attach_money, color: context.pal.fg54, size: 16),
                         const SizedBox(width: 8),
-                        Text(bus['monthlyFee'] != null ? 'LKR ${bus['monthlyFee']}' : 'N/A', style: const TextStyle(color: Colors.white70)),
+                        Text(bus['monthlyFee'] != null ? 'LKR ${bus['monthlyFee']}' : 'N/A', style: TextStyle(color: context.pal.fg70)),
                       ],
                     ),
                   ],
@@ -202,10 +203,10 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: _isRequesting ? null : (hasRequestedThis ? () => _unassignDriver(requestId!) : (hasActiveRequestAnywhere ? null : () => _requestSeat(bus['id']))),
-                  icon: Icon(hasRequestedThis ? Icons.cancel : Icons.send, color: Colors.white),
-                  label: Text(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  icon: Icon(hasRequestedThis ? Icons.cancel : Icons.send, color: context.pal.fg),
+                  label: Text(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT'), style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? Colors.white24 : Colors.blueAccent),
+                    backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? context.pal.fg24 : Colors.blueAccent),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -222,22 +223,22 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
                     children: [
                       Text(
                         bus['routeName'] ?? 'Unknown Route',
-                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: context.pal.fg, fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          const Icon(Icons.person, color: Colors.white54, size: 16),
+                          Icon(Icons.person, color: context.pal.fg54, size: 16),
                           const SizedBox(width: 8),
-                          Text('Driver: ${bus['fullName'] ?? 'Unknown'}', style: const TextStyle(color: Colors.white70)),
+                          Text('Driver: ${bus['fullName'] ?? 'Unknown'}', style: TextStyle(color: context.pal.fg70)),
                         ],
                       ),
                       const SizedBox(height: 5),
                       Row(
                         children: [
-                          const Icon(Icons.confirmation_number, color: Colors.white54, size: 16),
+                          Icon(Icons.confirmation_number, color: context.pal.fg54, size: 16),
                           const SizedBox(width: 8),
-                          Text('Reg: ${bus['busRegNumber'] ?? 'N/A'}', style: const TextStyle(color: Colors.white70)),
+                          Text('Reg: ${bus['busRegNumber'] ?? 'N/A'}', style: TextStyle(color: context.pal.fg70)),
                         ],
                       ),
                     ],
@@ -250,25 +251,25 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.access_time, color: Colors.white54, size: 16),
+                          Icon(Icons.access_time, color: context.pal.fg54, size: 16),
                           const SizedBox(width: 8),
-                          Text(bus['pickupTime'] ?? 'N/A', style: const TextStyle(color: Colors.white70)),
+                          Text(bus['pickupTime'] ?? 'N/A', style: TextStyle(color: context.pal.fg70)),
                         ],
                       ),
                       const SizedBox(height: 5),
                       Row(
                         children: [
-                          const Icon(Icons.event_seat, color: Colors.white54, size: 16),
+                          Icon(Icons.event_seat, color: context.pal.fg54, size: 16),
                           const SizedBox(width: 8),
-                          Text('Seats: ${bus['busCapacity'] ?? 'N/A'}', style: const TextStyle(color: Colors.white70)),
+                          Text('Seats: ${bus['busCapacity'] ?? 'N/A'}', style: TextStyle(color: context.pal.fg70)),
                         ],
                       ),
                       const SizedBox(height: 5),
                       Row(
                         children: [
-                          const Icon(Icons.attach_money, color: Colors.white54, size: 16),
+                          Icon(Icons.attach_money, color: context.pal.fg54, size: 16),
                           const SizedBox(width: 8),
-                          Text(bus['monthlyFee'] != null ? 'LKR ${bus['monthlyFee']}' : 'N/A', style: const TextStyle(color: Colors.white70)),
+                          Text(bus['monthlyFee'] != null ? 'LKR ${bus['monthlyFee']}' : 'N/A', style: TextStyle(color: context.pal.fg70)),
                         ],
                       ),
                     ],
@@ -278,10 +279,10 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
                   alignment: Alignment.centerRight,
                   child: ElevatedButton.icon(
                     onPressed: _isRequesting ? null : (hasRequestedThis ? () => _unassignDriver(requestId!) : (hasActiveRequestAnywhere ? null : () => _requestSeat(bus['id']))),
-                    icon: Icon(hasRequestedThis ? Icons.cancel : Icons.send, color: Colors.white),
-                    label: Text(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    icon: Icon(hasRequestedThis ? Icons.cancel : Icons.send, color: context.pal.fg),
+                    label: Text(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT'), style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? Colors.white24 : Colors.blueAccent),
+                      backgroundColor: hasRequestedThis ? Colors.redAccent : (hasActiveRequestAnywhere ? context.pal.fg24 : Colors.blueAccent),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -294,9 +295,9 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.pal.tint(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: context.pal.fg24),
       ),
       clipBehavior: Clip.antiAlias,
       child: isNarrow
@@ -322,9 +323,9 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF12141D),
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      return Scaffold(
+        backgroundColor: context.pal.bg,
+        body: Center(child: CircularProgressIndicator(color: context.pal.fg)),
       );
     }
 
@@ -341,9 +342,9 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'AVAILABLE BUSES',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+              style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 40),
             if (_myFare?['frozen'] == true)
@@ -355,9 +356,9 @@ class _StudentAvailableBusesScreenState extends State<StudentAvailableBusesScree
                 ),
               )
             else if (_buses.isEmpty)
-              const Expanded(
+              Expanded(
                 child: Center(
-                  child: Text('No buses available at the moment.', style: TextStyle(color: Colors.white54, fontSize: 18)),
+                  child: Text('No buses available at the moment.', style: TextStyle(color: context.pal.fg54, fontSize: 18)),
                 ),
               )
             else

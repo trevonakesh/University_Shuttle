@@ -10,10 +10,18 @@
       "port": 3002
     },
     {
+      "name": "backend",
+      "cwd": "backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "autoPort": false,
+      "port": 5000
+    },
+    {
       "name": "student-app",
       "cwd": "mobile-app",
       "runtimeExecutable": "flutter",
-      "runtimeArgs": ["run", "-d", "web-server", "--web-port", "5050"],
+      "runtimeArgs": ["run", "-d", "web-server", "--web-port", "5050", "--dart-define=API_ORIGIN=http://localhost:5000"],
       "autoPort": false,
       "port": 5050
     }

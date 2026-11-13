@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../widgets/theme_mode_button.dart';
+import '../../utils/palette.dart';
 import 'role_selection_screen.dart';
 import 'forgot_password_screen.dart';
 import '../../widgets/app_background.dart';
@@ -76,6 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? _buildDesktopLayout(context) 
                 : _buildMobileLayout(context),
           ),
+          const Positioned(top: 0, right: 0, child: SafeArea(child: Padding(padding: EdgeInsets.all(8), child: ThemeModeButton()))),
         ],
       ),
     );
@@ -115,14 +118,14 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLeftText() {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           'SMART . SAFE . RELIABLE',
           style: TextStyle(
-            color: Colors.white70,
+            color: context.pal.fg70,
             fontSize: 14,
             letterSpacing: 2,
             fontWeight: FontWeight.w500,
@@ -132,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           'CAMPUS BUS\nSERVICE',
           style: TextStyle(
-            color: Colors.white,
+            color: context.pal.fg,
             fontSize: 48,
             fontWeight: FontWeight.bold,
             height: 1.1,
@@ -150,31 +153,31 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Container(
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
+            color: context.pal.tint(0.2),
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3),
+              color: context.pal.tint(0.3),
               width: 1.5,
             ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'WELCOME BACK!',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: context.pal.fg,
                   letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'LOGIN TO CONTINUE',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white70,
+                  color: context.pal.fg70,
                   letterSpacing: 1,
                 ),
               ),
@@ -218,9 +221,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       'FORGOT PASSWORD?',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
+                      style: TextStyle(color: context.pal.fg, fontSize: 12),
                     ),
                   ),
                 ],
@@ -233,15 +236,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: context.pal.btn,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onPressed: _isLoading ? null : _login,
                   child: _isLoading 
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
+                    ? CircularProgressIndicator(color: Colors.white)
+                    : Text(
                         'LOGIN',
                         style: TextStyle(
                           color: Colors.white,
@@ -258,9 +261,9 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     "DON'T HAVE AN ACCOUNT? ",
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(color: context.pal.fg70, fontSize: 12),
                   ),
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
@@ -273,10 +276,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         );
                       },
-                      child: const Text(
+                      child: Text(
                         'SIGN UP',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: context.pal.fg,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -300,9 +303,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: context.pal.tint(0.9),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        border: Border.all(color: context.pal.tint(0.3)),
       ),
       child: TextField(
         controller: controller,

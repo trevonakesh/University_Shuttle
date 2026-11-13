@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../widgets/theme_mode_button.dart';
+import '../../utils/palette.dart';
 import '../../widgets/app_background.dart';
 import 'student_register_screen.dart';
 import 'driver_register_screen.dart';
@@ -29,22 +31,22 @@ class RoleSelectionScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'CHOOSE YOUR ROLE',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: context.pal.fg,
                             letterSpacing: 1.5,
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'SELECT HOW YOU WANT TO CONTINUE',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white70,
+                            color: context.pal.fg70,
                             letterSpacing: 1.2,
                           ),
                           textAlign: TextAlign.center,
@@ -134,10 +136,11 @@ class RoleSelectionScreen extends StatelessWidget {
             top: 40,
             left: 16,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(Icons.arrow_back, color: context.pal.fg),
               onPressed: () => Navigator.pop(context),
             ),
           ),
+          const Positioned(top: 0, right: 0, child: SafeArea(child: Padding(padding: EdgeInsets.all(8), child: ThemeModeButton()))),
         ],
       ),
     );
@@ -158,10 +161,10 @@ class RoleSelectionScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
+            color: context.pal.tint(0.15),
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: context.pal.tint(0.2),
               width: 1.5,
             ),
           ),
@@ -171,15 +174,15 @@ class RoleSelectionScreen extends StatelessWidget {
               Icon(
                 icon,
                 size: 100,
-                color: Colors.white,
+                color: context.pal.fg,
               ),
               const SizedBox(height: 30),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: context.pal.fg,
                   letterSpacing: 2,
                 ),
               ),
@@ -187,9 +190,9 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white70,
+                  color: context.pal.fg70,
                   height: 1.5,
                   letterSpacing: 1,
                 ),
@@ -200,16 +203,16 @@ class RoleSelectionScreen extends StatelessWidget {
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: context.pal.btn,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Colors.white24),
+                      side: BorderSide(color: context.pal.fg24),
                     ),
                   ),
                   onPressed: onPressed,
                   child: Text(
                     buttonText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       letterSpacing: 1.2,
                       fontWeight: FontWeight.bold,

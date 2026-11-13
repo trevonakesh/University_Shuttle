@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'theme_mode_button.dart';
+import '../utils/palette.dart';
 import '../screens/auth/login_screen.dart';
 import '../services/api_service.dart';
 import '../screens/student/student_dashboard.dart';
@@ -81,15 +83,16 @@ class DashboardLayout extends StatelessWidget {
   Widget _buildMobile(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black87,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
+        backgroundColor: context.pal.bar,
+        iconTheme: IconThemeData(color: context.pal.fg),
+        title: Text(
           'UNI SHUTTLE',
-          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+          style: TextStyle(color: context.pal.fg, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.2),
         ),
         actions: [
+          const ThemeModeButton(),
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.white),
+            icon: Icon(Icons.notifications_none, color: context.pal.fg),
             onPressed: () => _showNotifications(context),
           ),
           Padding(
@@ -102,7 +105,7 @@ class DashboardLayout extends StatelessWidget {
         ],
       ),
       drawer: Drawer(
-        backgroundColor: const Color(0xFF12141D),
+        backgroundColor: context.pal.bg,
         child: SafeArea(child: _buildSidebar(context, inDrawer: true)),
       ),
       body: Stack(
@@ -128,24 +131,24 @@ class DashboardLayout extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A24),
-          title: const Text('NOTIFICATIONS', style: TextStyle(color: Colors.white, fontSize: 14, letterSpacing: 1)),
+          backgroundColor: context.pal.surface,
+          title: Text('NOTIFICATIONS', style: TextStyle(color: context.pal.fg, fontSize: 14, letterSpacing: 1)),
           content: SizedBox(
             width: 400,
             child: FutureBuilder<List<dynamic>>(
               future: ApiService.getNotifications(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
-                  return const SizedBox(
+                  return SizedBox(
                     height: 80,
-                    child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                    child: Center(child: CircularProgressIndicator(color: context.pal.fg)),
                   );
                 }
                 final notifications = snapshot.data ?? [];
                 if (notifications.isEmpty) {
-                  return const SizedBox(
+                  return SizedBox(
                     height: 80,
-                    child: Center(child: Text('No notifications yet.', style: TextStyle(color: Colors.white54))),
+                    child: Center(child: Text('No notifications yet.', style: TextStyle(color: context.pal.fg54))),
                   );
                 }
                 return SizedBox(
@@ -159,10 +162,10 @@ class DashboardLayout extends StatelessWidget {
                       return ListTile(
                         leading: Icon(
                           isRead ? Icons.notifications_none : Icons.notifications_active,
-                          color: isRead ? Colors.white38 : Colors.orangeAccent,
+                          color: isRead ? context.pal.fg38 : context.pal.orange,
                         ),
-                        title: Text(n['title'] ?? '', style: TextStyle(color: isRead ? Colors.white54 : Colors.white, fontSize: 13)),
-                        subtitle: Text(n['message'] ?? '', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                        title: Text(n['title'] ?? '', style: TextStyle(color: isRead ? context.pal.fg54 : context.pal.fg, fontSize: 13)),
+                        subtitle: Text(n['message'] ?? '', style: TextStyle(color: context.pal.fg38, fontSize: 11)),
                         onTap: isRead ? null : () => ApiService.markNotificationRead(n['id']),
                       );
                     },
@@ -174,7 +177,7 @@ class DashboardLayout extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('CLOSE', style: TextStyle(color: Colors.white)),
+              child: Text('CLOSE', style: TextStyle(color: context.pal.fg)),
             ),
           ],
         );
@@ -184,7 +187,7 @@ class DashboardLayout extends StatelessWidget {
 
   Widget _buildSidebar(BuildContext context, {bool inDrawer = false}) {
     return Container(
-      color: inDrawer ? Colors.transparent : Colors.black.withValues(alpha: 0.4),
+      color: inDrawer ? Colors.transparent : context.pal.sidebar,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -198,7 +201,7 @@ class DashboardLayout extends StatelessWidget {
                 Text(
                   'UNI SHUTTLE',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: context.pal.fg,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
@@ -243,19 +246,19 @@ class DashboardLayout extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: isActive ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
+        color: isActive ? (context.pal.isDark ? context.pal.tint(0.15) : const Color(0x1F0E7C66)) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
       child: ListTile(
         leading: Icon(
           icon,
-          color: isActive ? Colors.white : Colors.white54,
+          color: isActive ? context.pal.fg : context.pal.fg54,
           size: 20,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isActive ? Colors.white : Colors.white54,
+            color: isActive ? context.pal.fg : context.pal.fg54,
             fontSize: 10,
             letterSpacing: 1.2,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
@@ -291,8 +294,9 @@ class DashboardLayout extends StatelessWidget {
           _buildHeaderLink('FAQS', context),
           _buildHeaderLink('CONTACT', context),
           const SizedBox(width: 20),
+          const ThemeModeButton(),
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.white, size: 24),
+            icon: Icon(Icons.notifications_none, color: context.pal.fg, size: 24),
             onPressed: () => _showNotifications(context),
           ),
           const SizedBox(width: 20),
@@ -311,16 +315,16 @@ class DashboardLayout extends StatelessWidget {
                     children: [
                       Text(
                         userName,
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         userRole,
-                        style: const TextStyle(color: Colors.white54, fontSize: 10),
+                        style: TextStyle(color: context.pal.fg54, fontSize: 10),
                       ),
                     ],
                   ),
                   const SizedBox(width: 10),
-                  const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 16),
+                  Icon(Icons.keyboard_arrow_down, color: context.pal.fg54, size: 16),
                 ],
               ),
             ),
@@ -349,8 +353,8 @@ class DashboardLayout extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Text(
             text,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: context.pal.fg70,
               fontSize: 10,
               letterSpacing: 1.2,
             ),

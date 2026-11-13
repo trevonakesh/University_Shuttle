@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/palette.dart';
 import '../screens/student/student_payments.dart';
 import '../services/api_service.dart';
 
@@ -49,14 +50,14 @@ class FrozenBanner extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   _freezeMessage(reason, month, amountDue),
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(color: context.pal.fg70, fontSize: 12),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 10),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: context.pal.fg),
             onPressed: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const StudentPaymentsScreen()),
@@ -95,7 +96,7 @@ class FrozenLock extends StatelessWidget {
             child: Text(
               _freezeMessage(reason, month, amountDue),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              style: TextStyle(color: context.pal.fg70, fontSize: 13),
             ),
           ),
           const SizedBox(height: 25),
@@ -104,7 +105,7 @@ class FrozenLock extends StatelessWidget {
             label: Text(ApiService.onlinePayments ? 'PAY MONTHLY FARE' : 'VIEW MY FARE', style: const TextStyle(fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              foregroundColor: context.pal.fg,
               padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
             ),
             onPressed: () => Navigator.pushReplacement(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
@@ -44,13 +45,13 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A24),
-          title: const Text('Confirm Unassign', style: TextStyle(color: Colors.white)),
-          content: const Text('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.', style: TextStyle(color: Colors.white70)),
+          backgroundColor: context.pal.surface,
+          title: Text('Confirm Unassign', style: TextStyle(color: context.pal.fg)),
+          content: Text('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.', style: TextStyle(color: context.pal.fg70)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+              child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
@@ -74,10 +75,10 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
         _isRequesting = false;
       });
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unassigned successfully!', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unassigned successfully!', style: TextStyle(color: context.pal.fg)), backgroundColor: Colors.green));
         _fetchData();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to unassign', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to unassign', style: TextStyle(color: context.pal.fg)), backgroundColor: Colors.redAccent));
       }
     }
   }
@@ -87,7 +88,7 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: context.pal.fg12,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -97,9 +98,9 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              Text(label, style: TextStyle(color: context.pal.fg54, fontSize: 12)),
               const SizedBox(height: 4),
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(value, style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -110,9 +111,9 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF12141D),
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      return Scaffold(
+        backgroundColor: context.pal.bg,
+        body: Center(child: CircularProgressIndicator(color: context.pal.fg)),
       );
     }
 
@@ -129,22 +130,22 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'MY ASSIGNED BUS',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+              style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 40),
             if (_myBus == null)
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.directions_bus_filled_outlined, color: Colors.white24, size: 80),
+                      Icon(Icons.directions_bus_filled_outlined, color: context.pal.fg24, size: 80),
                       SizedBox(height: 20),
-                      Text('You don\'t have an assigned bus yet.', style: TextStyle(color: Colors.white54, fontSize: 18)),
+                      Text('You don\'t have an assigned bus yet.', style: TextStyle(color: context.pal.fg54, fontSize: 18)),
                       SizedBox(height: 10),
-                      Text('Check the "AVAILABLE BUSES" tab to request a seat.', style: TextStyle(color: Colors.white54, fontSize: 14)),
+                      Text('Check the "AVAILABLE BUSES" tab to request a seat.', style: TextStyle(color: context.pal.fg54, fontSize: 14)),
                     ],
                   ),
                 ),
@@ -154,9 +155,9 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                   final driverContainer = Container(
                     padding: EdgeInsets.all(isNarrow ? 20 : 30),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: context.pal.tint(0.05),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white24),
+                      border: Border.all(color: context.pal.fg24),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,12 +166,12 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                           children: [
                             CircleAvatar(
                               radius: 40,
-                              backgroundColor: Colors.white10,
+                              backgroundColor: context.pal.fg12,
                               backgroundImage: ApiService.resolveUrl(_myBus!['driver']['profilePhotoUrl']) != null
                                 ? NetworkImage(ApiService.resolveUrl(_myBus!['driver']['profilePhotoUrl'])!)
                                 : null,
                               child: ApiService.resolveUrl(_myBus!['driver']['profilePhotoUrl']) == null
-                                ? const Icon(Icons.person, color: Colors.white54, size: 40)
+                                ? Icon(Icons.person, color: context.pal.fg54, size: 40)
                                 : null,
                             ),
                             const SizedBox(width: 20),
@@ -178,8 +179,8 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('YOUR DRIVER', style: TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 1)),
-                                  Text(_myBus!['driver']['fullName'] ?? 'Unknown Driver', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                                  Text('YOUR DRIVER', style: TextStyle(color: context.pal.fg54, fontSize: 12, letterSpacing: 1)),
+                                  Text(_myBus!['driver']['fullName'] ?? 'Unknown Driver', style: TextStyle(color: context.pal.fg, fontSize: 24, fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 5),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -199,8 +200,8 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: () {},
-                            icon: const Icon(Icons.chat, color: Colors.white),
-                            label: const Text('MESSAGE DRIVER', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            icon: Icon(Icons.chat, color: context.pal.fg),
+                            label: Text('MESSAGE DRIVER', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blueAccent,
                               padding: const EdgeInsets.symmetric(vertical: 20),
@@ -213,8 +214,8 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: _isRequesting ? null : () => _unassignDriver(_myBus!['id']),
-                            icon: const Icon(Icons.cancel, color: Colors.white),
-                            label: const Text('UNASSIGN BUS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            icon: Icon(Icons.cancel, color: context.pal.fg),
+                            label: Text('UNASSIGN BUS', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.redAccent,
                               padding: const EdgeInsets.symmetric(vertical: 20),
@@ -229,9 +230,9 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                   final busContainer = Container(
                     padding: EdgeInsets.all(isNarrow ? 20 : 30),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: context.pal.tint(0.05),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white24),
+                      border: Border.all(color: context.pal.fg24),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +243,7 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                             height: 200,
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: Colors.white10,
+                              color: context.pal.fg12,
                               borderRadius: BorderRadius.circular(15),
                               image: busPhotoUrl != null
                                 ? DecorationImage(
@@ -253,7 +254,7 @@ class _StudentMyBusScreenState extends State<StudentMyBusScreen> {
                                 : null,
                             ),
                             child: busPhotoUrl == null
-                              ? const Icon(Icons.directions_bus, color: Colors.white24, size: 80)
+                              ? Icon(Icons.directions_bus, color: context.pal.fg24, size: 80)
                               : null,
                           );
                         }),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -183,14 +184,14 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Text(
+            Text(
               'LIVE BUS TRACKING',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+              style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 5),
-            const Text(
+            Text(
               "TRACK YOUR BUS IN REAL-TIME AND VIEW ETA",
-              style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+              style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 25),
 
@@ -205,7 +206,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                 ),
               )
             else if (!hasApprovedDriver)
-              const Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: Colors.white70, fontSize: 16)))
+              Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: context.pal.fg70, fontSize: 16)))
             else
               // Map and Info Area
               Expanded(
@@ -213,7 +214,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                 decoration: BoxDecoration(
                   color: Colors.black45,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white24, width: 1),
+                  border: Border.all(color: context.pal.fg24, width: 1),
                 ),
                 child: Stack(
                   children: [
@@ -243,7 +244,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                                   point: _myLocation!,
                                   width: 30,
                                   height: 30,
-                                  child: const Icon(Icons.person_pin_circle, color: Colors.greenAccent, size: 30),
+                                  child: Icon(Icons.person_pin_circle, color: context.pal.green, size: 30),
                                 ),
                             ],
                           ),
@@ -264,24 +265,24 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                             padding: const EdgeInsets.all(25),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.6),
-                              border: Border.all(color: Colors.white24),
+                              border: Border.all(color: context.pal.fg24),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    const CircleAvatar(
-                                      backgroundColor: Colors.white12,
+                                    CircleAvatar(
+                                      backgroundColor: context.pal.fg12,
                                       radius: 20,
-                                      child: Icon(Icons.directions_bus, color: Colors.white, size: 20),
+                                      child: Icon(Icons.directions_bus, color: context.pal.fg, size: 20),
                                     ),
                                     const SizedBox(width: 15),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Text('Status', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                          Text('Status', style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold)),
                                           Text(
                                             _isBusOnline ? _lastSeenText : 'Offline',
                                             style: TextStyle(color: _isBusOnline ? Colors.green : Colors.red, fontSize: 12),
@@ -302,9 +303,9 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                                 ),
                                 if (_myLocation == null && _isBusOnline) ...[
                                   const SizedBox(height: 12),
-                                  const Text(
+                                  Text(
                                     'Allow location access to see distance and ETA to you.',
-                                    style: TextStyle(color: Colors.white38, fontSize: 10),
+                                    style: TextStyle(color: context.pal.fg38, fontSize: 10),
                                   ),
                                 ],
                               ],
@@ -327,7 +328,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.bold)),
+        Text(label, style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
       ],

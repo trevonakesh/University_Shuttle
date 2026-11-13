@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
@@ -38,22 +39,22 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white54, size: 24),
+          Icon(icon, color: context.pal.fg54, size: 24),
           const SizedBox(width: 20),
-          Column(
+          Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 1),
+                style: TextStyle(color: context.pal.fg54, fontSize: 12, letterSpacing: 1),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ],
-          ),
+          )),
         ],
       ),
     );
@@ -62,52 +63,56 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF12141D),
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      return Scaffold(
+        backgroundColor: context.pal.bg,
+        body: Center(child: CircularProgressIndicator(color: context.pal.fg)),
       );
     }
 
     final profile = _user?['profile'] ?? _user?['student'] ?? {};
     final name = profile['fullName'] ?? 'Student';
 
+    // On a phone the avatar sits above the details instead of beside them.
+    final narrow = MediaQuery.of(context).size.width < 700;
+
     return DashboardLayout(
       userName: name,
       userRole: 'STUDENT',
       activeIndex: -1, // Profile is accessed via top header, no sidebar index
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(narrow ? 16 : 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'MY PROFILE',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+              style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
-            const SizedBox(height: 40),
+            SizedBox(height: narrow ? 20 : 40),
             Expanded(
               child: Container(
-                padding: const EdgeInsets.all(40),
+                padding: EdgeInsets.all(narrow ? 20 : 40),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: context.pal.tint(0.05),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white24),
+                  border: Border.all(color: context.pal.fg24),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Flex(
+                  direction: narrow ? Axis.vertical : Axis.horizontal,
+                  crossAxisAlignment: narrow ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
                   children: [
                     // Avatar Column
                     Column(
                       children: [
                         Container(
-                          width: 150,
-                          height: 150,
+                          width: narrow ? 96 : 150,
+                          height: narrow ? 96 : 150,
                           decoration: BoxDecoration(
-                            color: Colors.white10,
+                            color: context.pal.fg12,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white24, width: 2),
+                            border: Border.all(color: context.pal.fg24, width: 2),
                           ),
-                          child: const Icon(Icons.school, color: Colors.white, size: 80),
+                          child: Icon(Icons.school, color: context.pal.fg, size: narrow ? 50 : 80),
                         ),
                         const SizedBox(height: 20),
                         Container(
@@ -124,40 +129,40 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(width: 60),
+                    SizedBox(width: narrow ? 0 : 60, height: narrow ? 20 : 0),
                     // Details Column
                     Expanded(
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'PERSONAL INFORMATION',
-                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
+                              style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                             ),
-                            const Divider(color: Colors.white24, height: 30),
+                            Divider(color: context.pal.fg24, height: 30),
                             _buildInfoRow('FULL NAME', profile['fullName'] ?? 'Not set', Icons.badge),
                             _buildInfoRow('EMAIL', _user?['email'] ?? 'Not set', Icons.email),
                             _buildInfoRow('PHONE', _user?['phone'] ?? 'Not set', Icons.phone),
                             if (_filled(profile['nic'])) _buildInfoRow('NIC NUMBER', profile['nic'], Icons.credit_card),
                             
                             const SizedBox(height: 40),
-                            const Text(
+                            Text(
                               'ACADEMIC INFORMATION',
-                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
+                              style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                             ),
-                            const Divider(color: Colors.white24, height: 30),
+                            Divider(color: context.pal.fg24, height: 30),
                             _buildInfoRow('UNIVERSITY', profile['universityName'] ?? 'Not set', Icons.account_balance),
                             if (_filled(profile['faculty'])) _buildInfoRow('FACULTY', profile['faculty'], Icons.domain),
                             if (_filled(profile['degreeProgram'])) _buildInfoRow('PROGRAM', profile['degreeProgram'], Icons.book),
                             if (_filled(profile['academicYear'])) _buildInfoRow('YEAR', profile['academicYear'], Icons.school),
 
                             const SizedBox(height: 40),
-                            const Text(
+                            Text(
                               'TRAVEL INFORMATION',
-                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
+                              style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                             ),
-                            const Divider(color: Colors.white24, height: 30),
+                            Divider(color: context.pal.fg24, height: 30),
                             if (_filled(profile['homeLocation'])) _buildInfoRow('HOME LOCATION', profile['homeLocation'], Icons.home),
                             _buildInfoRow('PICKUP POINT', profile['pickupPoint'] ?? 'Not set', Icons.location_on),
                             _buildInfoRow('DESTINATION', profile['destination'] ?? 'Not set', Icons.flag),

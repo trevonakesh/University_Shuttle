@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../utils/palette.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -192,14 +193,14 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Text(
+            Text(
               'LIVE GPS TRACKING',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+              style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 5),
-            const Text(
+            Text(
               "BROADCAST YOUR REAL LOCATION TO YOUR PASSENGERS",
-              style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+              style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 25),
 
@@ -209,7 +210,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                 decoration: BoxDecoration(
                   color: Colors.black45,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white24, width: 1),
+                  border: Border.all(color: context.pal.fg24, width: 1),
                 ),
                 child: Stack(
                   children: [
@@ -272,7 +273,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                             padding: EdgeInsets.all(isNarrow ? 15 : 25),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.6),
-                              border: Border.all(color: Colors.white24),
+                              border: Border.all(color: context.pal.fg24),
                             ),
                             child: Wrap(
                               spacing: 15,
@@ -287,7 +288,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                                     Text(
                                       _isBroadcasting ? 'BROADCASTING LIVE' : 'LOCATION SHARING OFF',
                                       style: TextStyle(
-                                        color: _isBroadcasting ? Colors.blueAccent : Colors.white70,
+                                        color: _isBroadcasting ? Colors.blueAccent : context.pal.fg70,
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -299,14 +300,14 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                                             ? 'GPS live · ${_speedKmh.toStringAsFixed(0)} km/h · ${_currentLocation.latitude.toStringAsFixed(5)}, ${_currentLocation.longitude.toStringAsFixed(5)}'
                                             : 'Waiting for GPS fix…')
                                         : 'Turn on to share your real GPS position with students.',
-                                      style: const TextStyle(color: Colors.white54, fontSize: 13),
+                                      style: TextStyle(color: context.pal.fg54, fontSize: 13),
                                     ),
                                   ],
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: _isBroadcasting ? Colors.redAccent : Colors.white,
-                                    foregroundColor: _isBroadcasting ? Colors.white : Colors.black,
+                                    backgroundColor: _isBroadcasting ? Colors.redAccent : context.pal.fg,
+                                    foregroundColor: _isBroadcasting ? context.pal.fg : context.pal.onFg,
                                     padding: EdgeInsets.symmetric(horizontal: isNarrow ? 20 : 30, vertical: isNarrow ? 15 : 20),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                                   ),
