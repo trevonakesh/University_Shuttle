@@ -1,11 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../widgets/theme_mode_button.dart';
+import '../../widgets/language_button.dart';
 import '../../utils/palette.dart';
 import '../../widgets/app_background.dart';
 import 'student_register_screen.dart';
 import 'driver_register_screen.dart';
 
+import '../../utils/lang.dart';
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({Key? key}) : super(key: key);
 
@@ -32,7 +34,7 @@ class RoleSelectionScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'CHOOSE YOUR ROLE',
+                          tr('CHOOSE YOUR ROLE'),
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
@@ -43,7 +45,7 @@ class RoleSelectionScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'SELECT HOW YOU WANT TO CONTINUE',
+                          tr('SELECT HOW YOU WANT TO CONTINUE'),
                           style: TextStyle(
                             fontSize: 12,
                             color: context.pal.fg70,
@@ -62,7 +64,7 @@ class RoleSelectionScreen extends StatelessWidget {
                                 child: _buildRoleCard(
                                   context: context,
                                   icon: Icons.school_outlined,
-                                  title: 'STUDENT',
+                                  title: tr('STUDENT'),
                                   description: 'FIND BUSES. REQUEST SEATS.\nTRACK AND MANAGE YOUR TRAVEL.',
                                   buttonText: 'CONTINUE AS STUDENT',
                                   onPressed: () {
@@ -78,7 +80,7 @@ class RoleSelectionScreen extends StatelessWidget {
                                 child: _buildRoleCard(
                                   context: context,
                                   icon: Icons.directions_bus_outlined,
-                                  title: 'DRIVER',
+                                  title: tr('DRIVER'),
                                   description: 'MANAGE YOUR BUS, PASSENGERS,\nPOLLS, PAYMENTS AND MORE.',
                                   buttonText: 'CONTINUE AS DRIVER',
                                   onPressed: () {
@@ -97,7 +99,7 @@ class RoleSelectionScreen extends StatelessWidget {
                               _buildRoleCard(
                                 context: context,
                                 icon: Icons.school_outlined,
-                                title: 'STUDENT',
+                                title: tr('STUDENT'),
                                 description: 'FIND BUSES. REQUEST SEATS.\nTRACK AND MANAGE YOUR TRAVEL.',
                                 buttonText: 'CONTINUE AS STUDENT',
                                 onPressed: () {
@@ -111,7 +113,7 @@ class RoleSelectionScreen extends StatelessWidget {
                               _buildRoleCard(
                                 context: context,
                                 icon: Icons.directions_bus_outlined,
-                                title: 'DRIVER',
+                                title: tr('DRIVER'),
                                 description: 'MANAGE YOUR BUS, PASSENGERS,\nPOLLS, PAYMENTS AND MORE.',
                                 buttonText: 'CONTINUE AS DRIVER',
                                 onPressed: () {
@@ -140,7 +142,7 @@ class RoleSelectionScreen extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          const Positioned(top: 0, right: 0, child: SafeArea(child: Padding(padding: EdgeInsets.all(8), child: ThemeModeButton()))),
+          const Positioned(top: 0, right: 0, child: SafeArea(child: Padding(padding: EdgeInsets.all(8), child: Row(mainAxisSize: MainAxisSize.min, children: [LanguageButton(), ThemeModeButton()])))),
         ],
       ),
     );
@@ -178,7 +180,7 @@ class RoleSelectionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 30),
               Text(
-                title,
+                tr(title),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -188,7 +190,7 @@ class RoleSelectionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                description,
+                tr(description),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -211,7 +213,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   ),
                   onPressed: onPressed,
                   child: Text(
-                    buttonText,
+                    tr(buttonText),
                     style: TextStyle(
                       color: Colors.white,
                       letterSpacing: 1.2,

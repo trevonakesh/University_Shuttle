@@ -3,6 +3,7 @@ import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class _InfoBaseScreen extends StatefulWidget {
   final String title;
   final Widget content;
@@ -58,7 +59,7 @@ class _InfoBaseScreenState extends State<_InfoBaseScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.title,
+              tr(widget.title),
               style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 40),
@@ -88,27 +89,27 @@ class AboutUsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _InfoBaseScreen(
-      title: 'ABOUT US',
+      title: tr('ABOUT US'),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Campus Bus Service',
+            tr('Campus Bus Service'),
             style: TextStyle(color: context.pal.fg, fontSize: 24, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 20),
           Text(
-            'Welcome to the Campus Bus Service, your reliable partner in university transportation. We are committed to providing safe, efficient, and comfortable daily commuting solutions for students across multiple universities.',
+            tr('Welcome to the Campus Bus Service, your reliable partner in university transportation. We are committed to providing safe, efficient, and comfortable daily commuting solutions for students across multiple universities.'),
             style: TextStyle(color: context.pal.fg70, fontSize: 16, height: 1.5),
           ),
           SizedBox(height: 20),
           Text(
-            'Our Mission',
+            tr('Our Mission'),
             style: TextStyle(color: context.pal.fg, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 10),
           Text(
-            'To ensure that no student misses a class due to transit issues. We bridge the gap between your home and campus with our modern fleet of buses and dedicated drivers.',
+            tr('To ensure that no student misses a class due to transit issues. We bridge the gap between your home and campus with our modern fleet of buses and dedicated drivers.'),
             style: TextStyle(color: context.pal.fg70, fontSize: 16, height: 1.5),
           ),
         ],
@@ -123,7 +124,7 @@ class ServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _InfoBaseScreen(
-      title: 'OUR SERVICES',
+      title: tr('OUR SERVICES'),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -149,9 +150,9 @@ class ServicesScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(tr(title), style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text(description, style: TextStyle(color: context.pal.fg54, fontSize: 14, height: 1.5)),
+              Text(tr(description), style: TextStyle(color: context.pal.fg54, fontSize: 14, height: 1.5)),
             ],
           ),
         ),
@@ -166,7 +167,7 @@ class FaqsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _InfoBaseScreen(
-      title: 'FREQUENTLY ASKED QUESTIONS',
+      title: tr('FREQUENTLY ASKED QUESTIONS'),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -185,9 +186,9 @@ class FaqsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(question, style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(tr(question), style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(answer, style: TextStyle(color: context.pal.fg54, fontSize: 14, height: 1.5)),
+          Text(tr(answer), style: TextStyle(color: context.pal.fg54, fontSize: 14, height: 1.5)),
         ],
       ),
     );
@@ -200,17 +201,17 @@ class ContactScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _InfoBaseScreen(
-      title: 'CONTACT US',
+      title: tr('CONTACT US'),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Get In Touch',
+            tr('Get In Touch'),
             style: TextStyle(color: context.pal.fg, fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           Text(
-            'Have a question or facing an issue? Reach out to our support team.',
+            tr('Have a question or facing an issue? Reach out to our support team.'),
             style: TextStyle(color: context.pal.fg70, fontSize: 16, height: 1.5),
           ),
           const SizedBox(height: 40),
@@ -239,9 +240,9 @@ class ContactScreen extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(color: context.pal.fg54, fontSize: 12, letterSpacing: 1)),
+            Text(tr(label), style: TextStyle(color: context.pal.fg54, fontSize: 12, letterSpacing: 1)),
             const SizedBox(height: 4),
-            Text(value, style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.w500)),
+            Text(tr(value), style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.w500)),
           ],
         ),
       ],

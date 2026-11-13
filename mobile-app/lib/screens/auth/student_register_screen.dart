@@ -10,6 +10,7 @@ import '../../services/api_service.dart';
 import '../student/student_dashboard.dart';
 import 'dart:convert';
 
+import '../../utils/lang.dart';
 class StudentRegisterScreen extends StatefulWidget {
   const StudentRegisterScreen({Key? key}) : super(key: key);
 
@@ -59,9 +60,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
     if (!mounted) return;
     if (form == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Could not load the sign-up form.'),
+        content: Text(tr('Could not load the sign-up form.')),
         duration: const Duration(days: 1),
-        action: SnackBarAction(label: 'RETRY', onPressed: _loadForm),
+        action: SnackBarAction(label: tr('RETRY'), onPressed: _loadForm),
       ));
       return;
     }
@@ -117,7 +118,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen()));
       } else {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Registration failed')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(result['message'] ?? 'Registration failed'))));
       }
     }
   }
@@ -178,9 +179,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('STUDENT REGISTRATION', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.5)),
+                                  Text(tr('STUDENT REGISTRATION'), style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.5)),
                                   SizedBox(height: 4),
-                                  Text('PLEASE FILL IN YOUR DETAILS TO CREATE YOUR STUDENT ACCOUNT', style: TextStyle(fontSize: 10, color: context.pal.fg70, letterSpacing: 1)),
+                                  Text(tr('PLEASE FILL IN YOUR DETAILS TO CREATE YOUR STUDENT ACCOUNT'), style: TextStyle(fontSize: 10, color: context.pal.fg70, letterSpacing: 1)),
                                 ],
                               ),
                             ),
@@ -313,7 +314,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     onPressed: _isLoading ? null : _submitRegistration,
                     child: _isLoading
                         ? CircularProgressIndicator(color: Colors.white)
-                        : Text('CREATE ACCOUNT', style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                        : Text(tr('CREATE ACCOUNT'), style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -325,7 +326,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.2));
+    return Text(tr(title), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.2));
   }
 
   Widget _buildResponsiveRow(bool isDesktop, List<Widget> children) {
@@ -352,7 +353,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
+        Text(tr(label), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(color: context.pal.tint(0.9), borderRadius: BorderRadius.circular(20), border: Border.all(color: context.pal.tint(0.2))),
@@ -360,7 +361,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
             controller: controller,
             obscureText: obscureText,
             style: const TextStyle(color: Colors.black, fontSize: 12),
-            decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.black54, fontSize: 10), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
+            decoration: InputDecoration(hintText: tr(hint), hintStyle: const TextStyle(color: Colors.black54, fontSize: 10), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
             validator: (value) => value == null || value.isEmpty ? 'Required' : null,
           ),
         ),
@@ -372,7 +373,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
+        Text(tr(label), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -381,10 +382,10 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
             child: DropdownButton<String>(
               isExpanded: true,
               value: currentValue,
-              hint: Text(hint, style: TextStyle(color: context.pal.fg54, fontSize: 10)),
+              hint: Text(tr(hint), style: TextStyle(color: context.pal.fg54, fontSize: 10)),
               dropdownColor: context.pal.surface,
               icon: Icon(Icons.keyboard_arrow_down, color: context.pal.fg54, size: 16),
-              items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: context.pal.fg)))).toList(),
+              items: items.map((e) => DropdownMenuItem(value: e, child: Text(tr(e), style: TextStyle(color: context.pal.fg)))).toList(),
               onChanged: onChanged,
             ),
           ),
@@ -398,7 +399,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PROFILE PHOTO', style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
+        Text(tr('PROFILE PHOTO'), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: _pickImage,
@@ -425,9 +426,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                       children: [
                         Icon(Icons.cloud_upload_outlined, color: context.pal.fg, size: 24),
                         SizedBox(height: 4),
-                        Text('UPLOAD PHOTO', style: TextStyle(color: context.pal.fg, fontSize: 10)),
+                        Text(tr('UPLOAD PHOTO'), style: TextStyle(color: context.pal.fg, fontSize: 10)),
                         SizedBox(height: 2),
-                        Text('JPG, PNG (MAX 2MB)', style: TextStyle(color: context.pal.fg54, fontSize: 8)),
+                        Text(tr('JPG, PNG (MAX 2MB)'), style: TextStyle(color: context.pal.fg54, fontSize: 8)),
                       ],
                     ),
                   ),

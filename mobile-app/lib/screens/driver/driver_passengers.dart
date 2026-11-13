@@ -3,6 +3,7 @@ import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class DriverPassengersScreen extends StatefulWidget {
   const DriverPassengersScreen({Key? key}) : super(key: key);
 
@@ -40,7 +41,7 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
     final details = await ApiService.getPassengerDetails(studentId);
     if (!mounted) return;
     if (details == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('Could not load this student. Please try again.')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('Could not load this student. Please try again.'))));
       return;
     }
     final message = await showDialog<String>(
@@ -48,7 +49,7 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
       builder: (_) => _EditPassengerDialog(studentId: studentId, studentName: studentName, details: details),
     );
     if (message == null || !mounted) return;
-    messenger.showSnackBar(SnackBar(content: Text(message)));
+    messenger.showSnackBar(SnackBar(content: Text(tr(message))));
     _fetchData();
   }
 
@@ -74,12 +75,12 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'MY PASSENGERS',
+              tr('MY PASSENGERS'),
               style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
             Text(
-              "TOTAL PASSENGERS: ${_passengers.length}",
+              tr('TOTAL PASSENGERS: {n}', {'n': _passengers.length}),
               style: TextStyle(color: context.pal.fg70, fontSize: 14, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 40),
@@ -94,7 +95,7 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
                 child: _passengers.isEmpty
                     ? Center(
                         child: Text(
-                          'NO PASSENGERS YET',
+                          tr('NO PASSENGERS YET'),
                           style: TextStyle(color: context.pal.fg54, fontSize: 16),
                         ),
                       )
@@ -119,9 +120,9 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(student['fullName'] ?? 'Unknown', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 16)),
+                                      Text(tr(student['fullName'] ?? 'Unknown'), style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 16)),
                                       const SizedBox(height: 4),
-                                      Text('${student['universityName'] ?? 'Unknown Uni'} • ${student['pickupPoint'] ?? 'Unknown Pickup'}', style: TextStyle(color: context.pal.fg54, fontSize: 12)),
+                                      Text('${student['universityName'] ?? tr('Unknown Uni')} • ${student['pickupPoint'] ?? tr('Unknown Pickup')}', style: TextStyle(color: context.pal.fg54, fontSize: 12)),
                                     ],
                                   ),
                                 ),
@@ -132,11 +133,11 @@ class _DriverPassengersScreenState extends State<DriverPassengersScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(color: Colors.green),
                                   ),
-                                  child: const Text('APPROVED', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  child: Text(tr('APPROVED'), style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
                                 ),
                                 IconButton(
                                   icon: Icon(Icons.edit, color: context.pal.fg70),
-                                  tooltip: 'Edit student details',
+                                  tooltip: tr('Edit student details'),
                                   onPressed: () {
                                     final int id = (p['studentId'] as num?)?.toInt() ?? 0;
                                     if (id != 0) _editPassenger(id, student['fullName'] ?? 'Student');
@@ -218,18 +219,18 @@ class _EditPassengerDialogState extends State<_EditPassengerDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: context.pal.surface,
-      title: Text('Edit Student Details', style: TextStyle(color: context.pal.fg)),
+      title: Text(tr('Edit Student Details'), style: TextStyle(color: context.pal.fg)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${widget.studentName}. The student will be told about any change you save.',
+            Text(tr('{name}. The student will be told about any change you save.', {'name': widget.studentName}),
                 style: TextStyle(color: context.pal.fg70, fontSize: 13)),
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                child: Text(tr(_error!), style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
               ),
             for (final entry in _labels.entries)
               Padding(
@@ -240,7 +241,7 @@ class _EditPassengerDialogState extends State<_EditPassengerDialog> {
                   keyboardType: entry.key == 'emerContactPhone' ? TextInputType.phone : TextInputType.text,
                   style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
-                    labelText: entry.value,
+                    labelText: tr(entry.value),
                     labelStyle: const TextStyle(color: Colors.black54),
                     counterText: '',
                     filled: true,
@@ -254,12 +255,12 @@ class _EditPassengerDialogState extends State<_EditPassengerDialog> {
       actions: [
         TextButton(
           onPressed: _saving ? null : () => Navigator.pop(context),
-          child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
+          child: Text(tr('CANCEL'), style: TextStyle(color: context.pal.fg54)),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
           onPressed: _saving ? null : _save,
-          child: Text(_saving ? 'SAVING...' : 'SAVE', style: TextStyle(color: context.pal.fg)),
+          child: Text(tr(_saving ? 'SAVING...' : 'SAVE'), style: TextStyle(color: context.pal.fg)),
         ),
       ],
     );

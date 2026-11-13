@@ -5,6 +5,7 @@ import '../../widgets/dashboard_layout.dart';
 import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({Key? key}) : super(key: key);
 
@@ -65,10 +66,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     if (mounted) Navigator.pop(context);
 
     if (result['success']) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seat requested successfully!')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Seat requested successfully!'))));
       _fetchData(); // Refresh requests
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(result['message']))));
     }
   }
 
@@ -78,16 +79,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: context.pal.surface,
-          title: Text('Confirm Unassign', style: TextStyle(color: context.pal.fg)),
-          content: Text('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.', style: TextStyle(color: context.pal.fg70)),
+          title: Text(tr('Confirm Unassign'), style: TextStyle(color: context.pal.fg)),
+          content: Text(tr('Are you sure you want to unassign from this bus? You will need to request a seat again if you change your mind.'), style: TextStyle(color: context.pal.fg70)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
+              child: Text(tr('CANCEL'), style: TextStyle(color: context.pal.fg54)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('UNASSIGN', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              child: Text(tr('UNASSIGN'), style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -103,10 +104,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     if (mounted) Navigator.pop(context);
 
     if (success) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unassigned successfully!')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Unassigned successfully!'))));
       _fetchData(); // Refresh data
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to unassign')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Failed to unassign'))));
     }
   }
 
@@ -189,7 +190,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
             // Welcome Section
             Text(
-              'DASHBOARD',
+              tr('DASHBOARD'),
               style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
@@ -197,7 +198,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               children: [
                 Flexible(
                   child: Text(
-                    '$_greeting, ${firstName.toUpperCase()}! ',
+                    '${tr(_greeting)}, ${firstName.toUpperCase()}! ',
                     style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -207,7 +208,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             ),
             const SizedBox(height: 5),
             Text(
-              "HERE'S WHAT'S HAPPENING WITH YOUR TRAVEL.",
+              tr("HERE'S WHAT'S HAPPENING WITH YOUR TRAVEL."),
               style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 30),
@@ -245,12 +246,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'AVAILABLE BUSES',
+                          tr('AVAILABLE BUSES'),
                           style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                         ),
                         TextButton(
                           onPressed: _fetchData,
-                          child: const Text('REFRESH', style: TextStyle(color: Colors.green, fontSize: 12)),
+                          child: Text(tr('REFRESH'), style: TextStyle(color: Colors.green, fontSize: 12)),
                         ),
                       ],
                     ),
@@ -259,7 +260,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   if (_buses.isEmpty)
                     Padding(
                       padding: EdgeInsets.all(40.0),
-                      child: Text('NO BUSES AVAILABLE', style: TextStyle(color: context.pal.fg54)),
+                      child: Text(tr('NO BUSES AVAILABLE'), style: TextStyle(color: context.pal.fg54)),
                     ),
                   ..._buses.map((bus) => Column(
                     children: [
@@ -267,7 +268,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         bus['id'],
                         bus['routeName'] ?? 'Unknown Route',
                         bus['fullName'] ?? 'Driver',
-                        'LKR ${bus['monthlyFee'] ?? '0'}',
+                        '${tr('LKR')} ${bus['monthlyFee'] ?? '0'}',
                         hasActiveRequestAnywhere
                       ),
                       Divider(color: context.pal.fg24, height: 1),
@@ -303,11 +304,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
+                    Text(tr(title), style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
                     const SizedBox(height: 5),
-                    Text(value, style: TextStyle(color: statusColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(tr(value), style: TextStyle(color: statusColor, fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 5),
-                    Text(subtitle, style: TextStyle(color: context.pal.fg54, fontSize: 10)),
+                    Text(tr(subtitle), style: TextStyle(color: context.pal.fg54, fontSize: 10)),
                   ],
                 ),
               ),
@@ -350,11 +351,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(route, style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(tr(route), style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
-                Text('DRIVER: $driver', style: TextStyle(color: context.pal.fg54, fontSize: 10)),
+                Text(tr('DRIVER: {name}', {'name': driver}), style: TextStyle(color: context.pal.fg54, fontSize: 10)),
                 const SizedBox(height: 4),
-                Text('$price / MONTH', style: TextStyle(color: context.pal.fg70, fontSize: 12)),
+                Text(tr('{price} / MONTH', {'price': price}), style: TextStyle(color: context.pal.fg70, fontSize: 12)),
               ],
             ),
           ),
@@ -372,7 +373,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
             onPressed: hasRequestedThis ? () => _unassignDriver(requestId!) : (hasActiveRequestAnywhere ? null : () => _requestSeat(driverId)),
-            child: Text(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
+            child: Text(tr(hasRequestedThis ? 'UNASSIGN' : (hasActiveRequestAnywhere ? 'UNAVAILABLE' : 'REQUEST SEAT')), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
           ),
         ],
       ),

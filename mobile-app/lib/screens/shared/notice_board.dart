@@ -4,6 +4,7 @@ import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class NoticeBoardScreen extends StatefulWidget {
   final bool isDriver;
   final String userName;
@@ -57,7 +58,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: context.pal.surface,
-        title: Text('Post New Notice', style: TextStyle(color: context.pal.fg)),
+        title: Text(tr('Post New Notice'), style: TextStyle(color: context.pal.fg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -65,7 +66,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
               controller: titleController,
               style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
-                labelText: 'Title',
+                labelText: tr('Title'),
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
@@ -78,7 +79,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
               maxLines: 3,
               style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
-                labelText: 'Content',
+                labelText: tr('Content'),
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
@@ -90,7 +91,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
+            child: Text(tr('CANCEL'), style: TextStyle(color: context.pal.fg54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
@@ -101,11 +102,11 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
                   Navigator.pop(context);
                   _fetchNotices();
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(res['message']))));
                 }
               }
             },
-            child: Text('POST', style: TextStyle(color: context.pal.fg)),
+            child: Text(tr('POST'), style: TextStyle(color: context.pal.fg)),
           ),
         ],
       ),
@@ -116,9 +117,9 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
     final success = await ApiService.deleteNotice(id);
     if (success) {
       _fetchNotices();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notice deleted')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Notice deleted'))));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete notice')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Failed to delete notice'))));
     }
   }
 
@@ -144,12 +145,12 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'NOTICE BOARD',
+                        tr('NOTICE BOARD'),
                         style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
                       ),
                       SizedBox(height: 5),
                       Text(
-                        "IMPORTANT UPDATES AND ANNOUNCEMENTS",
+                        tr("IMPORTANT UPDATES AND ANNOUNCEMENTS"),
                         style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
                       ),
                     ],
@@ -159,7 +160,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
                 if (widget.isDriver)
                   ElevatedButton.icon(
                     icon: const Icon(Icons.add_alert, size: 18),
-                    label: const Text('POST NOTICE', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: Text(tr('POST NOTICE'), style: TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: context.pal.fg,
                       foregroundColor: context.pal.onFg,
@@ -175,9 +176,9 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
             else if (!hasApprovedDriver)
-              Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: context.pal.fg70, fontSize: 16)))
+              Center(child: Text(tr("You have to assign to a driver to use this feature."), style: TextStyle(color: context.pal.fg70, fontSize: 16)))
             else if (_notices.isEmpty)
-              Center(child: Text("No notices available.", style: TextStyle(color: context.pal.fg70)))
+              Center(child: Text(tr("No notices available."), style: TextStyle(color: context.pal.fg70)))
             else
               // Notices Grid/List
               Expanded(
@@ -243,7 +244,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
                     const SizedBox(width: 10),
                   ],
                   Text(
-                    title,
+                    tr(title),
                     style: TextStyle(
                       color: isUrgent ? Colors.redAccent : context.pal.fg,
                       fontSize: 18,
@@ -255,7 +256,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
               Row(
                 children: [
                   Text(
-                    date,
+                    tr(date),
                     style: TextStyle(color: context.pal.fg54, fontSize: 12),
                   ),
                   if (widget.isDriver) ...[
@@ -273,7 +274,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
           ),
           const SizedBox(height: 15),
           Text(
-            content,
+            tr(content),
             style: TextStyle(color: context.pal.fg70, fontSize: 14, height: 1.5),
           ),
           const SizedBox(height: 20),
@@ -286,7 +287,7 @@ class _NoticeBoardScreenState extends State<NoticeBoardScreen> {
               ),
               const SizedBox(width: 10),
               Text(
-                'Posted by $author',
+                tr('Posted by {name}', {'name': author}),
                 style: TextStyle(color: context.pal.fg54, fontSize: 12, fontStyle: FontStyle.italic),
               ),
             ],

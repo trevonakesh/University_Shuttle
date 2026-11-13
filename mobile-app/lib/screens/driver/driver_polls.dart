@@ -5,6 +5,7 @@ import 'package:printing/printing.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class DriverPollsScreen extends StatefulWidget {
   const DriverPollsScreen({Key? key}) : super(key: key);
 
@@ -46,7 +47,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: context.pal.surface,
-        title: Text('Create New Poll', style: TextStyle(color: context.pal.fg)),
+        title: Text(tr('Create New Poll'), style: TextStyle(color: context.pal.fg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -54,7 +55,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
               controller: questionController,
               style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
-                labelText: 'Question',
+                labelText: tr('Question'),
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
@@ -67,7 +68,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
               controller: option1Controller,
               style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
-                labelText: 'Option 1 (e.g. Yes / Morning)',
+                labelText: tr('Option 1 (e.g. Yes / Morning)'),
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
@@ -80,7 +81,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
               controller: option2Controller,
               style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
-                labelText: 'Option 2 (e.g. No / Evening)',
+                labelText: tr('Option 2 (e.g. No / Evening)'),
                 labelStyle: TextStyle(color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
@@ -93,7 +94,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('CANCEL', style: TextStyle(color: context.pal.fg54)),
+            child: Text(tr('CANCEL'), style: TextStyle(color: context.pal.fg54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
@@ -119,11 +120,11 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                   _fetchData();
                 } else {
                   ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(res['message'])));
+                      .showSnackBar(SnackBar(content: Text(tr(res['message']))));
                 }
               }
             },
-            child: Text('CREATE', style: TextStyle(color: context.pal.fg)),
+            child: Text(tr('CREATE'), style: TextStyle(color: context.pal.fg)),
           ),
         ],
       ),
@@ -138,9 +139,9 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
     if (!mounted) return;
     setState(() => _downloadingPollId = null);
     if (bytes == null) {
-      messenger.showSnackBar(const SnackBar(
+      messenger.showSnackBar(SnackBar(
           content:
-              Text('Could not create the passenger list. Please try again.')));
+              Text(tr('Could not create the passenger list. Please try again.'))));
       return;
     }
     await Printing.sharePdf(
@@ -152,10 +153,10 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
     if (success) {
       _fetchData();
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Poll deleted')));
+          .showSnackBar(SnackBar(content: Text(tr('Poll deleted'))));
     } else {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Failed to delete poll')));
+          .showSnackBar(SnackBar(content: Text(tr('Failed to delete poll'))));
     }
   }
 
@@ -187,7 +188,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'ATTENDANCE POLLS',
+                          tr('ATTENDANCE POLLS'),
                           style: TextStyle(
                               color: context.pal.fg,
                               fontSize: 32,
@@ -196,7 +197,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                         ),
                         SizedBox(height: 5),
                         Text(
-                          "MANAGE DAILY ATTENDANCE AND SEAT AVAILABILITY",
+                          tr("MANAGE DAILY ATTENDANCE AND SEAT AVAILABILITY"),
                           style: TextStyle(
                               color: context.pal.fg70,
                               fontSize: 12,
@@ -206,7 +207,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                     ),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.add_chart, size: 18),
-                      label: const Text('CREATE POLL',
+                      label: Text(tr('CREATE POLL'),
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.pal.fg,
@@ -226,7 +227,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
               const Center(child: CircularProgressIndicator())
             else if (_polls.isEmpty)
               Center(
-                  child: Text("No polls created yet.",
+                  child: Text(tr("No polls created yet."),
                       style: TextStyle(color: context.pal.fg70)))
             else
               // Active Polls View
@@ -275,13 +276,13 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(poll['date'] ?? '',
+                                    Text(tr(poll['date'] ?? ''),
                                         style: TextStyle(
                                             color: context.pal.fg,
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold)),
                                     const SizedBox(height: 5),
-                                    Text(poll['question'] ?? '',
+                                    Text(tr(poll['question'] ?? ''),
                                         style: TextStyle(
                                             color: context.pal.fg70,
                                             fontSize: 14)),
@@ -327,28 +328,28 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                               children: [
                                 Expanded(
                                     flex: 3,
-                                    child: Text('STUDENT NAME',
+                                    child: Text(tr('STUDENT NAME'),
                                         style: TextStyle(
                                             color: context.pal.fg70,
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold))),
                                 Expanded(
                                     flex: 3,
-                                    child: Text('PICKUP POINT',
+                                    child: Text(tr('PICKUP POINT'),
                                         style: TextStyle(
                                             color: context.pal.fg70,
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold))),
                                 Expanded(
                                     flex: 2,
-                                    child: Text('PHONE NUMBER',
+                                    child: Text(tr('PHONE NUMBER'),
                                         style: TextStyle(
                                             color: context.pal.fg70,
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold))),
                                 Expanded(
                                     flex: 2,
-                                    child: Text('SELECTION',
+                                    child: Text(tr('SELECTION'),
                                         style: TextStyle(
                                             color: context.pal.fg70,
                                             fontSize: 12,
@@ -363,7 +364,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                             Padding(
                               padding: const EdgeInsets.all(20.0),
                               child: Text(
-                                  'No students have selected ${poll['option1'] ?? 'Option 1'} yet.',
+                                  tr('No students have selected {option} yet.', {'option': poll['option1'] ?? tr('Option 1')}),
                                   style: TextStyle(color: context.pal.fg54)),
                             )
                           else
@@ -383,9 +384,9 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                                 child: OutlinedButton.icon(
                                   icon: const Icon(Icons.picture_as_pdf,
                                       size: 18),
-                                  label: Text(_downloadingPollId == poll['id']
+                                  label: Text(tr(_downloadingPollId == poll['id']
                                       ? 'PREPARING PDF...'
-                                      : 'DOWNLOAD PASSENGER LIST (PDF)'),
+                                      : 'DOWNLOAD PASSENGER LIST (PDF)')),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: context.pal.fg,
                                     side: BorderSide(color: context.pal.fg54),
@@ -426,11 +427,11 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
       ),
       child: Column(
         children: [
-          Text(count,
+          Text(tr(count),
               style: TextStyle(
                   color: color, fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          Text(label,
+          Text(tr(label),
               style: TextStyle(
                   color: color.withValues(alpha: 0.8),
                   fontSize: 10,
@@ -458,7 +459,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                    child: Text(name,
+                    child: Text(tr(name),
                         style: TextStyle(
                             color: context.pal.fg, fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis)),
@@ -472,7 +473,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                 Icon(Icons.location_on, color: context.pal.fg54, size: 14),
                 const SizedBox(width: 4),
                 Expanded(
-                    child: Text(pickup,
+                    child: Text(tr(pickup),
                         style: TextStyle(color: context.pal.fg70),
                         overflow: TextOverflow.ellipsis)),
               ],
@@ -485,7 +486,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                 Icon(Icons.phone, color: context.pal.fg54, size: 14),
                 const SizedBox(width: 4),
                 Expanded(
-                    child: Text(phone,
+                    child: Text(tr(phone),
                         style: TextStyle(color: context.pal.fg70),
                         overflow: TextOverflow.ellipsis)),
               ],
@@ -504,7 +505,7 @@ class _DriverPollsScreenState extends State<DriverPollsScreen> {
                       Border.all(color: Colors.green.withValues(alpha: 0.5)),
                 ),
                 child: Text(
-                  option1Text.toUpperCase(),
+                  tr(option1Text.toUpperCase()),
                   style: const TextStyle(
                       color: Colors.green,
                       fontSize: 10,

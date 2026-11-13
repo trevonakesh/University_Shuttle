@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../widgets/theme_mode_button.dart';
+import '../../widgets/language_button.dart';
 import '../../utils/palette.dart';
 import 'role_selection_screen.dart';
 import 'forgot_password_screen.dart';
@@ -10,6 +11,7 @@ import '../student/student_dashboard.dart';
 import '../driver/driver_dashboard.dart';
 import 'driver_pending_screen.dart';
 
+import '../../utils/lang.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -26,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Please fill all fields'))));
       return;
     }
 
@@ -52,12 +54,12 @@ class _LoginScreenState extends State<LoginScreen> {
         // Admin accounts have no screens in the mobile app.
         await ApiService.logout();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Admin accounts must use the web admin panel.')),
+          SnackBar(content: Text(tr('Admin accounts must use the web admin panel.'))),
         );
       }
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(result['message']))));
     }
   }
 
@@ -78,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? _buildDesktopLayout(context) 
                 : _buildMobileLayout(context),
           ),
-          const Positioned(top: 0, right: 0, child: SafeArea(child: Padding(padding: EdgeInsets.all(8), child: ThemeModeButton()))),
+          const Positioned(top: 0, right: 0, child: SafeArea(child: Padding(padding: EdgeInsets.all(8), child: Row(mainAxisSize: MainAxisSize.min, children: [LanguageButton(), ThemeModeButton()])))),
         ],
       ),
     );
@@ -123,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'SMART . SAFE . RELIABLE',
+          tr('SMART . SAFE . RELIABLE'),
           style: TextStyle(
             color: context.pal.fg70,
             fontSize: 14,
@@ -133,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         SizedBox(height: 10),
         Text(
-          'CAMPUS BUS\nSERVICE',
+          tr('CAMPUS BUS\nSERVICE'),
           style: TextStyle(
             color: context.pal.fg,
             fontSize: 48,
@@ -164,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'WELCOME BACK!',
+                tr('WELCOME BACK!'),
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -174,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'LOGIN TO CONTINUE',
+                tr('LOGIN TO CONTINUE'),
                 style: TextStyle(
                   fontSize: 12,
                   color: context.pal.fg70,
@@ -186,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Email Field
               _buildTextField(
                 controller: _emailController,
-                hintText: 'EMAIL OR PHONE NUMBER',
+                hintText: tr('EMAIL OR PHONE NUMBER'),
                 obscureText: false,
               ),
               const SizedBox(height: 20),
@@ -194,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Password Field
               _buildTextField(
                 controller: _passwordController,
-                hintText: 'PASSWORD',
+                hintText: tr('PASSWORD'),
                 obscureText: !_isPasswordVisible,
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -222,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: Text(
-                      'FORGOT PASSWORD?',
+                      tr('FORGOT PASSWORD?'),
                       style: TextStyle(color: context.pal.fg, fontSize: 12),
                     ),
                   ),
@@ -245,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: _isLoading 
                     ? CircularProgressIndicator(color: Colors.white)
                     : Text(
-                        'LOGIN',
+                        tr('LOGIN'),
                         style: TextStyle(
                           color: Colors.white,
                           letterSpacing: 1.5,
@@ -262,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "DON'T HAVE AN ACCOUNT? ",
+                    tr("DON'T HAVE AN ACCOUNT? "),
                     style: TextStyle(color: context.pal.fg70, fontSize: 12),
                   ),
                   MouseRegion(
@@ -277,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                       child: Text(
-                        'SIGN UP',
+                        tr('SIGN UP'),
                         style: TextStyle(
                           color: context.pal.fg,
                           fontSize: 12,
@@ -312,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
         obscureText: obscureText,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
-          hintText: hintText,
+          hintText: tr(hintText),
           hintStyle: const TextStyle(color: Colors.black54, fontSize: 14),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),

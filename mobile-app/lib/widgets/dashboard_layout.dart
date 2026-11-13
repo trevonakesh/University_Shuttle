@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'theme_mode_button.dart';
+import 'language_button.dart';
 import '../utils/palette.dart';
 import '../screens/auth/login_screen.dart';
 import '../services/api_service.dart';
@@ -21,6 +22,7 @@ import '../screens/shared/info_screens.dart';
 import 'app_background.dart';
 import 'profile_avatar.dart';
 
+import '../utils/lang.dart';
 class DashboardLayout extends StatelessWidget {
   final Widget child;
   final String userName;
@@ -85,11 +87,17 @@ class DashboardLayout extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: context.pal.bar,
         iconTheme: IconThemeData(color: context.pal.fg),
-        title: Text(
-          'UNI SHUTTLE',
-          style: TextStyle(color: context.pal.fg, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        // Shrinks rather than cuts off when the phone is narrow.
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'UNI SHUTTLE',
+            style: TextStyle(color: context.pal.fg, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+          ),
         ),
         actions: [
+          const LanguageButton(),
           const ThemeModeButton(),
           IconButton(
             icon: Icon(Icons.notifications_none, color: context.pal.fg),
@@ -132,7 +140,7 @@ class DashboardLayout extends StatelessWidget {
       builder: (context) {
         return AlertDialog(
           backgroundColor: context.pal.surface,
-          title: Text('NOTIFICATIONS', style: TextStyle(color: context.pal.fg, fontSize: 14, letterSpacing: 1)),
+          title: Text(tr('NOTIFICATIONS'), style: TextStyle(color: context.pal.fg, fontSize: 14, letterSpacing: 1)),
           content: SizedBox(
             width: 400,
             child: FutureBuilder<List<dynamic>>(
@@ -148,7 +156,7 @@ class DashboardLayout extends StatelessWidget {
                 if (notifications.isEmpty) {
                   return SizedBox(
                     height: 80,
-                    child: Center(child: Text('No notifications yet.', style: TextStyle(color: context.pal.fg54))),
+                    child: Center(child: Text(tr('No notifications yet.'), style: TextStyle(color: context.pal.fg54))),
                   );
                 }
                 return SizedBox(
@@ -164,8 +172,8 @@ class DashboardLayout extends StatelessWidget {
                           isRead ? Icons.notifications_none : Icons.notifications_active,
                           color: isRead ? context.pal.fg38 : context.pal.orange,
                         ),
-                        title: Text(n['title'] ?? '', style: TextStyle(color: isRead ? context.pal.fg54 : context.pal.fg, fontSize: 13)),
-                        subtitle: Text(n['message'] ?? '', style: TextStyle(color: context.pal.fg38, fontSize: 11)),
+                        title: Text(tr(n['title'] ?? ''), style: TextStyle(color: isRead ? context.pal.fg54 : context.pal.fg, fontSize: 13)),
+                        subtitle: Text(tr(n['message'] ?? ''), style: TextStyle(color: context.pal.fg38, fontSize: 11)),
                         onTap: isRead ? null : () => ApiService.markNotificationRead(n['id']),
                       );
                     },
@@ -177,7 +185,7 @@ class DashboardLayout extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('CLOSE', style: TextStyle(color: context.pal.fg)),
+              child: Text(tr('CLOSE'), style: TextStyle(color: context.pal.fg)),
             ),
           ],
         );
@@ -199,7 +207,7 @@ class DashboardLayout extends StatelessWidget {
                 Image.asset('assets/images/logo_mark.png', height: 26),
                 SizedBox(width: 12),
                 Text(
-                  'UNI SHUTTLE',
+                  tr('UNI SHUTTLE'),
                   style: TextStyle(
                     color: context.pal.fg,
                     fontSize: 12,
@@ -256,7 +264,7 @@ class DashboardLayout extends StatelessWidget {
           size: 20,
         ),
         title: Text(
-          title,
+          tr(title),
           style: TextStyle(
             color: isActive ? context.pal.fg : context.pal.fg54,
             fontSize: 10,
@@ -294,6 +302,7 @@ class DashboardLayout extends StatelessWidget {
           _buildHeaderLink('FAQS', context),
           _buildHeaderLink('CONTACT', context),
           const SizedBox(width: 20),
+          const LanguageButton(),
           const ThemeModeButton(),
           IconButton(
             icon: Icon(Icons.notifications_none, color: context.pal.fg, size: 24),
@@ -314,11 +323,11 @@ class DashboardLayout extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        userName,
+                        tr(userName),
                         style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        userRole,
+                        tr(userRole),
                         style: TextStyle(color: context.pal.fg54, fontSize: 10),
                       ),
                     ],
@@ -352,7 +361,7 @@ class DashboardLayout extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Text(
-            text,
+            tr(text),
             style: TextStyle(
               color: context.pal.fg70,
               fontSize: 10,

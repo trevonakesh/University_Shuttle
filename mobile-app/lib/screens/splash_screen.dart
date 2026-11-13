@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import 'student/student_dashboard.dart';
 import 'driver/driver_dashboard.dart';
 
+import '../utils/lang.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
 
@@ -78,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Image.asset('assets/images/logo_mark.png', height: 100),
             SizedBox(height: 20),
             Text(
-              'Uni Shuttle',
+              tr('Uni Shuttle'),
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,

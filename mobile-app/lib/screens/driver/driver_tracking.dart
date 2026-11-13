@@ -9,6 +9,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class DriverTrackingScreen extends StatefulWidget {
   const DriverTrackingScreen({Key? key}) : super(key: key);
 
@@ -87,7 +88,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+      SnackBar(content: Text(tr(message)), backgroundColor: Colors.redAccent),
     );
   }
 
@@ -194,12 +195,12 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
           children: [
             // Header
             Text(
-              'LIVE GPS TRACKING',
+              tr('LIVE GPS TRACKING'),
               style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 5),
             Text(
-              "BROADCAST YOUR REAL LOCATION TO YOUR PASSENGERS",
+              tr("BROADCAST YOUR REAL LOCATION TO YOUR PASSENGERS"),
               style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 25),
@@ -286,7 +287,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      _isBroadcasting ? 'BROADCASTING LIVE' : 'LOCATION SHARING OFF',
+                                      tr(_isBroadcasting ? 'BROADCASTING LIVE' : 'LOCATION SHARING OFF'),
                                       style: TextStyle(
                                         color: _isBroadcasting ? Colors.blueAccent : context.pal.fg70,
                                         fontSize: 18,
@@ -295,11 +296,11 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                                     ),
                                     const SizedBox(height: 5),
                                     Text(
-                                      _isBroadcasting
+                                      tr(_isBroadcasting
                                         ? (_hasFix
                                             ? 'GPS live · ${_speedKmh.toStringAsFixed(0)} km/h · ${_currentLocation.latitude.toStringAsFixed(5)}, ${_currentLocation.longitude.toStringAsFixed(5)}'
                                             : 'Waiting for GPS fix…')
-                                        : 'Turn on to share your real GPS position with students.',
+                                        : 'Turn on to share your real GPS position with students.'),
                                       style: TextStyle(color: context.pal.fg54, fontSize: 13),
                                     ),
                                   ],
@@ -318,7 +319,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen> with Single
                                       Icon(_isBroadcasting ? Icons.stop : Icons.play_arrow, size: 20),
                                       const SizedBox(width: 8),
                                       Text(
-                                        _isBroadcasting ? 'STOP SHARING' : 'START LIVE LOCATION',
+                                        tr(_isBroadcasting ? 'STOP SHARING' : 'START LIVE LOCATION'),
                                         style: const TextStyle(fontWeight: FontWeight.bold),
                                       ),
                                     ],

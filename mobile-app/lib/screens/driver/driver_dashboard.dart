@@ -4,6 +4,7 @@ import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class DriverDashboardScreen extends StatefulWidget {
   const DriverDashboardScreen({Key? key}) : super(key: key);
 
@@ -68,10 +69,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     if (mounted) Navigator.pop(context);
 
     if (result['success']) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Request $status successfully!')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Request {status} successfully!', {'status': tr(status)}))));
       _fetchData();
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(result['message']))));
     }
   }
 
@@ -83,10 +84,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     if (mounted) Navigator.pop(context);
 
     if (result['success']) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Daily ride $status successfully!')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Daily ride {status} successfully!', {'status': tr(status)}))));
       _fetchData();
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(result['message']))));
     }
   }
 
@@ -100,19 +101,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: context.pal.surface,
-          title: Text('$optionName Students', style: TextStyle(color: context.pal.fg)),
+          title: Text(tr('{option} Students', {'option': optionName}), style: TextStyle(color: context.pal.fg)),
           content: SizedBox(
             width: double.maxFinite,
             child: students.isEmpty 
-              ? Text('No students have selected $optionName yet.', style: TextStyle(color: context.pal.fg70))
+              ? Text(tr('No students have selected {option} yet.', {'option': optionName}), style: TextStyle(color: context.pal.fg70))
               : ListView.builder(
                   shrinkWrap: true,
                   itemCount: students.length,
                   itemBuilder: (context, index) {
                     final s = students[index];
                     return ListTile(
-                      title: Text(s['name'] ?? 'Unknown', style: TextStyle(color: context.pal.fg)),
-                      subtitle: Text(s['pickupPoint'] ?? 'Unknown', style: TextStyle(color: context.pal.fg54)),
+                      title: Text(tr(s['name'] ?? 'Unknown'), style: TextStyle(color: context.pal.fg)),
+                      subtitle: Text(tr(s['pickupPoint'] ?? 'Unknown'), style: TextStyle(color: context.pal.fg54)),
                       leading: CircleAvatar(
                         backgroundColor: context.pal.fg12,
                         child: Icon(Icons.person, color: context.pal.fg),
@@ -124,7 +125,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('CLOSE', style: TextStyle(color: context.pal.fg)),
+              child: Text(tr('CLOSE'), style: TextStyle(color: context.pal.fg)),
             ),
           ],
         );
@@ -165,7 +166,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final statCards = [
       _buildStatCard('TOTAL STUDENTS', _totalStudents.toString(), Icons.school, context.pal.fg),
       _buildStatCard('SEATS', seats, Icons.event_seat, context.pal.fg),
-      _buildStatCard('WALLET BALANCE', 'LKR ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, _walletBalance > 0 ? context.pal.green : Colors.redAccent),
+      _buildStatCard('WALLET BALANCE', '${tr('LKR')} ${_walletBalance.toStringAsFixed(2)}', Icons.account_balance_wallet, _walletBalance > 0 ? context.pal.green : Colors.redAccent),
       _buildStatCard('PENDING REQUESTS', _requests.length.toString(), Icons.swap_calls, context.pal.fg),
     ];
 
@@ -173,12 +174,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'DRIVER DASHBOARD',
+          tr('DRIVER DASHBOARD'),
           style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
         ),
         const SizedBox(height: 10),
         Text(
-          "WELCOME BACK, ${firstName.toUpperCase()}! HERE'S YOUR OVERVIEW",
+          tr("WELCOME BACK, {name}! HERE'S YOUR OVERVIEW", {'name': firstName.toUpperCase()}),
           style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
@@ -270,14 +271,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               children: [
                 Flexible(
                   child: Text(
-                    'PENDING STUDENT REQUESTS',
+                    tr('PENDING STUDENT REQUESTS'),
                     style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 TextButton(
                   onPressed: _fetchData,
-                  child: Text('REFRESH', style: TextStyle(color: context.pal.fg54, fontSize: 12)),
+                  child: Text(tr('REFRESH'), style: TextStyle(color: context.pal.fg54, fontSize: 12)),
                 ),
               ],
             ),
@@ -285,7 +286,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           Divider(color: context.pal.fg24, height: 1),
           Expanded(
             child: _requests.isEmpty
-              ? Center(child: Text('NO PENDING REQUESTS', style: TextStyle(color: context.pal.fg54)))
+              ? Center(child: Text(tr('NO PENDING REQUESTS'), style: TextStyle(color: context.pal.fg54)))
               : ListView.separated(
                   itemCount: _requests.length,
                   separatorBuilder: (_, __) => Divider(color: context.pal.fg24, height: 1),
@@ -313,7 +314,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Text(
-              _isTodayPoll ? "TODAY'S POLL" : 'LATEST POLL',
+              tr(_isTodayPoll ? "TODAY'S POLL" : 'LATEST POLL'),
               style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
             ),
           ),
@@ -321,12 +322,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           Padding(
             padding: const EdgeInsets.all(30.0),
             child: _todayPoll == null
-              ? Center(child: Text('NO POLLS AVAILABLE', style: TextStyle(color: context.pal.fg54)))
+              ? Center(child: Text(tr('NO POLLS AVAILABLE'), style: TextStyle(color: context.pal.fg54)))
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${_todayPoll!['question']}\n(${_todayPoll!['date']})',
+                      tr('${_todayPoll!['question']}\n(${_todayPoll!['date']})'),
                       style: TextStyle(color: context.pal.fg, fontSize: 12, height: 1.5),
                     ),
                     const SizedBox(height: 30),
@@ -351,7 +352,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 20),
                 ),
                 onPressed: _showComingStudents,
-                child: const Text('VIEW DETAILS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)),
+                child: Text(tr('VIEW DETAILS'), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)),
               ),
             ),
         ],
@@ -381,9 +382,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(title, style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
+                  Text(tr(title), style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
                   const SizedBox(height: 10),
-                  Text(value, style: TextStyle(color: valueColor, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(tr(value), style: TextStyle(color: valueColor, fontSize: 20, fontWeight: FontWeight.bold)),
                 ],
               ),
             ],
@@ -399,7 +400,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: context.pal.surface,
-          title: Text('STUDENT DETAILS', style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          title: Text(tr('STUDENT DETAILS'), style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, letterSpacing: 1)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,7 +419,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('CLOSE', style: TextStyle(color: context.pal.fg)),
+              child: Text(tr('CLOSE'), style: TextStyle(color: context.pal.fg)),
             ),
           ],
         );
@@ -434,9 +435,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
+            Text(tr(label), style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
             const SizedBox(height: 4),
-            Text(value, style: TextStyle(color: context.pal.fg, fontSize: 14)),
+            Text(tr(value), style: TextStyle(color: context.pal.fg, fontSize: 14)),
           ],
         ),
       ],
@@ -465,11 +466,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(tr(name), style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
-                Text('PICKUP: $pickup', style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
+                Text(tr('PICKUP: {place}', {'place': pickup}), style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
                 const SizedBox(height: 4),
-                Text(date, style: TextStyle(color: context.pal.fg54, fontSize: 10)),
+                Text(tr(date), style: TextStyle(color: context.pal.fg54, fontSize: 10)),
               ],
             ),
           ),
@@ -531,14 +532,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               children: [
                 Flexible(
                   child: Text(
-                    'PENDING DAILY RIDES',
+                    tr('PENDING DAILY RIDES'),
                     style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 TextButton(
                   onPressed: _fetchData,
-                  child: Text('REFRESH', style: TextStyle(color: context.pal.fg54, fontSize: 12)),
+                  child: Text(tr('REFRESH'), style: TextStyle(color: context.pal.fg54, fontSize: 12)),
                 ),
               ],
             ),
@@ -546,7 +547,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           Divider(color: context.pal.fg24, height: 1),
           Expanded(
             child: _dailyRequests.isEmpty
-              ? Center(child: Text('NO PENDING DAILY RIDES', style: TextStyle(color: context.pal.fg54)))
+              ? Center(child: Text(tr('NO PENDING DAILY RIDES'), style: TextStyle(color: context.pal.fg54)))
               : ListView.separated(
                   itemCount: _dailyRequests.length,
                   separatorBuilder: (_, __) => Divider(color: context.pal.fg24, height: 1),
@@ -567,7 +568,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final name = student['fullName'] ?? 'Unknown';
     final tripType = req['tripType'] == 'ROUND_TRIP' ? 'Round Trip' : (req['tripType'] == 'TO_UNI_ONLY' ? 'To Uni' : 'From Uni');
     final date = req['date'] ?? 'Unknown';
-    final fare = req['fareAmount'] != null ? 'LKR ${req['fareAmount']}' : 'TBD';
+    final fare = req['fareAmount'] != null ? '${tr('LKR')} ${req['fareAmount']}' : 'TBD';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -583,11 +584,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(tr(name), style: TextStyle(color: context.pal.fg, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
-                Text('DATE: $date | TYPE: $tripType', style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
+                Text(tr('DATE: {date} · TYPE: {type}', {'date': date, 'type': tr(tripType)}), style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1)),
                 const SizedBox(height: 4),
-                Text('FARE: $fare', style: TextStyle(color: context.pal.fg54, fontSize: 10)),
+                Text(tr('FARE: {fare}', {'fare': fare}), style: TextStyle(color: context.pal.fg54, fontSize: 10)),
               ],
             ),
           ),
@@ -625,7 +626,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
+        Text(tr(label), style: TextStyle(color: context.pal.fg, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 10),
         Stack(
           children: [

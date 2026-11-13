@@ -4,6 +4,7 @@ import '../../utils/palette.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_background.dart';
 
+import '../../utils/lang.dart';
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
 
@@ -101,7 +102,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _snack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(msg))));
   }
 
   @override
@@ -132,17 +133,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'RESET PASSWORD',
+                            tr('RESET PASSWORD'),
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.2),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'STEP ${_step + 1} OF 3\n${const [
+                            '${tr('STEP {n} OF 3', {'n': _step + 1})}\n${tr(const [
                               'ENTER YOUR EMAIL TO GET A RESET CODE',
                               'ENTER THE CODE WE EMAILED YOU',
                               'CODE CONFIRMED. CHOOSE A NEW PASSWORD',
-                            ][_step]}',
+                            ][_step])}',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 11, color: context.pal.fg70, letterSpacing: 1, height: 1.6),
                           ),
@@ -155,7 +156,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             _field(controller: _codeController, hint: '6-DIGIT CODE', keyboardType: TextInputType.number),
                             const SizedBox(height: 8),
                             Text(
-                              'ASKED MORE THAN ONCE? ONLY THE NEWEST CODE WORKS.',
+                              tr('ASKED MORE THAN ONCE? ONLY THE NEWEST CODE WORKS.'),
                               textAlign: TextAlign.center,
                               style: TextStyle(fontSize: 10, color: context.pal.fg70, letterSpacing: 0.5),
                             ),
@@ -187,7 +188,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               child: _isLoading
                                   ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                                   : Text(
-                                      const ['SEND RESET CODE', 'VERIFY CODE', 'RESET PASSWORD'][_step],
+                                      tr(const ['SEND RESET CODE', 'VERIFY CODE', 'RESET PASSWORD'][_step]),
                                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                                     ),
                             ),
@@ -196,17 +197,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           if (_step == 1) ...[
                             TextButton(
                               onPressed: _isLoading ? null : _requestCode,
-                              child: Text('SEND A NEW CODE', style: TextStyle(color: context.pal.fg70, fontSize: 11)),
+                              child: Text(tr('SEND A NEW CODE'), style: TextStyle(color: context.pal.fg70, fontSize: 11)),
                             ),
                             TextButton(
                               onPressed: _isLoading ? null : () => setState(() => _step = 0),
-                              child: Text('CHANGE EMAIL', style: TextStyle(color: context.pal.fg70, fontSize: 11)),
+                              child: Text(tr('CHANGE EMAIL'), style: TextStyle(color: context.pal.fg70, fontSize: 11)),
                             ),
                           ],
 
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: Text('BACK TO LOGIN', style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold)),
+                            child: Text(tr('BACK TO LOGIN'), style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold)),
                           ),
                         ],
                       ),
@@ -241,7 +242,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         keyboardType: keyboardType,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
-          hintText: hint,
+          hintText: tr(hint),
           hintStyle: const TextStyle(color: Colors.black54, fontSize: 14),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),

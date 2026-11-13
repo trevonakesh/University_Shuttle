@@ -14,9 +14,11 @@ import 'screens/driver/driver_polls.dart';
 import 'screens/student/student_tracking.dart';
 import 'screens/driver/driver_tracking.dart';
 
+import 'utils/lang.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeController.load();
+  await LangController.load();
   runApp(const LankaTripApp());
 }
 
@@ -28,7 +30,7 @@ class LankaTripApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.mode,
       builder: (context, mode, _) => MaterialApp(
-        title: 'Uni Shuttle',
+        title: tr('Uni Shuttle'),
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: mode,
@@ -50,69 +52,69 @@ class TestNavScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('UI Sandbox')),
+      appBar: AppBar(title: Text(tr('UI Sandbox'))),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentDashboardScreen())),
-              child: const Text('View Student Dashboard'),
+              child: Text(tr('View Student Dashboard')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverDashboardScreen())),
-              child: const Text('View Driver Dashboard'),
+              child: Text(tr('View Driver Dashboard')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentRegisterScreen())),
-              child: const Text('View Student Registration'),
+              child: Text(tr('View Student Registration')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverRegisterScreen())),
-              child: const Text('View Driver Registration'),
+              child: Text(tr('View Driver Registration')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentPaymentsScreen())),
-              child: const Text('View Student Payments'),
+              child: Text(tr('View Student Payments')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverPaymentsScreen())),
-              child: const Text('View Driver Payments'),
+              child: Text(tr('View Driver Payments')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NoticeBoardScreen(isDriver: false, userName: 'Supun Perera'))),
-              child: const Text('View Notice Board (Student)'),
+              child: Text(tr('View Notice Board (Student)')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NoticeBoardScreen(isDriver: true, userName: 'Chaminda Dias'))),
-              child: const Text('View Notice Board (Driver)'),
+              child: Text(tr('View Notice Board (Driver)')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentPollsScreen())),
-              child: const Text('View Student Polls'),
+              child: Text(tr('View Student Polls')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverPollsScreen())),
-              child: const Text('View Driver Polls'),
+              child: Text(tr('View Driver Polls')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentTrackingScreen())),
-              child: const Text('View Student GPS Tracking'),
+              child: Text(tr('View Student GPS Tracking')),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverTrackingScreen())),
-              child: const Text('View Driver GPS Tracking'),
+              child: Text(tr('View Driver GPS Tracking')),
             ),
           ],
         ),

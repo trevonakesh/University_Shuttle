@@ -7,6 +7,7 @@ import '../../services/api_service.dart';
 import '../driver/driver_dashboard.dart';
 import 'login_screen.dart';
 
+import '../../utils/lang.dart';
 class DriverPendingScreen extends StatefulWidget {
   const DriverPendingScreen({Key? key}) : super(key: key);
 
@@ -70,8 +71,8 @@ class _DriverPendingScreenState extends State<DriverPendingScreen> {
         } else if (status == 'REJECTED') {
           ApiService.logout(); // Clear token
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Your application was rejected by the admin.'),
+            SnackBar(
+              content: Text(tr('Your application was rejected by the admin.')),
               backgroundColor: Colors.red,
             ),
           );
@@ -128,7 +129,7 @@ class _DriverPendingScreenState extends State<DriverPendingScreen> {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            'UNDER REVIEW',
+                            tr('UNDER REVIEW'),
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -138,7 +139,7 @@ class _DriverPendingScreenState extends State<DriverPendingScreen> {
                           ),
                           const SizedBox(height: 15),
                           Text(
-                            'Your application is currently being reviewed by our admin team. This screen will automatically update once your account is approved.',
+                            tr('Your application is currently being reviewed by our admin team. This screen will automatically update once your account is approved.'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: context.pal.fg70,
@@ -162,7 +163,7 @@ class _DriverPendingScreenState extends State<DriverPendingScreen> {
                               );
                             },
                             child: Text(
-                              'LOGOUT',
+                              tr('LOGOUT'),
                               style: TextStyle(
                                 color: context.pal.fg54,
                                 letterSpacing: 1,

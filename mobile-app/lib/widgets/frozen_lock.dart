@@ -3,18 +3,18 @@ import '../utils/palette.dart';
 import '../screens/student/student_payments.dart';
 import '../services/api_service.dart';
 
+import '../utils/lang.dart';
 String _freezeMessage(String? reason, String month, double amountDue) {
-  final fare = 'LKR ${amountDue.toStringAsFixed(2)}';
+  final fare = tr('LKR {amount}', {'amount': amountDue.toStringAsFixed(2)});
   if (reason == 'EXEMPT') {
-    final settle = ApiService.onlinePayments
-        ? 'or pay the fare ($fare) if you plan to travel'
-        : 'or hand your driver the fare ($fare) and ask them to mark it as paid';
-    return 'Your driver marked you as not travelling in $month, so your account is frozen for this month. It unfreezes automatically next month, $settle.';
+    return ApiService.onlinePayments
+        ? tr('Your driver marked you as not travelling in {month}, so your account is frozen for this month. It unfreezes automatically next month, or pay the fare ({fare}) if you plan to travel.', {'month': month, 'fare': fare})
+        : tr('Your driver marked you as not travelling in {month}, so your account is frozen for this month. It unfreezes automatically next month, or hand your driver the fare ({fare}) and ask them to mark it as paid.', {'month': month, 'fare': fare});
   }
-  final settle = ApiService.onlinePayments
+  final settle = tr(ApiService.onlinePayments
       ? 'Pay it to unfreeze your account.'
-      : 'Hand it to your driver and ask them to mark it as paid to unfreeze your account.';
-  return 'Your $month fare ($fare) was not paid by the 10th. $settle';
+      : 'Hand it to your driver and ask them to mark it as paid to unfreeze your account.');
+  return '${tr('Your {month} fare ({fare}) was not paid by the 10th.', {'month': month, 'fare': fare})} $settle';
 }
 
 /// Red banner shown on the student dashboard when the account is frozen.
@@ -44,12 +44,12 @@ class FrozenBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  reason == 'EXEMPT' ? 'FROZEN — NOT TRAVELLING THIS MONTH' : 'ACCOUNT FROZEN',
+                  tr(reason == 'EXEMPT' ? 'FROZEN — NOT TRAVELLING THIS MONTH' : 'ACCOUNT FROZEN'),
                   style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _freezeMessage(reason, month, amountDue),
+                  tr(_freezeMessage(reason, month, amountDue)),
                   style: TextStyle(color: context.pal.fg70, fontSize: 12),
                 ),
               ],
@@ -62,7 +62,7 @@ class FrozenBanner extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (_) => const StudentPaymentsScreen()),
             ),
-            child: Text(ApiService.onlinePayments ? 'PAY NOW' : 'VIEW FARE', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+            child: Text(tr(ApiService.onlinePayments ? 'PAY NOW' : 'VIEW FARE'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
           ),
         ],
       ),
@@ -87,14 +87,14 @@ class FrozenLock extends StatelessWidget {
           const Icon(Icons.lock, color: Colors.redAccent, size: 70),
           const SizedBox(height: 20),
           Text(
-            reason == 'EXEMPT' ? 'FROZEN FOR $month' : 'ACCOUNT FROZEN',
+            tr(reason == 'EXEMPT' ? 'FROZEN FOR $month' : 'ACCOUNT FROZEN'),
             style: const TextStyle(color: Colors.redAccent, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 2),
           ),
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              _freezeMessage(reason, month, amountDue),
+              tr(_freezeMessage(reason, month, amountDue)),
               textAlign: TextAlign.center,
               style: TextStyle(color: context.pal.fg70, fontSize: 13),
             ),
@@ -102,7 +102,7 @@ class FrozenLock extends StatelessWidget {
           const SizedBox(height: 25),
           ElevatedButton.icon(
             icon: const Icon(Icons.payment, size: 18),
-            label: Text(ApiService.onlinePayments ? 'PAY MONTHLY FARE' : 'VIEW MY FARE', style: const TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(tr(ApiService.onlinePayments ? 'PAY MONTHLY FARE' : 'VIEW MY FARE'), style: const TextStyle(fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: context.pal.fg,

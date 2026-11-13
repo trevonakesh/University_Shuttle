@@ -3,6 +3,7 @@ import '../../utils/palette.dart';
 import '../../widgets/dashboard_layout.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class DriverProfileScreen extends StatefulWidget {
   const DriverProfileScreen({Key? key}) : super(key: key);
 
@@ -45,12 +46,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label,
+                tr(label),
                 style: TextStyle(color: context.pal.fg54, fontSize: 12, letterSpacing: 1),
               ),
               const SizedBox(height: 4),
               Text(
-                value,
+                tr(value),
                 style: TextStyle(color: context.pal.fg, fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ],
@@ -85,7 +86,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'MY PROFILE',
+              tr('MY PROFILE'),
               style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             SizedBox(height: narrow ? 20 : 40),
@@ -133,7 +134,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                             border: Border.all(color: Colors.green),
                           ),
                           child: Text(
-                            profile['status'] ?? 'APPROVED',
+                            tr(profile['status'] ?? 'APPROVED'),
                             style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -147,7 +148,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'PERSONAL INFORMATION',
+                              tr('PERSONAL INFORMATION'),
                               style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                             ),
                             Divider(color: context.pal.fg24, height: 30),
@@ -158,7 +159,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                             
                             const SizedBox(height: 40),
                             Text(
-                              'VEHICLE & ROUTE INFORMATION',
+                              tr('VEHICLE & ROUTE INFORMATION'),
                               style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                             ),
                             Divider(color: context.pal.fg24, height: 30),

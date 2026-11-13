@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/palette.dart';
 
+import '../utils/lang.dart';
 // The fields an admin added to a sign-up form. Answers are written into
 // [answers] by field key, and the surrounding Form validates required ones.
 class CustomSignupFields extends StatelessWidget {
@@ -20,7 +21,7 @@ class CustomSignupFields extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(field['label'].toString().toUpperCase(), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
+                Text(tr(field['label'].toString().toUpperCase()), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
                 const SizedBox(height: 8),
                 field['type'] == 'select' ? _dropdown(context, field) : _input(context, field),
               ],
@@ -60,13 +61,13 @@ class CustomSignupFields extends StatelessWidget {
       child: DropdownButtonFormField<String>(
         isExpanded: true,
         initialValue: answers[field['key']],
-        hint: Text('SELECT', style: TextStyle(color: context.pal.fg54, fontSize: 10)),
+        hint: Text(tr('SELECT'), style: TextStyle(color: context.pal.fg54, fontSize: 10)),
         dropdownColor: context.pal.surface,
         icon: Icon(Icons.keyboard_arrow_down, color: context.pal.fg54, size: 16),
         decoration: const InputDecoration(border: InputBorder.none),
         items: [
           for (final option in List<String>.from(field['options'] ?? const []))
-            DropdownMenuItem(value: option, child: Text(option, style: TextStyle(color: context.pal.fg))),
+            DropdownMenuItem(value: option, child: Text(tr(option), style: TextStyle(color: context.pal.fg))),
         ],
         validator: (value) => _validate(field, value),
         onChanged: (value) => answers[field['key']] = value ?? '',

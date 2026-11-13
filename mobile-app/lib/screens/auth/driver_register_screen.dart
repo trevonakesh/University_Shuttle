@@ -10,6 +10,7 @@ import '../../services/api_service.dart';
 import '../driver/driver_dashboard.dart';
 import 'driver_pending_screen.dart';
 
+import '../../utils/lang.dart';
 class DriverRegisterScreen extends StatefulWidget {
   const DriverRegisterScreen({Key? key}) : super(key: key);
 
@@ -72,9 +73,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     if (!mounted) return;
     if (form == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Could not load the sign-up form.'),
+        content: Text(tr('Could not load the sign-up form.')),
         duration: const Duration(days: 1),
-        action: SnackBarAction(label: 'RETRY', onPressed: _loadForm),
+        action: SnackBarAction(label: tr('RETRY'), onPressed: _loadForm),
       ));
       return;
     }
@@ -153,7 +154,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Registration failed')),
+          SnackBar(content: Text(tr(result['message'] ?? 'Registration failed'))),
         );
       }
     }
@@ -232,9 +233,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('DRIVER REGISTRATION', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.5)),
+                                  Text(tr('DRIVER REGISTRATION'), style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.5)),
                                   SizedBox(height: 4),
-                                  Text('PLEASE FILL IN YOUR DETAILS TO REGISTER AS A DRIVER', style: TextStyle(fontSize: 10, color: context.pal.fg70, letterSpacing: 1)),
+                                  Text(tr('PLEASE FILL IN YOUR DETAILS TO REGISTER AS A DRIVER'), style: TextStyle(fontSize: 10, color: context.pal.fg70, letterSpacing: 1)),
                                 ],
                               ),
                             ),
@@ -351,7 +352,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('WEEKDAY (MON - FRI)', style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold)),
+                              Text(tr('WEEKDAY (MON - FRI)'), style: TextStyle(color: context.pal.fg, fontSize: 12, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 16),
                               Row(
                                 children: [
@@ -403,7 +404,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(side: BorderSide(color: context.pal.fg54, width: 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))),
                             onPressed: () => Navigator.pop(context),
-                            child: Text('CANCEL', style: TextStyle(color: context.pal.fg, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                            child: Text(tr('CANCEL'), style: TextStyle(color: context.pal.fg, letterSpacing: 2, fontWeight: FontWeight.bold)),
                           ),
                         ),
                       ),
@@ -417,7 +418,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                             onPressed: _isLoading ? null : _register,
                             child: _isLoading 
                                 ? CircularProgressIndicator(color: Colors.white)
-                                : Text('SUBMIT REGISTRATION', style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                                : Text(tr('SUBMIT REGISTRATION'), style: TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold)),
                           ),
                         ),
                       ),
@@ -434,7 +435,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                           onPressed: _isLoading ? null : _register,
                           child: _isLoading 
                               ? CircularProgressIndicator(color: Colors.white)
-                              : Text('SUBMIT REGISTRATION', style: TextStyle(color: Colors.white, fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                              : Text(tr('SUBMIT REGISTRATION'), style: TextStyle(color: Colors.white, fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
                         ),
                       ),
                       const SizedBox(height: 15),
@@ -443,7 +444,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(side: BorderSide(color: context.pal.fg54, width: 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))),
                           onPressed: () => Navigator.pop(context),
-                          child: Text('CANCEL', style: TextStyle(color: context.pal.fg, fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                          child: Text(tr('CANCEL'), style: TextStyle(color: context.pal.fg, fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -457,7 +458,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.2));
+    return Text(tr(title), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.pal.fg, letterSpacing: 1.2));
   }
 
   Widget _buildResponsiveRow(bool isDesktop, List<Widget> children) {
@@ -484,7 +485,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
+        Text(tr(label), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(color: context.pal.tint(0.9), borderRadius: BorderRadius.circular(20), border: Border.all(color: context.pal.tint(0.2))),
@@ -492,7 +493,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
             controller: controller,
             obscureText: obscureText,
             style: const TextStyle(color: Colors.black, fontSize: 12),
-            decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.black54, fontSize: 10), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
+            decoration: InputDecoration(hintText: tr(hint), hintStyle: const TextStyle(color: Colors.black54, fontSize: 10), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
             validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
         ),
@@ -504,7 +505,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
+        Text(tr(label), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -513,10 +514,10 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
             child: DropdownButton<String>(
               isExpanded: true,
               value: currentValue,
-              hint: Text(hint, style: TextStyle(color: context.pal.fg54, fontSize: 10)),
+              hint: Text(tr(hint), style: TextStyle(color: context.pal.fg54, fontSize: 10)),
               dropdownColor: context.pal.surface,
               icon: Icon(Icons.keyboard_arrow_down, color: context.pal.fg54, size: 16),
-              items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: context.pal.fg)))).toList(),
+              items: items.map((e) => DropdownMenuItem(value: e, child: Text(tr(e), style: TextStyle(color: context.pal.fg)))).toList(),
               onChanged: onChanged,
             ),
           ),
@@ -530,7 +531,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
+        Text(tr(label), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,
@@ -543,7 +544,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    hint, 
+                    tr(hint), 
                     style: TextStyle(color: context.pal.fg, fontSize: 12),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -561,7 +562,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
+        Text(tr(label), style: TextStyle(color: context.pal.fg70, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,
@@ -588,9 +589,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                       children: [
                         Icon(Icons.cloud_upload_outlined, color: context.pal.fg, size: 24),
                         const SizedBox(height: 4),
-                        Text(subtext, style: TextStyle(color: context.pal.fg, fontSize: 10)),
+                        Text(tr(subtext), style: TextStyle(color: context.pal.fg, fontSize: 10)),
                         const SizedBox(height: 2),
-                        Text('JPG, PNG (MAX 2MB)', style: TextStyle(color: context.pal.fg54, fontSize: 8)),
+                        Text(tr('JPG, PNG (MAX 2MB)'), style: TextStyle(color: context.pal.fg54, fontSize: 8)),
                       ],
                     ),
                   ),

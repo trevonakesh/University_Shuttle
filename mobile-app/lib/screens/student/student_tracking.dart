@@ -10,6 +10,7 @@ import '../../widgets/dashboard_layout.dart';
 import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class StudentTrackingScreen extends StatefulWidget {
   const StudentTrackingScreen({Key? key}) : super(key: key);
 
@@ -147,16 +148,16 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
     // typical Sri Lankan urban traffic (~25 km/h).
     final speed = (_busSpeedKmh != null && _busSpeedKmh! > 5) ? _busSpeedKmh! : 25.0;
     final mins = (dist / speed * 60).round();
-    if (mins < 1) return 'ARRIVING';
-    return '$mins MIN${mins == 1 ? '' : 'S'}';
+    if (mins < 1) return tr('ARRIVING');
+    return tr(mins == 1 ? '{n} MIN' : '{n} MINS', {'n': mins});
   }
 
   String get _lastSeenText {
     if (_lastUpdate == null) return 'Waiting for the bus to come online…';
     final secs = DateTime.now().difference(_lastUpdate!).inSeconds;
     if (secs < 5) return 'Live · updated just now';
-    if (secs < 60) return 'Live · updated ${secs}s ago';
-    return 'Last seen ${(secs / 60).floor()} min ago';
+    if (secs < 60) return tr('Live · updated {n}s ago', {'n': secs});
+    return tr('Last seen {n} min ago', {'n': (secs / 60).floor()});
   }
 
   @override
@@ -185,12 +186,12 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
           children: [
             // Header
             Text(
-              'LIVE BUS TRACKING',
+              tr('LIVE BUS TRACKING'),
               style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 5),
             Text(
-              "TRACK YOUR BUS IN REAL-TIME AND VIEW ETA",
+              tr("TRACK YOUR BUS IN REAL-TIME AND VIEW ETA"),
               style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 25),
@@ -206,7 +207,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                 ),
               )
             else if (!hasApprovedDriver)
-              Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: context.pal.fg70, fontSize: 16)))
+              Center(child: Text(tr("You have to assign to a driver to use this feature."), style: TextStyle(color: context.pal.fg70, fontSize: 16)))
             else
               // Map and Info Area
               Expanded(
@@ -282,9 +283,9 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text('Status', style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold)),
+                                          Text(tr('Status'), style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold)),
                                           Text(
-                                            _isBusOnline ? _lastSeenText : 'Offline',
+                                            tr(_isBusOnline ? _lastSeenText : 'Offline'),
                                             style: TextStyle(color: _isBusOnline ? Colors.green : Colors.red, fontSize: 12),
                                           ),
                                         ],
@@ -304,7 +305,7 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
                                 if (_myLocation == null && _isBusOnline) ...[
                                   const SizedBox(height: 12),
                                   Text(
-                                    'Allow location access to see distance and ETA to you.',
+                                    tr('Allow location access to see distance and ETA to you.'),
                                     style: TextStyle(color: context.pal.fg38, fontSize: 10),
                                   ),
                                 ],
@@ -328,9 +329,9 @@ class _StudentTrackingScreenState extends State<StudentTrackingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.bold)),
+        Text(tr(label), style: TextStyle(color: context.pal.fg54, fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(tr(value), style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
       ],
     );
   }

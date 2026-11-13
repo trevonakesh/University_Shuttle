@@ -5,6 +5,7 @@ import '../../widgets/dashboard_layout.dart';
 import '../../widgets/frozen_lock.dart';
 import '../../services/api_service.dart';
 
+import '../../utils/lang.dart';
 class StudentPollsScreen extends StatefulWidget {
   const StudentPollsScreen({Key? key}) : super(key: key);
 
@@ -47,7 +48,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
     if (res['success']) {
       _fetchData();
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(res['message']))));
     }
   }
 
@@ -68,12 +69,12 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
           children: [
             // Header
             Text(
-              'ATTENDANCE POLLS',
+              tr('ATTENDANCE POLLS'),
               style: TextStyle(color: context.pal.fg, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const SizedBox(height: 5),
             Text(
-              "CONFIRM YOUR SEAT FOR UPCOMING TRIPS",
+              tr("CONFIRM YOUR SEAT FOR UPCOMING TRIPS"),
               style: TextStyle(color: context.pal.fg70, fontSize: 12, letterSpacing: 1),
             ),
             const SizedBox(height: 40),
@@ -89,9 +90,9 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                 ),
               )
             else if (!hasApprovedDriver)
-              Center(child: Text("You have to assign to a driver to use this feature.", style: TextStyle(color: context.pal.fg70, fontSize: 16)))
+              Center(child: Text(tr("You have to assign to a driver to use this feature."), style: TextStyle(color: context.pal.fg70, fontSize: 16)))
             else if (_polls.isEmpty)
-              Center(child: Text("No polls available from your driver yet.", style: TextStyle(color: context.pal.fg70)))
+              Center(child: Text(tr("No polls available from your driver yet."), style: TextStyle(color: context.pal.fg70)))
             else
               // Polls List
               Expanded(
@@ -155,7 +156,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                date,
+                tr(date),
                 style: TextStyle(color: context.pal.fg, fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Row(
@@ -163,7 +164,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                   Icon(Icons.directions_bus, color: context.pal.fg54, size: 16),
                   const SizedBox(width: 8),
                   Text(
-                    driverName,
+                    tr(driverName),
                     style: TextStyle(color: context.pal.fg70, fontSize: 14),
                   ),
                 ],
@@ -172,7 +173,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
           ),
           const SizedBox(height: 15),
           Text(
-            question,
+            tr(question),
             style: TextStyle(color: context.pal.fg70, fontSize: 16),
           ),
           const SizedBox(height: 25),
@@ -193,7 +194,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                     children: [
                       Icon(Icons.check_circle_outline, color: hasVoted && isComing == true ? context.pal.fg : context.pal.fg54, size: 18),
                       const SizedBox(width: 8),
-                      Text(option1.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(tr(option1.toUpperCase()), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -214,7 +215,7 @@ class _StudentPollsScreenState extends State<StudentPollsScreen> {
                     children: [
                       Icon(Icons.cancel_outlined, color: hasVoted && isComing == false ? context.pal.fg : context.pal.fg54, size: 18),
                       const SizedBox(width: 8),
-                      Text(option2.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(tr(option2.toUpperCase()), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),

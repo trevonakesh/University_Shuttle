@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import '../utils/palette.dart';
 
+import '../utils/lang.dart';
 /// Opens a short menu to choose light, dark, or following the phone's setting.
 class ThemeModeButton extends StatelessWidget {
   const ThemeModeButton({super.key});
@@ -27,12 +28,12 @@ class ThemeModeButton extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                child: Text('APPEARANCE', style: TextStyle(color: pal.fg54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                child: Text(tr('APPEARANCE'), style: TextStyle(color: pal.fg54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
               ),
               for (final (mode, icon, label) in _options)
                 ListTile(
                   leading: Icon(icon, color: pal.fg),
-                  title: Text(label, style: TextStyle(color: pal.fg, fontWeight: FontWeight.w600)),
+                  title: Text(tr(label), style: TextStyle(color: pal.fg, fontWeight: FontWeight.w600)),
                   trailing: ThemeController.mode.value == mode ? Icon(Icons.check_circle, color: pal.green) : null,
                   onTap: () {
                     ThemeController.set(mode);
@@ -50,7 +51,7 @@ class ThemeModeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return IconButton(
-      tooltip: 'Light or dark mode',
+      tooltip: tr('Light or dark mode'),
       icon: Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined, color: context.pal.fg),
       onPressed: () => _choose(context),
     );
