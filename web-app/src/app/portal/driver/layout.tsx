@@ -1,9 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import { getPortalUser, setPortalUser, clearPortalToken, portalFetch } from '../../../lib/portalApi';
-import { BrandMark, BrandWordmark } from '../../../components/Brand';
+import PortalShell from '../../../components/PortalShell';
 import '../portal.css';
 
 const navItems = [
@@ -69,7 +67,6 @@ const navItems = [
 ];
 
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -98,58 +95,28 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
   const profile = user.profile || {};
 
   return (
-    <div className="portal">
-      <div className="portal-shell">
-        <aside className="portal-sidebar">
-          <Link href="/portal/driver" className="portal-brand">
-            <BrandMark height={26} />
-            <BrandWordmark height={17} />
-          </Link>
-          <div className="portal-role-badge" style={{ color: '#e8912f' }}>
-            Driver Operator
-          </div>
-          <nav className="portal-nav">
-            {navItems.map(item => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={pathname === item.href ? 'active' : ''}
-              >
-                {item.icon}
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="portal-spacer" />
-          <div style={{ padding: '0 10px 8px', fontSize: '12px', color: 'rgba(255,255,255,.35)', lineHeight: 1.4 }}>
-            Signed in as<br />
-            <span style={{ color: 'rgba(255,255,255,.75)', fontWeight: 600 }}>
-              {profile.fullName ?? user.email}
-            </span>
-            {profile.busRegNumber && (
-              <div style={{ color: '#e8912f', fontSize: '11px', marginTop: '2px' }}>
-                Bus: {profile.busRegNumber}
-              </div>
-            )}
-          </div>
-          <button className="portal-logout" onClick={logout}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Sign Out
-          </button>
-        </aside>
-        <main className="portal-main">
-          {profile.status && profile.status !== 'APPROVED' && (
-            <div className="p-alert amber" style={{ marginBottom: '20px' }}>
-              {profile.status === 'PENDING'
-                ? 'Your driver application is being reviewed. Students can see your bus once an administrator approves it.'
-                : 'Your driver application was not approved. Please contact support for help.'}
-            </div>
-          )}
-          {children}
-        </main>
-      </div>
-    </div>
+    <PortalShell
+      homeHref="/portal/driver"
+      roleLabel="Driver Operator"
+      roleColor="#e8912f"
+      navItems={navItems}
+      onLogout={logout}
+      signedInAs={
+        <>
+          Signed in as<br />
+          <b>{profile.fullName ?? user.email}</b>
+          {profile.busRegNumber && <div className="portal-signed-in-bus">Bus: {profile.busRegNumber}</div>}
+        </>
+      }
+    >
+      {profile.status && profile.status !== 'APPROVED' && (
+        <div className="p-alert amber" style={{ marginBottom: '20px' }}>
+          {profile.status === 'PENDING'
+            ? 'Your driver application is being reviewed. Students can see your bus once an administrator approves it.'
+            : 'Your driver application was not approved. Please contact support for help.'}
+        </div>
+      )}
+      {children}
+    </PortalShell>
   );
 }

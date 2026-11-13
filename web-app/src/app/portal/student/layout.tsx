@@ -1,9 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import { getPortalUser, clearPortalToken } from '../../../lib/portalApi';
-import { BrandMark, BrandWordmark } from '../../../components/Brand';
+import PortalShell from '../../../components/PortalShell';
 import '../portal.css';
 
 const navItems = [
@@ -18,7 +16,6 @@ const navItems = [
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -38,33 +35,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   if (!user) return null;
 
   return (
-    <div className="portal">
-      <div className="portal-shell">
-        <aside className="portal-sidebar">
-          <Link href="/portal/student" className="portal-brand">
-            <BrandMark height={26} />
-            <BrandWordmark height={17} />
-          </Link>
-          <div className="portal-role-badge">Student Portal</div>
-          <nav className="portal-nav">
-            {navItems.map(item => (
-              <Link key={item.href} href={item.href} className={pathname === item.href ? 'active' : ''}>
-                {item.icon}{item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="portal-spacer" />
-          <div style={{ padding: '0 10px 8px', fontSize: '12px', color: 'rgba(255,255,255,.35)', lineHeight: 1.4 }}>
-            Signed in as<br />
-            <span style={{ color: 'rgba(255,255,255,.6)', fontWeight: 500 }}>{user.profile?.fullName ?? user.email}</span>
-          </div>
-          <button className="portal-logout" onClick={logout}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-          </button>
-        </aside>
-        <main className="portal-main">{children}</main>
-      </div>
-    </div>
+    <PortalShell
+      homeHref="/portal/student"
+      roleLabel="Student Portal"
+      navItems={navItems}
+      onLogout={logout}
+      signedInAs={<>Signed in as<br /><b>{user.profile?.fullName ?? user.email}</b></>}
+    >
+      {children}
+    </PortalShell>
   );
 }
