@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getPortalUser, setPortalUser, clearPortalToken, portalFetch } from '../../../lib/portalApi';
 import PortalShell from '../../../components/PortalShell';
 import '../portal.css';
+import { useT } from '../../../lib/useLang';
 
 const navItems = [
   {
@@ -67,6 +68,7 @@ const navItems = [
 ];
 
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -98,22 +100,22 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
     <PortalShell
       homeHref="/portal/driver"
       roleLabel="Driver Operator"
-      roleColor="#e8912f"
+      roleColor="var(--amber)"
       navItems={navItems}
       onLogout={logout}
       signedInAs={
         <>
-          Signed in as<br />
+          {t("Signed in as")}<br />
           <b>{profile.fullName ?? user.email}</b>
-          {profile.busRegNumber && <div className="portal-signed-in-bus">Bus: {profile.busRegNumber}</div>}
+          {profile.busRegNumber && <div className="portal-signed-in-bus">{t("Bus:")} {profile.busRegNumber}</div>}
         </>
       }
     >
       {profile.status && profile.status !== 'APPROVED' && (
         <div className="p-alert amber" style={{ marginBottom: '20px' }}>
           {profile.status === 'PENDING'
-            ? 'Your driver application is being reviewed. Students can see your bus once an administrator approves it.'
-            : 'Your driver application was not approved. Please contact support for help.'}
+            ? t("Your driver application is being reviewed. Students can see your bus once an administrator approves it.")
+            : t("Your driver application was not approved. Please contact support for help.")}
         </div>
       )}
       {children}

@@ -1,6 +1,7 @@
 /* ============================================================
    Uni Shuttle — Consumer Portal (Student & Driver)
-   Clean, light, trustworthy. Matches the public site feel.
+   Light by default; dark when <html> carries data-theme="dark"
+   (the same switch as the public pages, see lib/theme.ts).
    ============================================================ */
 
 .portal {
@@ -11,36 +12,90 @@
   --paper-2:    #f4f6f9;
   --line:       #dde3ec;
 
+  --line-strong: #c9d3df;
+
+  /* -ink colours are for text and icons; the plain ones fill buttons with white text */
   --green:      #0e7c66;
+  --green-ink:  #0e7c66;
   --green-dk:   #0a5f4e;
   --green-tint: #e6f4f0;
+  --green-line: #bfe3d9;
   --amber:      #e8912f;
+  --amber-ink:  #a8631a;
   --amber-tint: #fdf3e6;
+  --amber-line: #f0dcbd;
   --blue:       #2563eb;
+  --blue-ink:   #2563eb;
+  --blue-dk:    #1e40af;
   --blue-tint:  #eff6ff;
+  --blue-line:  #bfdbfe;
   --red:        #dc2626;
+  --red-ink:    #dc2626;
+  --red-dk:     #991b1b;
   --red-tint:   #fef2f2;
+  --red-line:   #fecaca;
+  --warn-ink:   #7d4d10;
+  --sidebar:    #10203a;
 
   --radius: 14px;
   --shadow-sm: 0 1px 3px rgba(16,32,58,.07);
   --shadow:    0 4px 20px rgba(16,32,58,.09);
   --shadow-lg: 0 18px 50px rgba(16,32,58,.14);
 
-  --sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --sans: 'Inter', var(--font-sinhala), 'Segoe UI', system-ui, -apple-system, sans-serif;
 
   min-height: 100vh;
   background: var(--paper-2);
   color: var(--ink);
   font-family: var(--sans);
   line-height: 1.6;
+  color-scheme: light;
 }
+
+[data-theme='dark'] .portal {
+  --ink:        #e9eff6;
+  --ink-soft:   #b4c1d1;
+  --ink-faint:  #8898ad;
+  --paper:      #111c2e;
+  --paper-2:    #0a1220;
+  --line:       #24344b;
+  --line-strong: #33465f;
+
+  --green:      #11937a;
+  --green-ink:  #4fe3b8;
+  --green-dk:   #8ff3d4;
+  --green-tint: rgba(53, 240, 189, .12);
+  --green-line: rgba(53, 240, 189, .32);
+  --amber:      #e8912f;
+  --amber-ink:  #ffc673;
+  --amber-tint: rgba(255, 179, 71, .14);
+  --amber-line: rgba(255, 179, 71, .38);
+  --blue:       #2f6fe4;
+  --blue-ink:   #7cb2ff;
+  --blue-dk:    #bcd6ff;
+  --blue-tint:  rgba(96, 150, 255, .14);
+  --blue-line:  rgba(96, 150, 255, .38);
+  --red:        #d23c3c;
+  --red-ink:    #ff8a8a;
+  --red-dk:     #ffc0c0;
+  --red-tint:   rgba(255, 110, 110, .13);
+  --red-line:   rgba(255, 110, 110, .4);
+  --warn-ink:   #ffd699;
+  --sidebar:    #060b15;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+  --shadow:    0 4px 20px rgba(0,0,0,.35);
+  --shadow-lg: 0 18px 50px rgba(0,0,0,.45);
+  color-scheme: dark;
+}
+[data-theme='dark'] .portal-sidebar { border-right: 1px solid var(--line); }
 
 .portal *, .portal *::before, .portal *::after { box-sizing: border-box; }
 .portal h1, .portal h2, .portal h3, .portal h4 {
   color: var(--ink); line-height: 1.15; margin: 0; font-weight: 700;
 }
 .portal p { margin: 0; }
-.portal a { color: var(--green); text-decoration: none; }
+.portal a { color: var(--green-ink); text-decoration: none; }
 .portal a:hover { text-decoration: underline; }
 
 /* ── layout ── */
@@ -49,7 +104,7 @@
 }
 .portal-sidebar {
   width: 240px; flex: none;
-  background: var(--ink);
+  background: var(--sidebar);
   display: flex; flex-direction: column;
   padding: 0 0 24px;
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
@@ -91,7 +146,17 @@
 .portal-logout svg { width: 15px; height: 15px; }
 .portal-signed-in { padding: 0 10px 8px; font-size: 12px; color: rgba(255,255,255,.4); line-height: 1.4; }
 .portal-signed-in b { color: rgba(255,255,255,.75); font-weight: 600; overflow-wrap: anywhere; }
-.portal-signed-in-bus { color: #e8912f; font-size: 11px; margin-top: 2px; }
+.portal-signed-in-bus { color: var(--amber); font-size: 11px; margin-top: 2px; }
+
+/* light / dark switch in the menu */
+.portal-theme {
+  margin: 0 10px 8px; display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 9px; width: calc(100% - 20px);
+  background: none; border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.7); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer;
+}
+.portal-theme:hover { background: rgba(255,255,255,.07); color: #fff; }
+.portal-theme svg { width: 16px; height: 16px; }
 
 /* phone top bar and slide-in menu (see the responsive rules at the end) */
 .portal-topbar, .portal-backdrop { display: none; }
@@ -114,7 +179,7 @@
 }
 
 /* ── stat tiles ── */
-.p-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.p-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 16px; margin-bottom: 28px; }
 .p-stat {
   background: var(--paper); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 20px 22px;
@@ -122,10 +187,10 @@
 }
 .p-stat-label { font-size: 12px; color: var(--ink-faint); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
 .p-stat-val { font-size: 28px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); }
-.p-stat-val.green { color: var(--green); }
+.p-stat-val.green { color: var(--green-ink); }
 .p-stat-val.amber { color: var(--amber); }
-.p-stat-val.red   { color: var(--red); }
-.p-stat-val.blue  { color: var(--blue); }
+.p-stat-val.red   { color: var(--red-ink); }
+.p-stat-val.blue  { color: var(--blue-ink); }
 
 /* ── status badges ── */
 .p-badge {
@@ -133,9 +198,9 @@
   font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
 }
 .p-badge.green { background: var(--green-tint); color: var(--green-dk); }
-.p-badge.amber { background: var(--amber-tint); color: #a8631a; }
-.p-badge.red   { background: var(--red-tint);   color: var(--red); }
-.p-badge.blue  { background: var(--blue-tint);  color: var(--blue); }
+.p-badge.amber { background: var(--amber-tint); color: var(--amber-ink); }
+.p-badge.red   { background: var(--red-tint);   color: var(--red-ink); }
+.p-badge.blue  { background: var(--blue-tint);  color: var(--blue-ink); }
 .p-badge.gray  { background: var(--paper-2);    color: var(--ink-faint); border: 1px solid var(--line); }
 
 /* ── tables ── */
@@ -155,9 +220,9 @@
   transition: border-color .15s, box-shadow .15s;
 }
 .p-field input:focus, .p-field select:focus, .p-field textarea:focus {
-  outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--green-tint);
+  outline: none; border-color: var(--green-ink); box-shadow: 0 0 0 3px var(--green-tint);
 }
-.p-field-err { font-size: 12px; color: var(--red); }
+.p-field-err { font-size: 12px; color: var(--red-ink); }
 
 /* ── buttons ── */
 .p-btn {
@@ -176,13 +241,13 @@
 
 /* ── alert banners ── */
 .p-alert { padding: 14px 18px; border-radius: 10px; font-size: 14px; margin-bottom: 20px; }
-.p-alert.green { background: var(--green-tint); color: var(--green-dk); border: 1px solid #bfe3d9; }
-.p-alert.amber { background: var(--amber-tint); color: #7d4d10; border: 1px solid #f0dcbd; }
-.p-alert.red   { background: var(--red-tint);   color: #991b1b; border: 1px solid #fecaca; }
-.p-alert.blue  { background: var(--blue-tint);  color: #1e40af; border: 1px solid #bfdbfe; }
+.p-alert.green { background: var(--green-tint); color: var(--green-dk); border: 1px solid var(--green-line); }
+.p-alert.amber { background: var(--amber-tint); color: var(--warn-ink); border: 1px solid var(--amber-line); }
+.p-alert.red   { background: var(--red-tint);   color: var(--red-dk); border: 1px solid var(--red-line); }
+.p-alert.blue  { background: var(--blue-tint);  color: var(--blue-dk); border: 1px solid var(--blue-line); }
 
 /* ── info rows ── */
-.p-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.p-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 16px; }
 .p-info-item { display: flex; flex-direction: column; gap: 4px; }
 .p-info-item span:first-child { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); }
 .p-info-item span:last-child { font-size: 15px; color: var(--ink); font-weight: 500; }
@@ -203,14 +268,14 @@
 
 /* ── poll & pickup ── */
 .p-progress-track {
-  height: 10px; width: 100%; border-radius: 6px; background: #e2e8f0; overflow: hidden; display: flex;
+  height: 10px; width: 100%; border-radius: 6px; background: var(--line); overflow: hidden; display: flex;
 }
 .p-progress-fill {
   height: 100%; transition: width 0.3s ease;
 }
 .p-pickup-tag {
   display: inline-flex; align-items: center; gap: 5px;
-  background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;
+  background: var(--blue-tint); color: var(--blue-dk); border: 1px solid var(--blue-line);
   padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;
 }
 
@@ -219,7 +284,7 @@
   .portal-topbar {
     display: flex; align-items: center; gap: 12px;
     position: sticky; top: 0; z-index: 60; min-height: 60px; padding: 8px 12px 8px 16px;
-    background: var(--ink); color: #fff;
+    background: var(--sidebar); color: #fff;
   }
   .portal-topbar-brand { display: flex; flex: none; }
   .portal-topbar-title { flex: 1; min-width: 0; font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -238,7 +303,7 @@
   }
   .portal-sidebar.open { transform: none; visibility: visible; }
   .portal-nav a { padding: 13px 14px; font-size: 15px; }
-  .portal-logout { padding: 13px 14px; font-size: 14px; }
+  .portal-logout, .portal-theme { padding: 13px 14px; font-size: 14px; }
 
   .portal-backdrop {
     display: block; position: fixed; inset: 0; z-index: 70;

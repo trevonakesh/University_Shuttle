@@ -3,6 +3,8 @@ import { BrandLoader } from '../../../../components/Brand';
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { portalFetch } from '../../../../lib/portalApi';
 import EditPassengerModal from '../../../../components/EditPassengerModal';
+import { useLang, useT } from '../../../../lib/useLang';
+import { formatDate } from '../../../../lib/i18n';
 
 interface StudentFare {
   studentId: number;
@@ -33,6 +35,8 @@ interface FareResponse {
 }
 
 export default function DriverFaresPage() {
+  const t = useT();
+  const lang = useLang();
   const currentMonthStr = useMemo(() => {
     const d = new Date();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -53,7 +57,7 @@ export default function DriverFaresPage() {
   const handleSaved = (pickupPoint: string, message: string) => {
     const studentId = editing?.studentId;
     setData(d => d && { ...d, students: d.students.map(s => s.studentId === studentId ? { ...s, pickupPoint } : s) });
-    setMsg({ ok: true, text: message });
+    setMsg({ ok: true, text: t(message) });
     setEditing(null);
   };
 
@@ -84,13 +88,13 @@ export default function DriverFaresPage() {
       });
       const resData = await res.json();
       if (!res.ok) {
-        setMsg({ ok: false, text: resData.error || 'Failed to update status' });
+        setMsg({ ok: false, text: t(resData.error || 'Failed to update status') });
       } else {
-        setMsg({ ok: true, text: `Successfully updated fare to ${status}` });
+        setMsg({ ok: true, text: t('Fare marked as {status}.', { status: t(status) }) });
         loadMonthData(month);
       }
     } catch {
-      setMsg({ ok: false, text: 'Network error updating fare status.' });
+      setMsg({ ok: false, text: t('Network error updating fare status.') });
     } finally {
       setUpdatingId(null);
     }
@@ -125,15 +129,15 @@ export default function DriverFaresPage() {
       {/* Top Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
         <div>
-          <h1 style={{ fontSize: '26px', color: '#10203a' }}>Monthly Fare Ledger</h1>
-          <p style={{ color: '#7a8699', marginTop: '6px' }}>
-            Track seat collections, record cash payments, or mark students who did not travel.
+          <h1 style={{ fontSize: '26px', color: 'var(--ink)' }}>{t("Monthly Fare Ledger")}</h1>
+          <p style={{ color: 'var(--ink-faint)', marginTop: '6px' }}>
+            {t("Track seat collections, record cash payments, or mark students who did not travel.")}
           </p>
         </div>
 
         {/* Month Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <label htmlFor="month-select" style={{ fontSize: '13px', fontWeight: 600, color: '#40506b' }}>Month:</label>
+          <label htmlFor="month-select" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink-soft)' }}>{t("Month:")}</label>
           <select
             id="month-select"
             value={month}
@@ -141,17 +145,17 @@ export default function DriverFaresPage() {
             style={{
               padding: '8px 14px',
               borderRadius: '9px',
-              border: '1.5px solid #dde3ec',
-              background: '#fff',
+              border: '1.5px solid var(--line)',
+              background: 'var(--paper)',
               fontSize: '14px',
               fontWeight: 600,
-              color: '#10203a',
+              color: 'var(--ink)',
               cursor: 'pointer'
             }}
           >
             {monthsList.map(m => (
               <option key={m} value={m}>
-                {new Date(m + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} {m === currentMonthStr && '(Current)'}
+                {formatDate(m + '-01T00:00:00', lang, 'month')} {m === currentMonthStr && t("(Current)")}
               </option>
             ))}
           </select>
@@ -165,42 +169,42 @@ export default function DriverFaresPage() {
       )}
 
       {loading ? (
-        <BrandLoader label={`Loading ledger for ${month}…`} />
+        <BrandLoader label={t('Loading…')} />
       ) : data ? (
         <>
           {/* Summary Row */}
           <div className="p-stats">
             <div className="p-stat">
-              <div className="p-stat-label">Total Expected</div>
-              <div className="p-stat-val blue">LKR {data.summary.expected.toLocaleString()}</div>
-              <div style={{ fontSize: '12px', color: '#7a8699', marginTop: '4px' }}>
-                {data.summary.total - data.summary.exempt} billable seats
+              <div className="p-stat-label">{t("Total Expected")}</div>
+              <div className="p-stat-val blue">{t("LKR")} {data.summary.expected.toLocaleString()}</div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-faint)', marginTop: '4px' }}>
+                {data.summary.total - data.summary.exempt} {t("billable seats")}
               </div>
             </div>
 
             <div className="p-stat">
-              <div className="p-stat-label">Collected</div>
-              <div className="p-stat-val green">LKR {data.summary.collected.toLocaleString()}</div>
-              <div style={{ fontSize: '12px', color: '#7a8699', marginTop: '4px' }}>
-                {data.summary.paid} paid passengers
+              <div className="p-stat-label">{t("Collected")}</div>
+              <div className="p-stat-val green">{t("LKR")} {data.summary.collected.toLocaleString()}</div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-faint)', marginTop: '4px' }}>
+                {data.summary.paid} {t("paid passengers")}
               </div>
             </div>
 
             <div className="p-stat">
-              <div className="p-stat-label">Unpaid Balance</div>
+              <div className="p-stat-label">{t("Unpaid Balance")}</div>
               <div className="p-stat-val amber">
-                LKR {(data.summary.expected - data.summary.collected).toLocaleString()}
+                {t("LKR")} {(data.summary.expected - data.summary.collected).toLocaleString()}
               </div>
-              <div style={{ fontSize: '12px', color: '#7a8699', marginTop: '4px' }}>
-                {data.summary.unpaid} pending collection
+              <div style={{ fontSize: '12px', color: 'var(--ink-faint)', marginTop: '4px' }}>
+                {data.summary.unpaid} {t("pending collection")}
               </div>
             </div>
 
             <div className="p-stat">
-              <div className="p-stat-label">Exempt / Skipped</div>
+              <div className="p-stat-label">{t("Exempt / Skipped")}</div>
               <div className="p-stat-val red">{data.summary.exempt}</div>
-              <div style={{ fontSize: '12px', color: '#7a8699', marginTop: '4px' }}>
-                Didn&apos;t travel this month
+              <div style={{ fontSize: '12px', color: 'var(--ink-faint)', marginTop: '4px' }}>
+                {t("Didn't travel this month")}
               </div>
             </div>
           </div>
@@ -210,14 +214,14 @@ export default function DriverFaresPage() {
             <div style={{ flex: 1, minWidth: '240px', maxWidth: '380px' }}>
               <input
                 type="text"
-                placeholder="Search by student name or pickup point…"
+                placeholder={t("Search by student name or pickup point…")}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '9px 14px',
                   borderRadius: '10px',
-                  border: '1.5px solid #dde3ec',
+                  border: '1.5px solid var(--line)',
                   fontSize: '14px'
                 }}
               />
@@ -230,7 +234,7 @@ export default function DriverFaresPage() {
                   onClick={() => setStatusFilter(tab)}
                   className={`p-btn sm ${statusFilter === tab ? 'primary' : 'outline'}`}
                 >
-                  {tab}
+                  {tab === 'ALL' ? t('All') : t(tab)}
                 </button>
               ))}
             </div>
@@ -239,63 +243,63 @@ export default function DriverFaresPage() {
           {/* Table Card */}
           <div className="p-card">
             {filteredStudents.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a8699' }}>
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#10203a' }}>No students match your filter</div>
-                <p style={{ fontSize: '14px', marginTop: '4px' }}>Try adjusting your search query or status filter.</p>
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--ink-faint)' }}>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--ink)' }}>{t("No students match your filter")}</div>
+                <p style={{ fontSize: '14px', marginTop: '4px' }}>{t("Try adjusting your search query or status filter.")}</p>
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table className="p-table">
                   <thead>
                     <tr>
-                      <th>Passenger</th>
-                      <th>Pickup Point</th>
-                      <th>Phone</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Payment Detail</th>
-                      <th style={{ textAlign: 'right' }}>Actions</th>
+                      <th>{t("Passenger")}</th>
+                      <th>{t("Pickup Point")}</th>
+                      <th>{t("Phone")}</th>
+                      <th>{t("Amount")}</th>
+                      <th>{t("Status")}</th>
+                      <th>{t("Payment Detail")}</th>
+                      <th style={{ textAlign: 'right' }}>{t("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredStudents.map(s => (
                       <tr key={s.studentId}>
                         <td>
-                          <div style={{ fontWeight: 600, color: '#10203a' }}>{s.fullName}</div>
-                          <div style={{ fontSize: '11px', color: '#7a8699' }}>ID: #{s.studentId}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{s.fullName}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--ink-faint)' }}>{t("ID: #")}{s.studentId}</div>
                         </td>
-                        <td style={{ color: '#40506b', fontSize: '13px' }}>{s.pickupPoint || '—'}</td>
+                        <td style={{ color: 'var(--ink-soft)', fontSize: '13px' }}>{s.pickupPoint || '—'}</td>
                         <td style={{ fontSize: '13px' }}>
                           {s.phone ? (
-                            <a href={`tel:${s.phone}`} style={{ color: '#2563eb' }}>{s.phone}</a>
+                            <a href={`tel:${s.phone}`} style={{ color: 'var(--blue-ink)' }}>{s.phone}</a>
                           ) : '—'}
                         </td>
-                        <td style={{ fontWeight: 700, color: '#10203a' }}>
-                          LKR {s.amount.toLocaleString()}
+                        <td style={{ fontWeight: 700, color: 'var(--ink)' }}>
+                          {t("LKR")} {s.amount.toLocaleString()}
                         </td>
                         <td>
                           <span className={`p-badge ${s.status === 'PAID' ? 'green' : s.status === 'EXEMPT' ? 'gray' : s.frozen ? 'red' : 'amber'}`}>
-                            {s.status === 'PAID' ? 'PAID' : s.status === 'EXEMPT' ? 'EXEMPT' : s.frozen ? 'FROZEN' : 'UNPAID'}
+                            {s.status === 'PAID' ? t("PAID") : s.status === 'EXEMPT' ? t("EXEMPT") : s.frozen ? t("FROZEN") : t("UNPAID")}
                           </span>
                         </td>
-                        <td style={{ fontSize: '12px', color: '#7a8699' }}>
+                        <td style={{ fontSize: '12px', color: 'var(--ink-faint)' }}>
                           {s.status === 'PAID' ? (
                             <div>
-                              <span style={{ fontWeight: 600, color: '#10203a' }}>
-                                {s.paymentMethod === 'PAYHERE' ? 'Online (PayHere)' : s.paymentMethod === 'IN_APP' ? 'In-App' : 'Cash'}
+                              <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                                {s.paymentMethod === 'PAYHERE' ? t("Online (PayHere)") : s.paymentMethod === 'IN_APP' ? t("In-App") : t("Cash")}
                               </span>
                               {s.paidAt && <div>{new Date(s.paidAt).toLocaleDateString()}</div>}
                             </div>
                           ) : s.status === 'EXEMPT' ? (
-                            <span>Didn&apos;t travel</span>
+                            <span>{t("Didn't travel")}</span>
                           ) : (
-                            <span style={{ color: '#e8912f' }}>Pending</span>
+                            <span style={{ color: 'var(--amber)' }}>{t("Pending")}</span>
                           )}
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'inline-flex', gap: '6px' }}>
-                            <button onClick={() => setEditing(s)} className="p-btn sm outline" title="Edit pickup point and contact details">
-                              Edit Details
+                            <button onClick={() => setEditing(s)} className="p-btn sm outline" title={t("Edit pickup point and contact details")}>
+                              {t("Edit Details")}
                             </button>
 
                             {s.status !== 'PAID' && (
@@ -303,9 +307,9 @@ export default function DriverFaresPage() {
                                 onClick={() => updateFare(s.studentId, 'PAID')}
                                 disabled={updatingId === s.studentId}
                                 className="p-btn sm primary"
-                                title="Mark as cash collected"
+                                title={t("Mark as cash collected")}
                               >
-                                Mark Paid (Cash)
+                                {t("Mark Paid (Cash)")}
                               </button>
                             )}
 
@@ -315,9 +319,9 @@ export default function DriverFaresPage() {
                                 onClick={() => updateFare(s.studentId, 'EXEMPT')}
                                 disabled={updatingId === s.studentId}
                                 className="p-btn sm outline"
-                                title="Mark student as didn't travel this month"
+                                title={t("Mark student as didn't travel this month")}
                               >
-                                Exempt
+                                {t("Exempt")}
                               </button>
                             )}
 
@@ -327,9 +331,9 @@ export default function DriverFaresPage() {
                                 disabled={updatingId === s.studentId}
                                 className="p-btn sm danger"
                                 style={{ padding: '6px 10px', fontSize: '12px' }}
-                                title="Revert back to unpaid"
+                                title={t("Revert back to unpaid")}
                               >
-                                Reset
+                                {t("Reset")}
                               </button>
                             )}
                           </div>
@@ -343,7 +347,7 @@ export default function DriverFaresPage() {
           </div>
         </>
       ) : (
-        <div className="p-alert red">Could not load monthly fares.</div>
+        <div className="p-alert red">{t("Could not load monthly fares.")}</div>
       )}
 
       {editing && (

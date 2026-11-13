@@ -2,6 +2,7 @@
 import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import { colomboToday, portalFetch } from '../../../../lib/portalApi';
+import { useT } from '../../../../lib/useLang';
 
 const TRIPS: Record<string, string> = {
   ROUND_TRIP: 'Round trip',
@@ -17,6 +18,7 @@ const addDays = (date: string, days: number): string => {
 };
 
 export default function DailyRidesPage() {
+  const t = useT();
   const today = colomboToday();
   const [buses, setBuses] = useState<any[]>([]);
   const [rides, setRides] = useState<any[]>([]);
@@ -57,59 +59,59 @@ export default function DailyRidesPage() {
     }
   };
 
-  if (loading) return <BrandLoader label="Loading daily rides…" />;
+  if (loading) return <BrandLoader label={t("Loading daily rides…")} />;
 
   return (
     <div>
-      <h1 style={{ fontSize: '26px', color: '#10203a', marginBottom: '6px' }}>Daily Rides</h1>
-      <p style={{ color: '#7a8699', marginBottom: '24px' }}>Book a single day of travel. Pay your driver in cash when you travel.</p>
+      <h1 style={{ fontSize: '26px', color: 'var(--ink)', marginBottom: '6px' }}>{t("Daily Rides")}</h1>
+      <p style={{ color: 'var(--ink-faint)', marginBottom: '24px' }}>{t("Book a single day of travel. Pay your driver in cash when you travel.")}</p>
 
-      {notice && <div className={`p-alert ${notice.ok ? 'green' : 'red'}`} style={{ marginBottom: '20px' }}>{notice.msg}</div>}
+      {notice && <div className={`p-alert ${notice.ok ? 'green' : 'red'}`} style={{ marginBottom: '20px' }}>{t(notice.msg)}</div>}
 
       <div className="p-card" style={{ marginBottom: '20px' }}>
-        <div className="p-card-title">Request a Ride</div>
+        <div className="p-card-title">{t("Request a Ride")}</div>
         {buses.length === 0 ? (
-          <div className="p-alert amber">No approved buses serve your destination yet.</div>
+          <div className="p-alert amber">{t("No approved buses serve your destination yet.")}</div>
         ) : (
-          <form onSubmit={submit} style={{ display: 'grid', gap: '14px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', alignItems: 'end' }}>
+          <form onSubmit={submit} style={{ display: 'grid', gap: '14px', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', alignItems: 'end' }}>
             <div className="p-field">
-              <label htmlFor="bus">Bus</label>
+              <label htmlFor="bus">{t("Bus")}</label>
               <select id="bus" value={driverId} onChange={e => setDriverId(e.target.value)} required>
-                <option value="">Select a bus</option>
-                {buses.map(b => <option key={b.id} value={b.id}>{b.routeName ?? 'Route'} ({b.busRegNumber ?? b.fullName})</option>)}
+                <option value="">{t("Select a bus")}</option>
+                {buses.map(b => <option key={b.id} value={b.id}>{b.routeName ?? t("Route")} ({b.busRegNumber ?? b.fullName})</option>)}
               </select>
             </div>
             <div className="p-field">
-              <label htmlFor="date">Date</label>
+              <label htmlFor="date">{t("Date")}</label>
               <input id="date" type="date" value={date} min={today} max={addDays(today, BOOKING_WINDOW_DAYS)} onChange={e => setDate(e.target.value)} required />
             </div>
             <div className="p-field">
-              <label htmlFor="trip">Trip</label>
+              <label htmlFor="trip">{t("Trip")}</label>
               <select id="trip" value={tripType} onChange={e => setTripType(e.target.value)}>
-                {Object.entries(TRIPS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                {Object.entries(TRIPS).map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}
               </select>
             </div>
-            <button type="submit" className="p-btn primary" disabled={saving}>{saving ? 'Sending…' : 'Request Ride'}</button>
+            <button type="submit" className="p-btn primary" disabled={saving}>{saving ? t("Sending…") : t("Request Ride")}</button>
           </form>
         )}
       </div>
 
       <div className="p-card">
-        <div className="p-card-title">My Requests</div>
+        <div className="p-card-title">{t("My Requests")}</div>
         {rides.length === 0 ? (
-          <p style={{ color: '#7a8699', fontSize: '14px' }}>You haven&apos;t requested any daily rides yet.</p>
+          <p style={{ color: 'var(--ink-faint)', fontSize: '14px' }}>{t("You haven't requested any daily rides yet.")}</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table className="p-table">
-              <thead><tr><th>Date</th><th>Bus</th><th>Trip</th><th>Fare</th><th>Status</th></tr></thead>
+              <thead><tr><th>{t("Date")}</th><th>{t("Bus")}</th><th>{t("Trip")}</th><th>{t("Fare")}</th><th>{t("Status")}</th></tr></thead>
               <tbody>
                 {rides.map(r => (
                   <tr key={r.id}>
                     <td>{r.date}</td>
                     <td>{r.driver?.routeName ?? r.driver?.fullName ?? '—'}</td>
-                    <td>{TRIPS[r.tripType] ?? r.tripType}</td>
+                    <td>{t(TRIPS[r.tripType] ?? r.tripType)}</td>
                     <td>{r.fareAmount ? `LKR ${r.fareAmount.toLocaleString()}` : '—'}</td>
-                    <td><span className={`p-badge ${r.status === 'APPROVED' ? 'green' : r.status === 'REJECTED' ? 'red' : 'amber'}`}>{r.status}</span></td>
+                    <td><span className={`p-badge ${r.status === 'APPROVED' ? 'green' : r.status === 'REJECTED' ? 'red' : 'amber'}`}>{t(r.status)}</span></td>
                   </tr>
                 ))}
               </tbody>

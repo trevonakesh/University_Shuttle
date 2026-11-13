@@ -7,6 +7,7 @@ import { RoadBand } from '../../components/HomeArt';
 import { API_BASE, setPortalToken, setPortalUser } from '../../lib/portalApi';
 import { PASSWORD_HINT, passwordInputProps } from '../../lib/password';
 import '../portal/portal.css';
+import { useT } from '../../lib/useLang';
 
 type Role = 'STUDENT' | 'DRIVER';
 // `options` names a list served by /api/settings/signup-form, which admins
@@ -113,6 +114,7 @@ const toDisplayTime = (value: string): string => {
 };
 
 export default function SignupPage() {
+  const t = useT();
   const [role, setRole] = useState<Role>('STUDENT');
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +130,7 @@ export default function SignupPage() {
     fetch(`${API_BASE}/api/settings/signup-form`)
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
       .then(setForm)
-      .catch(() => setError('Could not load the sign-up form. Please refresh the page.'));
+      .catch(() => setError(t('Could not load the sign-up form. Please refresh the page.')));
   }, []);
 
   const set = (name: string, value: string) => setValues(v => ({ ...v, [name]: value }));
@@ -173,7 +175,7 @@ export default function SignupPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'Could not create your account.');
+        setError(t(data.error ?? 'Could not create your account.'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
@@ -181,7 +183,7 @@ export default function SignupPage() {
       setPortalUser({ ...data.user, profile: data.user.profile ?? data.user.student });
       window.location.href = role === 'STUDENT' ? '/portal/student/buses' : '/portal/driver';
     } catch {
-      setError('Could not reach the server. Please try again.');
+      setError(t('Could not reach the server. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -195,7 +197,7 @@ export default function SignupPage() {
 
   const tab = (value: Role, label: string) => (
     <button type="button" className={`p-btn ${role === value ? 'primary' : 'outline'}`} aria-pressed={role === value} onClick={() => switchRole(value)}>
-      {label}
+      {t(label)}
     </button>
   );
 
@@ -204,8 +206,8 @@ export default function SignupPage() {
      <section className="h-auth">
       <div className="h-auth-inner wide">
         <div className="h-auth-head">
-          <h1>Create your account</h1>
-          <p>Free for students and bus drivers. It takes a few minutes.</p>
+          <h1>{t("Create your account")}</h1>
+          <p>{t("Free for students and bus drivers. It takes a few minutes.")}</p>
         </div>
 
         <div className="h-auth-card">
@@ -216,23 +218,23 @@ export default function SignupPage() {
 
           {role === 'DRIVER' && (
             <div className="p-alert blue" style={{ marginBottom: '20px' }}>
-              Our team checks every driver before the bus appears to students.
+              {t("Our team checks every driver before the bus appears to students.")}
             </div>
           )}
           {error && <div className="p-alert red" role="alert" style={{ marginBottom: '20px' }}>{error}</div>}
 
-          {!form ? (!error && <div className="h-loading">Loading the form…</div>) : <form onSubmit={submit}>
+          {!form ? (!error && <div className="h-loading">{t("Loading the form…")}</div>) : <form onSubmit={submit}>
             {sections.map(section => (
               <div key={section.title} style={{ marginBottom: '24px' }}>
-                <div className="p-card-title">{section.title}</div>
+                <div className="p-card-title">{t(section.title)}</div>
                 <div style={{ display: 'grid', gap: '14px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                   {section.fields.map(f => (
                     <div className="p-field" key={f.name}>
-                      <label htmlFor={f.name}>{f.label}</label>
+                      <label htmlFor={f.name}>{t(f.label)}</label>
                       {f.options || f.choices ? (
                         <select id={f.name} value={values[f.name] ?? ''} onChange={e => set(f.name, e.target.value)} required={!f.optional}>
-                          <option value="">Select</option>
-                          {(f.choices ?? form.options[f.options!] ?? []).map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="">{t("Select")}</option>
+                          {(f.choices ?? form.options[f.options!] ?? []).map(o => <option key={o} value={o}>{t(o)}</option>)}
                         </select>
                       ) : (
                         <input
@@ -249,19 +251,19 @@ export default function SignupPage() {
                     </div>
                   ))}
                   {section.photos?.map(p => (
-                    <PhotoField key={p.name} label={p.label} value={values[p.name] ?? ''} onChange={url => set(p.name, url)} />
+                    <PhotoField key={p.name} label={t(p.label)} value={values[p.name] ?? ''} onChange={url => set(p.name, url)} />
                   ))}
                 </div>
               </div>
             ))}
 
             <button type="submit" className="p-btn primary" disabled={loading} style={{ width: '100%' }}>
-              {loading ? 'Creating your account…' : 'Create account'}
+              {loading ? t("Creating your account…") : t("Create account")}
             </button>
           </form>}
 
           <div className="h-auth-foot">
-            Already have an account? <Link href="/login" className="h-link">Sign in</Link>
+            {t("Already have an account?")} <Link href="/login" className="h-link">{t("Sign in")}</Link>
           </div>
         </div>
       </div>

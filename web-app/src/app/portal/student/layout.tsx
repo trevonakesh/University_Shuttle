@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getPortalUser, clearPortalToken } from '../../../lib/portalApi';
 import PortalShell from '../../../components/PortalShell';
 import '../portal.css';
+import { useT } from '../../../lib/useLang';
 
 const navItems = [
   { href: '/portal/student', label: 'Dashboard', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
@@ -16,6 +17,7 @@ const navItems = [
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       roleLabel="Student Portal"
       navItems={navItems}
       onLogout={logout}
-      signedInAs={<>Signed in as<br /><b>{user.profile?.fullName ?? user.email}</b></>}
+      signedInAs={<>{t("Signed in as")}<br /><b>{user.profile?.fullName ?? user.email}</b></>}
     >
       {children}
     </PortalShell>

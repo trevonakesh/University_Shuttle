@@ -1,3 +1,5 @@
+'use client';
+import { useT } from '../lib/useLang';
 // Illustrations for the home page, drawn in SVG in the brand colours.
 // They are decorative scenes, not data: anything that looks like a reading
 // (arrival time, distance) is labelled as an example on the page.
@@ -79,8 +81,9 @@ const STARS = [
 // The hero scene: a UniShuttle bus pulling up to the stop outside a university.
 // Everything that matters sits in the middle so phones, which crop the sides, still show it.
 export function HeroScene() {
+  const t = useT();
   return (
-    <svg className="h-scene" viewBox="0 0 1440 420" preserveAspectRatio="xMidYMax slice" role="img" aria-label="A UniShuttle bus arriving at a university bus stop">
+    <svg className="h-scene" viewBox="0 0 1440 420" preserveAspectRatio="xMidYMax slice" role="img" aria-label={t("A UniShuttle bus arriving at a university bus stop")}>
       <defs>
         <radialGradient id="h-sun-glow">
           <stop className="a-glow" offset="0" />
@@ -204,7 +207,7 @@ export function HeroScene() {
             <circle cy="-4" r="6" fill="#fff" />
             <rect x="24" y="-17" width="58" height="26" rx="13" fill="#fff" stroke="#c5eee0" strokeWidth="1.5" />
             <circle cx="37" cy="-4" r="4" fill="#12b48c" />
-            <text x="59" y="1" textAnchor="middle" fontSize="13" fontWeight="800" fill={GREEN} style={{ letterSpacing: '.06em' }}>LIVE</text>
+            <text x="59" y="1" textAnchor="middle" fontSize="13" fontWeight="800" fill={GREEN} style={{ letterSpacing: '.06em' }}>{t("LIVE")}</text>
           </g>
         </g>
       </g>
@@ -249,6 +252,7 @@ export function RoadBand() {
 const ROUTE = 'M58 356C58 300 96 290 128 262S150 196 196 180s52-48 40-84';
 
 export function PhoneTracking() {
+  const t = useT();
   const bus = (
     <g>
       <circle r="15" fill={GREEN} stroke="#fff" strokeWidth="3" />
@@ -257,7 +261,7 @@ export function PhoneTracking() {
     </g>
   );
   return (
-    <svg className="h-phone" viewBox="0 0 300 560" role="img" aria-label="Example of the live tracking screen on a phone">
+    <svg className="h-phone" viewBox="0 0 300 560" role="img" aria-label={t("Example of the live tracking screen on a phone")}>
       <defs><clipPath id="h-screen"><rect x="16" y="16" width="268" height="528" rx="30" /></clipPath></defs>
       <rect className="a-phone" width="300" height="560" rx="44" />
       <g clipPath="url(#h-screen)">
@@ -287,17 +291,17 @@ export function PhoneTracking() {
 
         {/* top bar */}
         <rect x="16" y="16" width="268" height="62" fill="#fff" />
-        <text x="34" y="55" fontSize="17" fontWeight="800" fill={INK}>Live Tracking</text>
+        <text x="34" y="55" fontSize="17" fontWeight="800" fill={INK}>{t("Live Tracking")}</text>
         <rect x="208" y="36" width="58" height="26" rx="13" fill="#e6faf3" />
         <circle cx="222" cy="49" r="4" fill="#12b48c" />
-        <text x="243" y="54" textAnchor="middle" fontSize="12" fontWeight="800" fill={GREEN}>LIVE</text>
+        <text x="243" y="54" textAnchor="middle" fontSize="12" fontWeight="800" fill={GREEN}>{t("LIVE")}</text>
 
         {/* arrival card */}
         <rect x="30" y="424" width="240" height="104" rx="20" fill="#fff" />
-        <text x="50" y="456" fontSize="13" fontWeight="700" fill="#74839a">Arrives in</text>
-        <text x="50" y="496" fontSize="34" fontWeight="800" fill={GREEN}>8 min</text>
-        <text x="250" y="456" textAnchor="end" fontSize="13" fontWeight="700" fill="#74839a">Distance</text>
-        <text x="250" y="492" textAnchor="end" fontSize="22" fontWeight="800" fill={INK}>3.2 km</text>
+        <text x="50" y="456" fontSize="13" fontWeight="700" fill="#74839a">{t("Arrives in")}</text>
+        <text x="50" y="496" fontSize="34" fontWeight="800" fill={GREEN}>8<tspan fontSize="18" dx="5">{t('min')}</tspan></text>
+        <text x="250" y="456" textAnchor="end" fontSize="13" fontWeight="700" fill="#74839a">{t("Distance")}</text>
+        <text x="250" y="492" textAnchor="end" fontSize="22" fontWeight="800" fill={INK}>{t("3.2 km")}</text>
       </g>
       <rect x="112" y="26" width="76" height="8" rx="4" fill={INK} opacity=".12" />
     </svg>

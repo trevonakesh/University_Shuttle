@@ -20,7 +20,7 @@
 body {
   background-color: var(--background);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', var(--font-sinhala), sans-serif;
   min-height: 100vh;
 }
 

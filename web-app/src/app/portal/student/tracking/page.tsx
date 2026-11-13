@@ -6,6 +6,7 @@ import type { Socket } from 'socket.io-client';
 import LiveMap, { Point } from '../../../../components/LiveMap';
 import { portalFetch, colomboToday, freezeMessage } from '../../../../lib/portalApi';
 import { openPortalSocket } from '../../../../lib/portalSocket';
+import { useT } from '../../../../lib/useLang';
 
 const STALE_AFTER_MS = 30_000;
 const TYPICAL_SPEED_KMH = 25; // Sri Lankan urban traffic, used when the bus isn't moving
@@ -19,6 +20,7 @@ const distanceKm = (a: Point, b: Point): number => {
 };
 
 export default function StudentTrackingPage() {
+  const t = useT();
   const [loading, setLoading] = useState(true);
   const [driverId, setDriverId] = useState<number | null>(null);
   const [frozenText, setFrozenText] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export default function StudentTrackingPage() {
       portalFetch('/api/requests/student').then(r => r.json()),
       portalFetch('/api/daily-rides/student').then(r => r.json())
     ]).then(([fare, seats, rides]) => {
-      if (fare?.frozen) setFrozenText(freezeMessage(fare));
+      if (fare?.frozen) setFrozenText(freezeMessage(fare, t));
       const seat = (seats.requests ?? []).find((r: any) => r.status === 'APPROVED');
       const today = colomboToday();
       const ride = Array.isArray(rides) ? rides.find((r: any) => r.status === 'APPROVED' && r.date === today) : null;
@@ -76,7 +78,7 @@ export default function StudentTrackingPage() {
     );
   }, [driverId]);
 
-  if (loading) return <BrandLoader label="Loading tracking…" />;
+  if (loading) return <BrandLoader label={t("Loading tracking…")} />;
 
   const isLive = !offline && lastUpdate !== null && now - lastUpdate < STALE_AFTER_MS;
   const km = isLive && bus && me ? distanceKm(me, bus) : null;
@@ -85,36 +87,36 @@ export default function StudentTrackingPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '26px', color: '#10203a', marginBottom: '6px' }}>Live Tracking</h1>
-      <p style={{ color: '#7a8699', marginBottom: '24px' }}>See where your bus is right now.</p>
+      <h1 style={{ fontSize: '26px', color: 'var(--ink)', marginBottom: '6px' }}>{t("Live Tracking")}</h1>
+      <p style={{ color: 'var(--ink-faint)', marginBottom: '24px' }}>{t("See where your bus is right now.")}</p>
 
       {frozenText ? (
-        <div className="p-alert red">{frozenText} <Link href="/portal/student/fare" style={{ fontWeight: 600, textDecoration: 'underline' }}>View fare</Link></div>
+        <div className="p-alert red">{frozenText} <Link href="/portal/student/fare" style={{ fontWeight: 600, textDecoration: 'underline' }}>{t("View fare")}</Link></div>
       ) : driverId === null ? (
         <div className="p-alert amber">
-          You need an approved seat, or an approved daily ride today, to track a bus.{' '}
-          <Link href="/portal/student/buses" style={{ fontWeight: 600, textDecoration: 'underline' }}>Find a bus</Link>
+          {t("You need an approved seat, or an approved daily ride today, to track a bus.")}{' '}
+          <Link href="/portal/student/buses" style={{ fontWeight: 600, textDecoration: 'underline' }}>{t("Find a bus")}</Link>
         </div>
       ) : denied ? (
-        <div className="p-alert red">{denied}</div>
+        <div className="p-alert red">{t(denied)}</div>
       ) : (
         <div className="p-card">
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
-            <span className={`p-badge ${isLive ? 'green' : 'gray'}`}>{isLive ? 'LIVE' : 'OFFLINE'}</span>
-            <span style={{ fontSize: '14px', color: '#7a8699' }}>
+            <span className={`p-badge ${isLive ? 'green' : 'gray'}`}>{isLive ? t("LIVE") : t("OFFLINE")}</span>
+            <span style={{ fontSize: '14px', color: 'var(--ink-faint)' }}>
               {isLive
-                ? `Updated ${seenSecs! < 5 ? 'just now' : `${seenSecs}s ago`}`
-                : lastUpdate !== null ? 'The bus has stopped sharing its location.' : 'Waiting for the driver to start sharing their location…'}
+                ? (seenSecs! < 5 ? t('Updated just now') : t('Updated {n}s ago', { n: seenSecs }))
+                : lastUpdate !== null ? t("The bus has stopped sharing its location.") : t("Waiting for the driver to start sharing their location…")}
             </span>
           </div>
           <LiveMap bus={bus} live={isLive} me={me} />
           <div className="p-stats" style={{ marginTop: '16px', marginBottom: 0 }}>
-            <div className="p-stat"><div className="p-stat-label">Arrives in</div><div className="p-stat-val">{eta === null ? '--' : eta < 1 ? 'Now' : `${eta} min`}</div></div>
-            <div className="p-stat"><div className="p-stat-label">Distance</div><div className="p-stat-val">{km === null ? '--' : `${km.toFixed(1)} km`}</div></div>
-            <div className="p-stat"><div className="p-stat-label">Speed</div><div className="p-stat-val">{isLive && speedKmh !== null ? `${speedKmh.toFixed(0)} km/h` : '--'}</div></div>
+            <div className="p-stat"><div className="p-stat-label">{t("Arrives in")}</div><div className="p-stat-val">{eta === null ? '--' : eta < 1 ? t("Now") : t('{n} min', { n: eta })}</div></div>
+            <div className="p-stat"><div className="p-stat-label">{t("Distance")}</div><div className="p-stat-val">{km === null ? '--' : `${km.toFixed(1)} km`}</div></div>
+            <div className="p-stat"><div className="p-stat-label">{t("Speed")}</div><div className="p-stat-val">{isLive && speedKmh !== null ? `${speedKmh.toFixed(0)} km/h` : '--'}</div></div>
           </div>
           {!me && isLive && (
-            <p style={{ fontSize: '13px', color: '#7a8699', marginTop: '12px' }}>Allow location access in your browser to see distance and arrival time.</p>
+            <p style={{ fontSize: '13px', color: 'var(--ink-faint)', marginTop: '12px' }}>{t("Allow location access in your browser to see distance and arrival time.")}</p>
           )}
         </div>
       )}

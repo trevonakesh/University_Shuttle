@@ -2,10 +2,12 @@
 import { BrandLoader } from '../../../../components/Brand';
 import { useEffect, useState } from 'react';
 import { API_BASE, portalFetch } from '../../../../lib/portalApi';
+import { useT } from '../../../../lib/useLang';
 
 type Notice = { ok: boolean; msg: string } | null;
 
 export default function FindABusPage() {
+  const t = useT();
   const [buses, setBuses] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,51 +58,51 @@ export default function FindABusPage() {
     }
   };
 
-  if (loading) return <BrandLoader label="Loading buses…" />;
+  if (loading) return <BrandLoader label={t("Loading buses…")} />;
 
   return (
     <div>
-      <h1 style={{ fontSize: '26px', color: '#10203a', marginBottom: '6px' }}>Find a Bus</h1>
-      <p style={{ color: '#7a8699', marginBottom: '24px' }}>Approved buses going to your university.</p>
+      <h1 style={{ fontSize: '26px', color: 'var(--ink)', marginBottom: '6px' }}>{t("Find a Bus")}</h1>
+      <p style={{ color: 'var(--ink-faint)', marginBottom: '24px' }}>{t("Approved buses going to your university.")}</p>
 
-      {notice && <div className={`p-alert ${notice.ok ? 'green' : 'red'}`} style={{ marginBottom: '20px' }}>{notice.msg}</div>}
+      {notice && <div className={`p-alert ${notice.ok ? 'green' : 'red'}`} style={{ marginBottom: '20px' }}>{t(notice.msg)}</div>}
 
       {buses.length === 0 ? (
-        <div className="p-card"><div className="p-alert amber">No approved buses serve your destination yet. Please check back soon.</div></div>
+        <div className="p-card"><div className="p-alert amber">{t("No approved buses serve your destination yet. Please check back soon.")}</div></div>
       ) : (
-        <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
+        <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(min(290px, 100%), 1fr))' }}>
           {buses.map(bus => {
             const mine = active?.driverId === bus.id ? active : null;
             return (
               <div key={bus.id} className="p-card" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {bus.busPhotoUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`${API_BASE}${bus.busPhotoUrl}`} alt={`${bus.routeName ?? 'Bus'} photo`} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '10px' }} />
+                  <img src={`${API_BASE}${bus.busPhotoUrl}`} alt={bus.routeName ?? t('Bus')} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '10px' }} />
                 )}
                 <div>
-                  <h3 style={{ fontSize: '17px', color: '#10203a', margin: 0 }}>{bus.routeName ?? 'Route'}</h3>
-                  <div style={{ fontSize: '13px', color: '#7a8699', marginTop: '4px' }}>{bus.startingPoint ?? '—'} → {bus.destination ?? '—'}</div>
+                  <h3 style={{ fontSize: '17px', color: 'var(--ink)', margin: 0 }}>{bus.routeName ?? t("Route")}</h3>
+                  <div style={{ fontSize: '13px', color: 'var(--ink-faint)', marginTop: '4px' }}>{bus.startingPoint ?? '—'} → {bus.destination ?? '—'}</div>
                 </div>
                 <div className="p-info-grid">
-                  <div className="p-info-item"><span>Driver</span><span>{bus.fullName}</span></div>
-                  <div className="p-info-item"><span>Bus</span><span>{bus.busRegNumber ?? '—'}</span></div>
-                  <div className="p-info-item"><span>Seats</span><span>{bus.busCapacity ?? '—'}</span></div>
-                  <div className="p-info-item"><span>Schedule</span><span>{bus.scheduleType ?? '—'}</span></div>
-                  <div className="p-info-item"><span>Pickup</span><span>{bus.pickupTime ?? '—'}</span></div>
-                  <div className="p-info-item"><span>Drop</span><span>{bus.dropTime ?? '—'}</span></div>
-                  <div className="p-info-item"><span>Monthly fare</span><span>LKR {bus.monthlyFee ?? '—'}</span></div>
+                  <div className="p-info-item"><span>{t("Driver")}</span><span>{bus.fullName}</span></div>
+                  <div className="p-info-item"><span>{t("Bus")}</span><span>{bus.busRegNumber ?? '—'}</span></div>
+                  <div className="p-info-item"><span>{t("Seats")}</span><span>{bus.busCapacity ?? '—'}</span></div>
+                  <div className="p-info-item"><span>{t("Schedule")}</span><span>{bus.scheduleType ? t(bus.scheduleType) : '—'}</span></div>
+                  <div className="p-info-item"><span>{t("Pickup")}</span><span>{bus.pickupTime ?? '—'}</span></div>
+                  <div className="p-info-item"><span>{t("Drop")}</span><span>{bus.dropTime ?? '—'}</span></div>
+                  <div className="p-info-item"><span>{t("Monthly fare")}</span><span>{t("LKR")} {bus.monthlyFee ?? '—'}</span></div>
                 </div>
                 <div style={{ marginTop: 'auto' }}>
                   {mine ? (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
-                      <span className={`p-badge ${mine.status === 'APPROVED' ? 'green' : 'amber'}`}>{mine.status === 'APPROVED' ? 'YOUR BUS' : 'REQUESTED'}</span>
+                      <span className={`p-badge ${mine.status === 'APPROVED' ? 'green' : 'amber'}`}>{mine.status === 'APPROVED' ? t("YOUR BUS") : t("REQUESTED")}</span>
                       <button className="p-btn outline sm" disabled={busyId === bus.id} onClick={() => leave(mine)}>
-                        {mine.status === 'APPROVED' ? 'Leave Bus' : 'Cancel Request'}
+                        {mine.status === 'APPROVED' ? t("Leave Bus") : t("Cancel Request")}
                       </button>
                     </div>
                   ) : (
                     <button className="p-btn primary" style={{ width: '100%' }} disabled={Boolean(active) || busyId === bus.id} onClick={() => requestSeat(bus.id)}>
-                      {busyId === bus.id ? 'Sending…' : active ? 'You already have a bus' : 'Request a Seat'}
+                      {busyId === bus.id ? t("Sending…") : active ? t("You already have a bus") : t("Request a Seat")}
                     </button>
                   )}
                 </div>

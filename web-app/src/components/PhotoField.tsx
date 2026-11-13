@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { API_BASE, uploadImage } from '../lib/api';
+import { useT } from '../lib/useLang';
 
 // File picker that uploads immediately (same /api/upload endpoint the mobile
 // sign-up uses) and reports the stored URL back to the form.
@@ -13,6 +14,7 @@ export default function PhotoField({
   value: string;
   onChange: (url: string) => void;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function PhotoField({
       const url = await uploadImage(file);
       onChange(url);
     } catch (e: any) {
-      setError(e.message ?? 'Upload failed');
+      setError(t(e.message ?? 'Upload failed'));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -67,7 +69,7 @@ export default function PhotoField({
             disabled={uploading}
             style={{ fontSize: '12px', padding: '6px 10px' }}
           >
-            {uploading ? 'Uploading…' : value ? 'Change' : 'Upload'}
+            {uploading ? t("Uploading…") : value ? t("Change") : t("Upload")}
           </button>
           {value && (
             <button
@@ -75,7 +77,7 @@ export default function PhotoField({
               onClick={() => onChange('')}
               style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '11px', cursor: 'pointer', padding: 0, textAlign: 'left' }}
             >
-              Remove
+              {t("Remove")}
             </button>
           )}
         </div>

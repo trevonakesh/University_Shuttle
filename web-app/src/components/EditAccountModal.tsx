@@ -186,7 +186,7 @@ export default function EditAccountModal({ kind, id, name, onClose, onSaved }: P
             {SECTIONS[kind].filter(section => shownFields(section).length > 0).map(section => (
               <div key={section.title} style={{ marginBottom: '22px' }}>
                 <h3 style={{ marginBottom: '12px', fontSize: '15px', color: 'var(--text)' }}>{section.title}</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '15px' }}>
                   {shownFields(section).map(renderField)}
                 </div>
               </div>
@@ -194,7 +194,7 @@ export default function EditAccountModal({ kind, id, name, onClose, onSaved }: P
             {customFields.length > 0 && (
               <div style={{ marginBottom: '22px' }}>
                 <h3 style={{ marginBottom: '12px', fontSize: '15px', color: 'var(--text)' }}>Additional information</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '15px' }}>
                   {customFields.map(renderCustomField)}
                 </div>
               </div>

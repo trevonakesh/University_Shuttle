@@ -5,8 +5,10 @@ import { API_BASE, setPortalToken, setPortalUser } from '../../lib/portalApi';
 import PublicShell from '../../components/PublicShell';
 import { RoadBand } from '../../components/HomeArt';
 import '../portal/portal.css';
+import { useT } from '../../lib/useLang';
 
 export default function PortalLoginPage() {
+  const t = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -24,20 +26,20 @@ export default function PortalLoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'Login failed. Check your credentials.');
+        setError(t(data.error ?? 'Login failed. Check your credentials.'));
         return;
       }
       const role = data.user?.role;
       // Admins sign in on their own page; this one doesn't point there.
       if (role !== 'STUDENT' && role !== 'DRIVER') {
-        setError('This page is for student and driver accounts.');
+        setError(t('This page is for student and driver accounts.'));
         return;
       }
       setPortalToken(data.token);
       setPortalUser(data.user);
       window.location.href = role === 'STUDENT' ? '/portal/student' : '/portal/driver';
     } catch {
-      setError('Could not reach the server. Please try again.');
+      setError(t('Could not reach the server. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -48,8 +50,8 @@ export default function PortalLoginPage() {
       <section className="h-auth">
         <div className="h-auth-inner">
           <div className="h-auth-head">
-            <h1>Welcome back</h1>
-            <p>Sign in to your student or driver account.</p>
+            <h1>{t("Welcome back")}</h1>
+            <p>{t("Sign in to your student or driver account.")}</p>
           </div>
 
           <div className="h-auth-card">
@@ -57,19 +59,19 @@ export default function PortalLoginPage() {
               {error && <div className="p-alert red" role="alert">{error}</div>}
 
               <div className="p-field">
-                <label htmlFor="email">Email address</label>
+                <label htmlFor="email">{t("Email address")}</label>
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
-                  placeholder="you@university.edu"
+                  placeholder={t("you@university.edu")}
                   autoComplete="email"
                 />
               </div>
               <div className="p-field">
-                <label htmlFor="password">Password</label>
+                <label htmlFor="password">{t("Password")}</label>
                 <input
                   id="password"
                   type="password"
@@ -80,15 +82,15 @@ export default function PortalLoginPage() {
                 />
               </div>
               <div style={{ textAlign: 'right', marginTop: '-6px' }}>
-                <Link href="/portal/forgot-password" className="h-link" style={{ fontSize: 15 }}>Forgot password?</Link>
+                <Link href="/portal/forgot-password" className="h-link" style={{ fontSize: 15 }}>{t("Forgot password?")}</Link>
               </div>
               <button type="submit" className="p-btn primary" disabled={loading}>
-                {loading ? 'Signing in…' : 'Sign in'}
+                {loading ? t("Signing in…") : t("Sign in")}
               </button>
             </form>
 
             <div className="h-auth-foot">
-              New to UniShuttle? <Link href="/signup" className="h-link">Create an account</Link>
+              {t("New to UniShuttle?")} <Link href="/signup" className="h-link">{t("Create an account")}</Link>
             </div>
           </div>
         </div>

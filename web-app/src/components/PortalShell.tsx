@@ -3,6 +3,8 @@ import { ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { BrandMark, BrandWordmark } from './Brand';
+import { MoonIcon, SunIcon, useTheme } from '../lib/useTheme';
+import { LangSwitch, useT } from '../lib/useLang';
 
 export interface PortalNavItem { href: string; label: string; icon: ReactNode }
 
@@ -19,8 +21,10 @@ interface Props {
 // The frame for the student and driver portals. On a computer the menu is a
 // sidebar; on a phone it is hidden behind a top bar and slides in from the left.
 export default function PortalShell({ homeHref, roleLabel, roleColor, navItems, signedInAs, onLogout, children }: Props) {
+  const t = useT();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [theme, switchTheme] = useTheme();
   const current = navItems.find(item => item.href === pathname);
 
   // Close the menu after moving to another page.
@@ -42,13 +46,13 @@ export default function PortalShell({ homeHref, roleLabel, roleColor, navItems, 
   return (
     <div className="portal">
       <header className="portal-topbar">
-        <Link href={homeHref} className="portal-topbar-brand" aria-label="Dashboard">
+        <Link href={homeHref} className="portal-topbar-brand" aria-label={t("Dashboard")}>
           <BrandMark height={26} />
         </Link>
-        <span className="portal-topbar-title">{current?.label ?? roleLabel}</span>
+        <span className="portal-topbar-title">{t(current?.label ?? roleLabel)}</span>
         <button
           className="portal-menu-btn"
-          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-label={open ? t("Close menu") : t("Open menu")}
           aria-expanded={open}
           aria-controls="portal-menu"
           onClick={() => setOpen(v => !v)}
@@ -67,8 +71,8 @@ export default function PortalShell({ homeHref, roleLabel, roleColor, navItems, 
             <BrandMark height={26} />
             <BrandWordmark height={17} />
           </Link>
-          <div className="portal-role-badge" style={roleColor ? { color: roleColor } : undefined}>{roleLabel}</div>
-          <nav className="portal-nav" aria-label={roleLabel}>
+          <div className="portal-role-badge" style={roleColor ? { color: roleColor } : undefined}>{t(roleLabel)}</div>
+          <nav className="portal-nav" aria-label={t(roleLabel)}>
             {navItems.map(item => (
               <Link
                 key={item.href}
@@ -77,15 +81,20 @@ export default function PortalShell({ homeHref, roleLabel, roleColor, navItems, 
                 aria-current={pathname === item.href ? 'page' : undefined}
                 onClick={() => setOpen(false)}
               >
-                {item.icon}{item.label}
+                {item.icon}{t(item.label)}
               </Link>
             ))}
           </nav>
           <div className="portal-spacer" />
           <div className="portal-signed-in">{signedInAs}</div>
+          <LangSwitch className="portal-theme" />
+          <button className="portal-theme" onClick={switchTheme} aria-label={theme === 'dark' ? t("Switch to light mode") : t("Switch to dark mode")}>
+            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            {theme === 'dark' ? t("Light mode") : t("Dark mode")}
+          </button>
           <button className="portal-logout" onClick={onLogout}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
+            {t("Sign Out")}
           </button>
         </aside>
         <main className="portal-main">{children}</main>

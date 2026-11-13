@@ -1,3 +1,4 @@
+import { translate, type TFn } from './i18n';
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
 
 const KEY = 'unishuttle_portal_token';
@@ -20,13 +21,13 @@ export const colomboToday = (): string =>
   new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
 
 // Plain-language reason for a frozen account, from GET /api/fares/me.
-export const freezeMessage = (fare: any): string => {
-  const settle = fare?.onlinePayments
+export const freezeMessage = (fare: any, t: TFn = (text, vars) => translate('en', text, vars)): string => {
+  const settle = t(fare?.onlinePayments
     ? 'Pay the fare to unfreeze it.'
-    : 'Hand the fare to your driver and ask them to mark it as paid to unfreeze it.';
+    : 'Hand the fare to your driver and ask them to mark it as paid to unfreeze it.');
   return fare?.freezeReason === 'EXEMPT'
-    ? `Your driver marked you as not travelling in ${fare.month}, so your account is frozen this month. Planning to travel? ${settle}`
-    : `Your ${fare?.month} fare wasn't paid by the ${fare?.dueDay}th, so your account is frozen. ${settle}`;
+    ? `${t('Your driver marked you as not travelling in {month}, so your account is frozen this month. Planning to travel?', { month: fare.month })} ${settle}`
+    : `${t("Your {month} fare wasn't paid by the {day}, so your account is frozen.", { month: fare?.month, day: t('{n}th', { n: fare?.dueDay }) })} ${settle}`;
 };
 
 export const portalFetch = async (path: string, init: RequestInit = {}): Promise<Response> => {

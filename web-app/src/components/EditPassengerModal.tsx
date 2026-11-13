@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { BrandLoader } from './Brand';
 import { portalFetch } from '../lib/portalApi';
+import { useT } from '../lib/useLang';
 
 const FIELDS = [
   { name: 'pickupPoint', label: 'Pickup point', required: true },
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function EditPassengerModal({ studentId, studentName, onClose, onSaved }: Props) {
+  const t = useT();
   const [form, setForm] = useState<Form | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,10 +31,10 @@ export default function EditPassengerModal({ studentId, studentName, onClose, on
     portalFetch(`/api/requests/passengers/${studentId}`)
       .then(async res => {
         const data = await res.json();
-        if (!res.ok) { setError(data.error ?? 'Could not load this student.'); return; }
+        if (!res.ok) { setError(t(data.error ?? 'Could not load this student.')); return; }
         setForm(Object.fromEntries(FIELDS.map(f => [f.name, data.student[f.name] ?? ''])) as Form);
       })
-      .catch(() => setError('Could not connect to the server.'));
+      .catch(() => setError(t('Could not connect to the server.')));
   }, [studentId]);
 
   useEffect(() => {
@@ -49,10 +51,10 @@ export default function EditPassengerModal({ studentId, studentName, onClose, on
     try {
       const res = await portalFetch(`/api/requests/passengers/${studentId}`, { method: 'PATCH', body: JSON.stringify(form) });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? 'Could not save the changes.'); return; }
+      if (!res.ok) { setError(t(data.error ?? 'Could not save the changes.')); return; }
       onSaved(data.student.pickupPoint ?? '', data.message);
     } catch {
-      setError('Could not connect to the server.');
+      setError(t('Could not connect to the server.'));
     } finally {
       setSaving(false);
     }
@@ -64,9 +66,9 @@ export default function EditPassengerModal({ studentId, studentName, onClose, on
       style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(16,32,58,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
     >
       <div role="dialog" aria-modal="true" aria-labelledby="edit-passenger-title" className="p-card" style={{ width: '100%', maxWidth: '460px', maxHeight: '90vh', overflowY: 'auto', margin: 0 }}>
-        <h3 id="edit-passenger-title" style={{ fontSize: '18px', color: '#10203a', margin: 0 }}>Edit student details</h3>
-        <p style={{ fontSize: '13px', color: '#7a8699', margin: '4px 0 16px' }}>
-          {studentName}. The student will be told about any change you save.
+        <h3 id="edit-passenger-title" style={{ fontSize: '18px', color: 'var(--ink)', margin: 0 }}>{t("Edit student details")}</h3>
+        <p style={{ fontSize: '13px', color: 'var(--ink-faint)', margin: '4px 0 16px' }}>
+          {t('{name}. The student will be told about any change you save.', { name: studentName })}
         </p>
 
         {error && <div className="p-alert red" style={{ marginBottom: '14px' }}>{error}</div>}
@@ -75,7 +77,7 @@ export default function EditPassengerModal({ studentId, studentName, onClose, on
           <form onSubmit={save} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {FIELDS.map(f => (
               <div className="p-field" key={f.name}>
-                <label htmlFor={`edit-${f.name}`}>{f.label}</label>
+                <label htmlFor={`edit-${f.name}`}>{t(f.label)}</label>
                 <input
                   id={`edit-${f.name}`}
                   type={f.name === 'emerContactPhone' ? 'tel' : 'text'}
@@ -87,16 +89,16 @@ export default function EditPassengerModal({ studentId, studentName, onClose, on
               </div>
             ))}
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
-              <button type="button" onClick={onClose} className="p-btn outline sm">Cancel</button>
-              <button type="submit" disabled={saving} className="p-btn primary sm">{saving ? 'Saving…' : 'Save Changes'}</button>
+              <button type="button" onClick={onClose} className="p-btn outline sm">{t("Cancel")}</button>
+              <button type="submit" disabled={saving} className="p-btn primary sm">{saving ? t("Saving…") : t("Save Changes")}</button>
             </div>
           </form>
         ) : error ? (
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} className="p-btn outline sm">Close</button>
+            <button type="button" onClick={onClose} className="p-btn outline sm">{t("Close")}</button>
           </div>
         ) : (
-          <BrandLoader label="Loading student…" />
+          <BrandLoader label={t("Loading student…")} />
         )}
       </div>
     </div>

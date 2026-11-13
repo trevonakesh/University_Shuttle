@@ -1,9 +1,12 @@
+'use client';
 import Link from 'next/link';
 import { business } from '../lib/business';
 import { BrandMark, BrandWordmark } from './Brand';
+import { useT } from '../lib/useLang';
 
 // Footer for the public pages.
 export default function HomeFooter() {
+  const t = useT();
   const address = business.address;
   return (
     <footer className="h-footer">
@@ -14,26 +17,26 @@ export default function HomeFooter() {
               <BrandMark height={30} />
               <BrandWordmark height={20} />
             </div>
-            <p>University bus travel in Sri Lanka, made simple for students and drivers.</p>
+            <p>{t("University bus travel in Sri Lanka, made simple for students and drivers.")}</p>
           </div>
           <div>
-            <h4>Site</h4>
+            <h4>{t("Site")}</h4>
             <div className="h-footer-links">
-              <Link href="/">Home</Link>
-              <Link href="/how-it-works">How it works</Link>
-              <Link href="/contact">Contact us</Link>
+              <Link href="/">{t("Home")}</Link>
+              <Link href="/how-it-works">{t("How it works")}</Link>
+              <Link href="/contact">{t("Contact us")}</Link>
             </div>
           </div>
           <div>
-            <h4>Your account</h4>
+            <h4>{t("Your account")}</h4>
             <div className="h-footer-links">
-              <Link href="/login">Sign in</Link>
-              <Link href="/signup">Create an account</Link>
-              <Link href="/portal/forgot-password">Forgot password</Link>
+              <Link href="/login">{t("Sign in")}</Link>
+              <Link href="/signup">{t("Create an account")}</Link>
+              <Link href="/portal/forgot-password">{t("Forgot password")}</Link>
             </div>
           </div>
           <div>
-            <h4>Get in touch</h4>
+            <h4>{t("Get in touch")}</h4>
             <div className="h-footer-links">
               <a href={`mailto:${business.email}`}>{business.email}</a>
               <a href={`tel:${business.phoneHref}`}>{business.phone}</a>
@@ -41,7 +44,7 @@ export default function HomeFooter() {
             </div>
           </div>
         </div>
-        <div className="h-footer-bottom">© {new Date().getFullYear()} {business.name}. All rights reserved.</div>
+        <div className="h-footer-bottom">© {new Date().getFullYear()} {business.name}{t(". All rights reserved.")}</div>
       </div>
     </footer>
   );

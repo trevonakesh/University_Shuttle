@@ -44,8 +44,8 @@
   --a-phone: #10203a;
 
   font-family: var(--sans);
-  --display: var(--font-home-display), 'Segoe UI', system-ui, sans-serif;
-  --sans: var(--font-home-body), 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --display: var(--font-home-display), var(--font-sinhala), 'Segoe UI', system-ui, sans-serif;
+  --sans: var(--font-home-body), var(--font-sinhala), 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
   font-size: 17px;
   line-height: 1.6;
   color: var(--ink);
@@ -154,7 +154,8 @@
 .h-nav .h-btn { margin-left: 8px; }
 .h-icon-btn { width: 46px; height: 46px; flex: none; border-radius: 13px; border: 2px solid var(--line); background: var(--card); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color .15s ease, color .15s ease; }
 .h-icon-btn:hover { border-color: var(--accent); color: var(--link); }
-.h-theme { order: 2; margin-left: 6px; }
+.h-lang { order: 2; width: auto; gap: 7px; padding: 0 13px; margin-left: 6px; font-family: var(--display); font-weight: 600; font-size: 15px; }
+.h-theme { order: 2; }
 .h-menu { display: none; order: 3; }
 
 /* ---------- hero ---------- */
@@ -389,7 +390,9 @@
 @media (max-width: 720px) {
   .home { font-size: 16.5px; }
   .h-menu { display: inline-flex; }
-  .h-theme { margin-left: 0; }
+  .h-theme, .h-lang { margin-left: 0; }
+  .h-lang { padding: 0 11px; }
+  .h-lang svg { display: none; }
   .h-nav { display: none; position: absolute; left: 12px; right: 12px; top: 74px; flex-direction: column; align-items: stretch; gap: 4px; padding: 12px; background: var(--card); border: 2px solid var(--line); border-radius: 20px; box-shadow: 0 20px 44px var(--shade); }
   .h-nav.open { display: flex; }
   .h-nav a:not(.h-btn) { padding: 14px 16px; font-size: 17px; }
@@ -410,6 +413,15 @@
   .h-page-head { padding-top: 38px; }
   .h-auth { padding-top: 30px; }
   .h-auth-card { padding: 22px 18px; border-radius: 22px; }
+}
+/* Sinhala menu words are longer, so its header folds into the menu button sooner. */
+.h-nav a, .h-nav .h-btn, .h-lang { white-space: nowrap; }
+@media (min-width: 721px) and (max-width: 1080px) {
+  html[lang='si'] .h-menu { display: inline-flex; }
+  html[lang='si'] .h-nav { display: none; position: absolute; left: 12px; right: 12px; top: 74px; flex-direction: column; align-items: stretch; gap: 4px; padding: 12px; background: var(--card); border: 2px solid var(--line); border-radius: 20px; box-shadow: 0 20px 44px var(--shade); }
+  html[lang='si'] .h-nav.open { display: flex; }
+  html[lang='si'] .h-nav a:not(.h-btn) { padding: 14px 16px; }
+  html[lang='si'] .h-nav .h-btn { margin: 6px 0 0; min-height: 52px; }
 }
 @media (max-width: 460px) {
   .h-steps { grid-template-columns: 1fr; }

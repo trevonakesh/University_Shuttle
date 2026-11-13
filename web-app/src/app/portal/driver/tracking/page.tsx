@@ -4,6 +4,7 @@ import type { Socket } from 'socket.io-client';
 import LiveMap, { Point } from '../../../../components/LiveMap';
 import { portalFetch } from '../../../../lib/portalApi';
 import { openPortalSocket } from '../../../../lib/portalSocket';
+import { useT } from '../../../../lib/useLang';
 
 const SEND_GAP_MS = 2000; // the server accepts at most one position per second
 
@@ -13,6 +14,7 @@ const gpsError = (e: GeolocationPositionError): string =>
     : 'Could not read your location. Check that location is turned on for this device.';
 
 export default function DriverTrackingPage() {
+  const t = useT();
   const [approved, setApproved] = useState<boolean | null>(null);
   const [sharing, setSharing] = useState(false);
   const [position, setPosition] = useState<Point | null>(null);
@@ -54,7 +56,7 @@ export default function DriverTrackingPage() {
   const start = async () => {
     setError(null);
     if (!navigator.geolocation) {
-      setError('This browser cannot share location. Please use the mobile app.');
+      setError(t('This browser cannot share location. Please use the mobile app.'));
       return;
     }
     // Keeps the phone screen on, since a sleeping browser stops sending GPS.
@@ -82,7 +84,7 @@ export default function DriverTrackingPage() {
         });
       },
       e => {
-        setError(gpsError(e));
+        setError(t(gpsError(e)));
         stop();
       },
       { enableHighAccuracy: true, maximumAge: 2000, timeout: 20_000 }
@@ -91,23 +93,23 @@ export default function DriverTrackingPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '26px', color: '#10203a', marginBottom: '6px' }}>Live Location</h1>
-      <p style={{ color: '#7a8699', marginBottom: '24px' }}>Share your bus&apos;s position with your passengers.</p>
+      <h1 style={{ fontSize: '26px', color: 'var(--ink)', marginBottom: '6px' }}>{t("Live Location")}</h1>
+      <p style={{ color: 'var(--ink-faint)', marginBottom: '24px' }}>{t("Share your bus's position with your passengers.")}</p>
 
       {approved === false ? (
-        <div className="p-alert amber">Live location becomes available once an administrator approves your bus.</div>
+        <div className="p-alert amber">{t("Live location becomes available once an administrator approves your bus.")}</div>
       ) : (
         <div className="p-card">
-          {error && <div className="p-alert red" style={{ marginBottom: '16px' }}>{error}</div>}
+          {error && <div className="p-alert red" style={{ marginBottom: '16px' }}>{t(error)}</div>}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
             <div>
-              <span className={`p-badge ${sharing ? 'green' : 'gray'}`}>{sharing ? 'SHARING LIVE' : 'NOT SHARING'}</span>
-              <div style={{ fontSize: '14px', color: '#7a8699', marginTop: '8px' }}>
-                {sharing ? `${speedKmh.toFixed(0)} km/h. Keep this page open while you drive.` : 'Students can follow your bus while this is on.'}
+              <span className={`p-badge ${sharing ? 'green' : 'gray'}`}>{sharing ? t("SHARING LIVE") : t("NOT SHARING")}</span>
+              <div style={{ fontSize: '14px', color: 'var(--ink-faint)', marginTop: '8px' }}>
+                {sharing ? `${speedKmh.toFixed(0)} km/h. ${t('Keep this page open while you drive.')}` : t("Students can follow your bus while this is on.")}
               </div>
             </div>
             <button className={`p-btn ${sharing ? 'danger' : 'primary'}`} onClick={sharing ? stop : start} disabled={approved === null}>
-              {sharing ? 'Stop Sharing' : 'Start Sharing'}
+              {sharing ? t("Stop Sharing") : t("Start Sharing")}
             </button>
           </div>
           <LiveMap bus={position} live={sharing} />

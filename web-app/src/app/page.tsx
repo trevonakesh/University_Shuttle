@@ -2,6 +2,7 @@ import Link from 'next/link';
 import PublicShell from '../components/PublicShell';
 import { DriverArt, HeroScene, PhoneTracking, StudentArt } from '../components/HomeArt';
 import { getCommissionPercent } from '../lib/business';
+import { getT } from '../lib/i18n-server';
 
 export const metadata = {
   title: 'UniShuttle: university bus travel in Sri Lanka',
@@ -46,6 +47,7 @@ const features = [
 ];
 
 export default async function HomePage() {
+  const t = await getT();
   const commissionPercent = await getCommissionPercent();
 
   return (
@@ -53,26 +55,25 @@ export default async function HomePage() {
         {/* ---------------- hero ---------------- */}
         <section className="h-hero">
           <div className="h-wrap h-hero-text">
-            <span className="h-pill"><i />For students and bus drivers in Sri Lanka</span>
-            <h1>Your university bus, <em>made easy</em>.</h1>
+            <span className="h-pill"><i />{t("For students and bus drivers in Sri Lanka")}</span>
+            <h1>{t("Your university bus,")} <em>{t("made easy")}</em>.</h1>
             <p className="h-lead">
-              Find a bus, book your seat and see where it is on the map.
-              Drivers keep their passengers and fares in one simple place.
+              {t("Find a bus, book your seat and see where it is on the map. Drivers keep their passengers and fares in one simple place.")}
             </p>
             <div className="h-actions">
-              <Link href="/signup" className="h-btn primary"><Icon>{icons.student}</Icon>I&apos;m a student</Link>
-              <Link href="/signup?role=driver" className="h-btn amber"><Icon>{icons.wheel}</Icon>I&apos;m a driver</Link>
+              <Link href="/signup" className="h-btn primary"><Icon>{icons.student}</Icon>{t("I'm a student")}</Link>
+              <Link href="/signup?role=driver" className="h-btn amber"><Icon>{icons.wheel}</Icon>{t("I'm a driver")}</Link>
             </div>
-            <p className="h-signin">Already have an account? <Link href="/login">Sign in</Link></p>
+            <p className="h-signin">{t("Already have an account?")} <Link href="/login">{t("Sign in")}</Link></p>
           </div>
           <HeroScene />
         </section>
 
         <div className="h-strip">
           <div className="h-wrap h-strip-inner">
-            <div className="h-strip-item"><Icon>{icons.shield}</Icon>Every driver is checked first</div>
-            <div className="h-strip-item"><Icon>{icons.pin}</Icon>See your bus live on the map</div>
-            <div className="h-strip-item"><Icon>{icons.cash}</Icon>Pay your driver in cash</div>
+            <div className="h-strip-item"><Icon>{icons.shield}</Icon>{t("Every driver is checked first")}</div>
+            <div className="h-strip-item"><Icon>{icons.pin}</Icon>{t("See your bus live on the map")}</div>
+            <div className="h-strip-item"><Icon>{icons.cash}</Icon>{t("Pay your driver in cash")}</div>
           </div>
         </div>
 
@@ -80,39 +81,39 @@ export default async function HomePage() {
         <section className="h-section">
           <div className="h-wrap">
             <div className="h-head">
-              <span className="h-kicker">Start here</span>
-              <h2>Who are you?</h2>
-              <p>Pick one and we&apos;ll set you up in a few minutes.</p>
+              <span className="h-kicker">{t("Start here")}</span>
+              <h2>{t("Who are you?")}</h2>
+              <p>{t("Pick one and we'll set you up in a few minutes.")}</p>
             </div>
 
             <div className="h-paths">
               <article className="h-path student">
                 <StudentArt />
                 <div className="h-path-body">
-                  <h3>I&apos;m a student</h3>
+                  <h3>{t("I'm a student")}</h3>
                   <ul className="h-ticks">
-                    <li>Find a bus that goes to your university</li>
-                    <li>Ask for a seat and get a reply from the driver</li>
-                    <li>See where your bus is and when it arrives</li>
+                    <li>{t("Find a bus that goes to your university")}</li>
+                    <li>{t("Ask for a seat and get a reply from the driver")}</li>
+                    <li>{t("See where your bus is and when it arrives")}</li>
                   </ul>
-                  <Link href="/signup" className="h-btn primary">Create student account</Link>
+                  <Link href="/signup" className="h-btn primary">{t("Create student account")}</Link>
                 </div>
               </article>
 
               <article className="h-path driver">
                 <DriverArt />
                 <div className="h-path-body">
-                  <h3>I&apos;m a driver</h3>
+                  <h3>{t("I'm a driver")}</h3>
                   <ul className="h-ticks">
-                    <li>Get students for your bus, at the fare you set</li>
-                    <li>See who has paid this month at a glance</li>
+                    <li>{t("Get students for your bus, at the fare you set")}</li>
+                    <li>{t("See who has paid this month at a glance")}</li>
                     <li>
                       {commissionPercent > 0
-                        ? `We keep ${commissionPercent}% of fares. The rest is yours`
-                        : 'You keep all of your fares'}
+                        ? t("We keep {pct}% of fares. The rest is yours", { pct: commissionPercent })
+                        : t("You keep all of your fares")}
                     </li>
                   </ul>
-                  <Link href="/signup?role=driver" className="h-btn amber">Register my bus</Link>
+                  <Link href="/signup?role=driver" className="h-btn amber">{t("Register my bus")}</Link>
                 </div>
               </article>
             </div>
@@ -125,19 +126,17 @@ export default async function HomePage() {
             <div className="h-track">
               <div className="h-phone-wrap">
                 <PhoneTracking />
-                <span className="h-example">Example screen</span>
+                <span className="h-example">{t("Example screen")}</span>
               </div>
               <div>
-                <span className="h-kicker">Live tracking</span>
-                <h2>No more guessing where the bus is</h2>
+                <span className="h-kicker">{t("Live tracking")}</span>
+                <h2>{t("No more guessing where the bus is")}</h2>
                 <p>
-                  When your driver starts the trip, your bus shows up on the map
-                  and moves as it drives. You see how far away it is and when it
-                  will reach you.
+                  {t("When your driver starts the trip, your bus shows up on the map and moves as it drives. You see how far away it is and when it will reach you.")}
                 </p>
                 <ul className="h-ticks">
-                  <li>Works on the website and in the app</li>
-                  <li>Only students travelling on the bus can see it</li>
+                  <li>{t("Works on the website and in the app")}</li>
+                  <li>{t("Only students travelling on the bus can see it")}</li>
                 </ul>
               </div>
             </div>
@@ -148,20 +147,20 @@ export default async function HomePage() {
         <section className="h-section tint" style={{ paddingTop: 20 }}>
           <div className="h-wrap">
             <div className="h-head">
-              <span className="h-kicker">How it works</span>
-              <h2>Four easy steps</h2>
+              <span className="h-kicker">{t("How it works")}</span>
+              <h2>{t("Four easy steps")}</h2>
             </div>
             <div className="h-steps">
               {steps.map(step => (
                 <div className="h-step" key={step.title}>
                   <div className="h-step-icon"><Icon>{step.icon}</Icon></div>
-                  <h3>{step.title}</h3>
-                  <p>{step.text}</p>
+                  <h3>{t(step.title)}</h3>
+                  <p>{t(step.text)}</p>
                 </div>
               ))}
             </div>
             <p style={{ textAlign: 'center', marginTop: 30 }}>
-              <Link href="/how-it-works" className="h-link">Read the full guide</Link>
+              <Link href="/how-it-works" className="h-link">{t("Read the full guide")}</Link>
             </p>
           </div>
         </section>
@@ -170,21 +169,21 @@ export default async function HomePage() {
         <section className="h-section">
           <div className="h-wrap">
             <div className="h-head">
-              <span className="h-kicker">What you get</span>
-              <h2>Everything for the daily ride</h2>
+              <span className="h-kicker">{t("What you get")}</span>
+              <h2>{t("Everything for the daily ride")}</h2>
             </div>
             <div className="h-features">
               {features.map(feature => (
                 <div className="h-feature" key={feature.title}>
                   <div className={`h-feature-icon ${feature.tone}`}><Icon>{feature.icon}</Icon></div>
                   <div>
-                    <h3>{feature.title}</h3>
-                    <p>{feature.text}</p>
+                    <h3>{t(feature.title)}</h3>
+                    <p>{t(feature.text)}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="h-soon"><b>Coming soon</b>Pay your fare by card in the app.</div>
+            <div className="h-soon"><b>{t("Coming soon")}</b>{t("Pay your fare by card in the app.")}</div>
           </div>
         </section>
 
@@ -192,11 +191,11 @@ export default async function HomePage() {
         <section className="h-section" style={{ paddingTop: 0 }}>
           <div className="h-wrap">
             <div className="h-cta">
-              <h2>Ready when your bus is</h2>
-              <p>It&apos;s free to join and takes a few minutes.</p>
+              <h2>{t("Ready when your bus is")}</h2>
+              <p>{t("It's free to join and takes a few minutes.")}</p>
               <div className="h-actions">
-                <Link href="/signup" className="h-btn amber">Create an account</Link>
-                <Link href="/contact" className="h-btn onDark">Talk to us</Link>
+                <Link href="/signup" className="h-btn amber">{t("Create an account")}</Link>
+                <Link href="/contact" className="h-btn onDark">{t("Talk to us")}</Link>
               </div>
             </div>
           </div>
