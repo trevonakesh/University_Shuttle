@@ -10,6 +10,7 @@ import { signToken, verifyToken } from '../utils/jwt';
 import { passwordError } from '../utils/password';
 import { createAttemptTracker, minutesLabel } from '../utils/rateLimit';
 import { serverError } from '../utils/httpError';
+import { cleanUploadUrl, markAsDocuments, withSignedDocuments } from '../utils/privateUploads';
 
 const generateToken = (userId: number, role: Role) => signToken({ userId, role }, '7d');
 
@@ -400,9 +401,9 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
             pickupTime,
             dropTime,
             profilePhotoUrl,
-            nicCopyUrl,
-            licenseCopyUrl,
-            vehicleRegUrl,
+            nicCopyUrl: cleanUploadUrl(nicCopyUrl),
+            licenseCopyUrl: cleanUploadUrl(licenseCopyUrl),
+            vehicleRegUrl: cleanUploadUrl(vehicleRegUrl),
             busPhotoUrl,
             customFields: custom.answers
           }
@@ -414,6 +415,7 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
     const token = generateToken(user.id, user.role);
 
     void sendEmail(emails.driverApplicationReceived(user.email, fullName));
+    markAsDocuments(nicCopyUrl, licenseCopyUrl, vehicleRegUrl);
 
     res.status(201).json({
       message: 'Driver registered successfully. Pending admin approval.',
@@ -423,7 +425,7 @@ export const registerDriver = async (req: Request, res: Response): Promise<void>
         email: user.email,
         phone: user.phone,
         role: user.role,
-        profile: user.driver
+        profile: withSignedDocuments(user.driver)
       }
     });
   } catch (error: any) {
@@ -482,7 +484,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const token = generateToken(user.id, user.role);
 
-    const profile = user.role === Role.STUDENT ? user.student : user.driver;
+    // A driver's own document links are signed; nobody else is sent them.
+    const profile = user.role === Role.STUDENT ? user.student : withSignedDocuments(user.driver);
 
     void sendEmail(emails.signInAlert(
       user.email,
@@ -525,7 +528,7 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const profile = user.role === Role.STUDENT ? user.student : user.driver;
+    const profile = user.role === Role.STUDENT ? user.student : withSignedDocuments(user.driver);
 
     res.status(200).json({
       user: {

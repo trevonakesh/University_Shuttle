@@ -10,6 +10,7 @@ import { removeDriver, removeStudent } from '../services/accountService';
 import { HttpError } from '../utils/httpError';
 import { findUserByEmail, normalizeEmail } from '../services/userLookup';
 import { passwordError } from '../utils/password';
+import { cleanUploadUrl, markAsDocuments, withSignedDocuments } from '../utils/privateUploads';
 
 export const getDrivers = async (req: Request, res: Response) => {
   try {
@@ -25,7 +26,8 @@ export const getDrivers = async (req: Request, res: Response) => {
       },
       orderBy: { id: 'desc' }
     });
-    res.status(200).json(drivers);
+    // Document links are signed so only this admin response can open them.
+    res.status(200).json(drivers.map(withSignedDocuments));
   } catch (error) {
     console.error('Error fetching drivers:', error);
     res.status(500).json({ message: 'Server error' });
@@ -58,7 +60,7 @@ export const updateDriverStatus = async (req: Request, res: Response) => {
       if (status === DriverStatus.REJECTED) void sendEmail(emails.driverRejected(driver.user.email, driver.fullName));
     }
 
-    res.status(200).json(driver);
+    res.status(200).json(withSignedDocuments(driver));
   } catch (error) {
     console.error('Error updating driver status:', error);
     res.status(500).json({ message: 'Server error' });
@@ -135,9 +137,9 @@ export const createDriver = async (req: Request, res: Response) => {
             pickupTime: pickupTime || null,
             dropTime: dropTime || null,
             profilePhotoUrl: profilePhotoUrl || null,
-            nicCopyUrl: nicCopyUrl || null,
-            licenseCopyUrl: licenseCopyUrl || null,
-            vehicleRegUrl: vehicleRegUrl || null,
+            nicCopyUrl: cleanUploadUrl(nicCopyUrl) || null,
+            licenseCopyUrl: cleanUploadUrl(licenseCopyUrl) || null,
+            vehicleRegUrl: cleanUploadUrl(vehicleRegUrl) || null,
             busPhotoUrl: busPhotoUrl || null,
             status: DriverStatus.APPROVED
           }
@@ -148,7 +150,8 @@ export const createDriver = async (req: Request, res: Response) => {
 
     void sendEmail(emails.accountCreatedByAdmin(user.email, fullName, 'DRIVER'));
 
-    res.status(201).json(user.driver);
+    markAsDocuments(nicCopyUrl, licenseCopyUrl, vehicleRegUrl);
+    res.status(201).json(withSignedDocuments(user.driver));
   } catch (error: any) {
     if (error.code === 'P2002') {
       const field = (error.meta?.target as string[])?.join(', ') || 'field';

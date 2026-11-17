@@ -56,6 +56,7 @@ import settingsRoutes from './routes/settingsRoutes';
 import { startFareReminderJob } from './fareReminders';
 import { logEmailMode } from './services/email';
 import path from 'path';
+import { guardDocuments } from './utils/privateUploads';
 
 // Middleware
 app.use(cors());
@@ -86,6 +87,8 @@ const IMAGE_FILE = /^\/[\w.-]+\.(jpe?g|png|webp|gif)$/i;
 app.use(
   '/uploads',
   (req, res, next) => (IMAGE_FILE.test(req.path) ? next() : res.status(404).end()),
+  // Drivers' identity documents only open through a signed, expiring link.
+  guardDocuments,
   express.static(path.join(__dirname, '../uploads'), {
     dotfiles: 'ignore',
     index: false,
