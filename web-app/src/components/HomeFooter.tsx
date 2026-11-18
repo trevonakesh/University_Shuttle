@@ -39,8 +39,8 @@ export default function HomeFooter() {
             <h4>{t("Get in touch")}</h4>
             <div className="h-footer-links">
               <a href={`mailto:${business.email}`}>{business.email}</a>
-              <a href={`tel:${business.phoneHref}`}>{business.phone}</a>
-              <span>{address.line1}<br />{address.city}, {address.country}</span>
+              {business.phone && <a href={`tel:${business.phoneHref}`}>{business.phone}</a>}
+              <span>{t(address.city)}, {t(address.country)}</span>
             </div>
           </div>
         </div>

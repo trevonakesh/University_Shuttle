@@ -129,13 +129,15 @@ export default function ContactPage() {
                   <div className="h-label">{t("Email")}</div>
                   <a className="h-strong-link" href={`mailto:${business.email}`}>{business.email}</a>
                 </div>
+                {business.phone && (
+                  <div>
+                    <div className="h-label">{t("Phone")}</div>
+                    <a className="h-strong-link" href={`tel:${business.phoneHref}`}>{business.phone}</a>
+                  </div>
+                )}
                 <div>
-                  <div className="h-label">{t("Phone")}</div>
-                  <a className="h-strong-link" href={`tel:${business.phoneHref}`}>{business.phone}</a>
-                </div>
-                <div>
-                  <div className="h-label">{t("Office")}</div>
-                  {a.line1}<br />{a.city}, {a.country}
+                  <div className="h-label">{t("Location")}</div>
+                  {t(a.city)}, {t(a.country)}
                 </div>
               </div>
             </div>
@@ -145,8 +147,8 @@ export default function ContactPage() {
               <div className="h-hours">
                 {business.hours.map(h => (
                   <div key={h.days}>
-                    <span>{h.days}</span>
-                    <span>{h.time}</span>
+                    <span>{t(h.days)}</span>
+                    <span>{t(h.time)}</span>
                   </div>
                 ))}
               </div>

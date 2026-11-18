@@ -94,12 +94,12 @@ class AboutUsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            tr('Campus Bus Service'),
+            'UniShuttle',
             style: TextStyle(color: context.pal.fg, fontSize: 24, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 20),
           Text(
-            tr('Welcome to the Campus Bus Service, your reliable partner in university transportation. We are committed to providing safe, efficient, and comfortable daily commuting solutions for students across multiple universities.'),
+            tr('Welcome to UniShuttle, your reliable partner in university transportation. We are committed to providing safe, efficient, and comfortable daily commuting solutions for students across multiple universities.'),
             style: TextStyle(color: context.pal.fg70, fontSize: 16, height: 1.5),
           ),
           SizedBox(height: 20),
@@ -215,11 +215,10 @@ class ContactScreen extends StatelessWidget {
             style: TextStyle(color: context.pal.fg70, fontSize: 16, height: 1.5),
           ),
           const SizedBox(height: 40),
-          _buildContactRow(context, Icons.email, 'Email Support', 'support@campusbus.com'),
+          // Same details as the website (web-app/src/lib/business.ts).
+          _buildContactRow(context, Icons.email, 'Email Support', 'info@unishuttle.lk'),
           const SizedBox(height: 20),
-          _buildContactRow(context, Icons.phone, 'Phone', '+94 11 234 5678'),
-          const SizedBox(height: 20),
-          _buildContactRow(context, Icons.location_on, 'Office', 'No. 123, University Road, Colombo 03'),
+          _buildContactRow(context, Icons.location_on, 'Location', 'Colombo, Sri Lanka'),
         ],
       ),
     );

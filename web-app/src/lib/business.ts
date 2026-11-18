@@ -1,18 +1,19 @@
 // Single source of truth for public business details shown on the website.
-// ⚠️ PLACEHOLDER contact details — replace email, phone and address with
-// real ones before the site goes live.
+// The Android app shows the same details on its contact screen
+// (mobile-app/lib/screens/shared/info_screens.dart): change both together.
 
 export const business = {
   name: 'UniShuttle',
   tagline: 'University bus travel in Sri Lanka, organised in one app.',
 
   email: 'info@unishuttle.lk',
-  phone: '+94 7436762686',
-  phoneHref: '+947436762686',
+  // Left empty until there is a number to publish; the phone line is hidden
+  // while it is empty. Example: phone: '+94 77 123 4567', phoneHref: '+94771234567'.
+  phone: '',
+  phoneHref: '',
 
   address: {
-    line1: 'No. 00, Example Road',
-    city: 'Colombo 07',
+    city: 'Colombo',
     country: 'Sri Lanka'
   },
 
